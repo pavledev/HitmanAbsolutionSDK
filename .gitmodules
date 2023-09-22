@@ -1,3 +1,6 @@
 [submodule "External/vcpkg"]
 	path = External/vcpkg
 	url = https://github.com/microsoft/vcpkg
+[submodule "External/IconFontCppHeaders"]
+	path = External/IconFontCppHeaders
+	url = https://github.com/juliettef/IconFontCppHeaders
