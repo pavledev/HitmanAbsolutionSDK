@@ -1,0 +1,14 @@
+{
+    "version": "0.2.1",
+    "defaults": {},
+    "configurations": [
+        {
+            "type": "dll",
+            "exe": "D:\\SteamLibrary\\steamapps\\common\\Hitman Absolution\\HMA.exe",
+            "cwd": "D:\\SteamLibrary\\steamapps\\common\\Hitman Absolution",
+            "project": "CMakeLists.txt",
+            "projectTarget": "HitmanAbsolutionSDK.dll (Install)",
+            "name": "Hitman Absolution"
+        }
+    ]
+}

@@ -1,0 +1,24 @@
+#pragma once
+
+#include "ERenderFormat.h"
+#include "SRenderSampleDesc.h"
+#include "ERenderResourceUsage.h"
+#include "ERenderResourcePriority.h"
+#include "ERenderResourceMipInterpolation.h"
+
+struct SRenderTexture2DDesc
+{
+	unsigned long long nResourceMemoryScopeID; //Offset = 0x0x0 Size = 0x0x8
+	unsigned int nWidth; //Offset = 0x0x8 Size = 0x0x4
+	unsigned int nHeight; //Offset = 0x0xC Size = 0x0x4
+	unsigned int nMipLevels; //Offset = 0x0x10 Size = 0x0x4
+	unsigned int nArraySize; //Offset = 0x0x14 Size = 0x0x4
+	ERenderFormat eFormat; //Offset = 0x0x18 Size = 0x0x4
+	SRenderSampleDesc sampleDesc; //Offset = 0x0x1C Size = 0x0x8
+	unsigned int nBindFlags; //Offset = 0x0x24 Size = 0x0x4
+	unsigned int nMiscFlags; //Offset = 0x0x28 Size = 0x0x4
+	unsigned int nCPUAccessFlags; //Offset = 0x0x2C Size = 0x0x4
+	ERenderResourceUsage eUsage; //Offset = 0x0x30 Size = 0x0x4
+	ERenderResourcePriority ePriority; //Offset = 0x0x34 Size = 0x0x4
+	ERenderResourceMipInterpolation eMipInterpolation; //Offset = 0x0x38 Size = 0x0x4
+};

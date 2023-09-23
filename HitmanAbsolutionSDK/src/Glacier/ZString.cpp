@@ -1,0 +1,115 @@
+#include "Glacier/ZString.h"
+#include "Glacier/Memory/ZMemoryManager.h"
+#include "Glacier/Memory/IAllocator.h"
+#include "Global.h"
+
+ZString::ZString()
+{
+	m_length = 0x80000000;
+	m_chars = const_cast<char*>("");
+}
+
+ZString::ZString(std::string_view str)
+{
+	m_length = static_cast<unsigned int>(str.size()) | 0x80000000;
+	m_chars = str.data();
+}
+
+ZString::ZString(const char* str)
+{
+	m_length = static_cast<unsigned int>(std::strlen(str)) | 0x80000000;
+	m_chars = str;
+}
+
+ZString::ZString(const char* str, size_t size)
+{
+	m_length = static_cast<unsigned int>(size) | 0x80000000;
+	m_chars = str;
+}
+
+ZString::ZString(const ZString& other)
+{
+	if (other.IsAllocated())
+	{
+		Allocate(other.ToCString(), other.Length());
+	}
+	else
+	{
+		m_length = other.m_length;
+		m_chars = other.m_chars;
+	}
+}
+
+ZString::~ZString()
+{
+	if (IsAllocated())
+	{
+		IAllocator* normalAllocator = memoryManager->GetNormalAllocator();
+
+		normalAllocator->Free(const_cast<char*>(m_chars));
+	}
+}
+
+unsigned int ZString::Length() const
+{
+	return m_length & 0x3FFFFFFF;
+}
+
+const char* ZString::ToCString() const
+{
+	return m_chars;
+}
+
+bool ZString::operator==(const ZString& other) const
+{
+	if (Length() != other.Length())
+	{
+		return false;
+	}
+
+	return strncmp(m_chars, other.m_chars, Length()) == 0;
+}
+
+bool ZString::StartsWith(const ZString& other) const
+{
+	if (Length() != other.Length())
+	{
+		return false;
+	}
+
+	return strncmp(m_chars, other.m_chars, other.Length()) == 0;
+}
+
+bool ZString::IsAllocated() const
+{
+	return (m_length & 0xC0000000) == 0;
+}
+
+std::string_view ZString::ToStringView() const
+{
+	return std::string_view(m_chars, Length());
+}
+
+ZString::operator std::string_view() const
+{
+	return ToStringView();
+}
+
+ZString ZString::CopyFrom(const ZString& other)
+{
+	ZString string;
+
+	string.Allocate(other.m_chars, other.Length());
+
+	return string;
+}
+
+void ZString::Allocate(const char* str, size_t size)
+{
+	IAllocator* normalAllocator = memoryManager->GetNormalAllocator();
+
+	m_length = static_cast<uint32_t>(size);
+	m_chars = reinterpret_cast<char*>(normalAllocator->Allocate(size, 0));
+
+	memcpy(const_cast<char*>(m_chars), str, size);
+}

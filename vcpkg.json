@@ -1,0 +1,8 @@
+{
+    "name": "hitmanabsolutionsdk",
+    "version": "1.0.0",
+    "dependencies": [
+        "directxtk",
+        "minhook"
+    ]
+}

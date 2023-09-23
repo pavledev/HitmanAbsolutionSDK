@@ -1,0 +1,19 @@
+{
+    "version": 2,
+    "configurePresets": [
+        {
+            "name": "x86-Debug-Install",
+            "inherits": [ "x86-Debug" ],
+            "cacheVariables": {
+                "GAME_INSTALL_PATH": "D:\\SteamLibrary\\steamapps\\common\\Hitman Absolution"
+            }
+        },
+        {
+            "name": "x86-Release-Install",
+            "inherits": [ "x86-Release" ],
+            "cacheVariables": {
+                "GAME_INSTALL_PATH": "D:\\SteamLibrary\\steamapps\\common\\Hitman Absolution"
+            }
+        }
+    ]
+}
