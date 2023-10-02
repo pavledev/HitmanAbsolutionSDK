@@ -2,7 +2,8 @@
 
 #include "IInputDeviceManager.h"
 #include "../ZGameTime.h"
-#include "Utility/Alignment.h"
+
+#include <Common.h>
 
 class ZInputDevice;
 

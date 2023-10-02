@@ -3,8 +3,9 @@
 #include <d3d11.h>
 
 #include "ZRenderDeviceBase.h"
-#include "Utility/Alignment.h"
 #include "ZRenderSwapChain.h"
+
+#include <Common.h>
 
 struct SRenderDestinationDesc;
 struct SRenderViewport;

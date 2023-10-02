@@ -63,12 +63,15 @@ void ZInputDevice::buttonSample(int nr, bool state, const ZGameTime& time)
 
 void ZInputDevice::AnalogSample(int nr, float state, float raw, const ZGameTime& time)
 {
-    Function::CallMethod<ZInputDevice*, int, float, float, const ZGameTime&>(moduleBaseAddresses["runtime.input.dll"] + 0x82F0, this, nr, state, raw, time);
+	m_anamotion[nr] = state - m_analog[nr];
+	m_analog[nr] = state;
+	m_anaraw[nr] = raw;
 }
 
 void ZInputDevice::AnalogMotionSample(int nr, float state, const ZGameTime& time)
 {
-    Function::CallMethod<ZInputDevice*, int, float, const ZGameTime&>(moduleBaseAddresses["runtime.input.dll"] + 0x82C0, this, nr, state, time);
+	m_anamotion[nr] = state;
+	m_analog[nr] += state;
 }
 
 const ZGameTime ZInputDevice::GetUpdateTime() const

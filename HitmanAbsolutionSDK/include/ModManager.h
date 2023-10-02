@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <memory>
 
-#include "ModInterface.h"
+class ModInterface;
 
 class ModManager
 {

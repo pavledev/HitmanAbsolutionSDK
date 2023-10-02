@@ -4,8 +4,9 @@
 
 #include "../Templates/TRenderResourceImpl.h"
 #include "SRenderTexture2DDesc.h"
-#include "Utility/Alignment.h"
 #include "IRenderResource.h"
+
+#include <Common.h>
 
 class ZRenderTexture2D : public TRenderResourceImpl<IRenderResource, 1>
 {

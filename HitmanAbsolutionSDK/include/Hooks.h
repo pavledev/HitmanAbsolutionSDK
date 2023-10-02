@@ -11,6 +11,10 @@ class ZVirtualControlWindows;
 class ZMouseWindows;
 class ZEngineAppCommon;
 class ZHitman5Module;
+class ZInputAction;
+class ZEntitySceneContext;
+class ZString;
+class ZFreeCameraControlEntity;
 
 namespace Hooks
 {
@@ -20,4 +24,11 @@ namespace Hooks
 	inline StdCallHook<BOOL, const RECT*> ClipCursor;
 	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_UpdateInputDeviceManager;
 	inline ThisCallHook<bool, ZHitman5Module> ZHitman5Module_Initialize;
+	inline ThisCallHook<bool, ZInputAction> ZInputAction_Digital;
+	inline ThisCallHook<void, ZEntitySceneContext, const ZString&> ZEntitySceneContext_CreateScene;
+	inline ThisCallHook<void, ZEntitySceneContext, bool> ZEntitySceneContext_ClearScene;
+	inline ThisCallHook<void, ZFreeCameraControlEntity, float> ZFreeCameraControlEntity_UpdateCamera;
+	inline ThisCallHook<void, ZFreeCameraControlEntity> ZFreeCameraControlEntity_UpdateMovementFromInput;
+	inline ThisCallHook<bool, ZInputActionManager, const char*> ZInputActionManager_AddBindings;
+	inline ThisCallHook<bool, ZEngineAppCommon, const SRenderDestinationDesc&> ZEngineAppCommon_Initialize;
 }

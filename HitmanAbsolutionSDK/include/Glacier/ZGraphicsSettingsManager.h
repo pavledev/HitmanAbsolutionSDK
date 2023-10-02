@@ -3,9 +3,10 @@
 #include <Windows.h>
 
 #include "IComponentInterface.h"
-#include "Utility/Alignment.h"
 
-class ZGraphicsSettingsManager : public IComponentInterface
+#include <Common.h>
+
+class HitmanAbsolutionSDK_API ZGraphicsSettingsManager : public IComponentInterface
 {
 public:
 	HWND GetHWND();

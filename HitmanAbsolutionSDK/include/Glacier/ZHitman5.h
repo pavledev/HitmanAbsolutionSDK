@@ -3,6 +3,8 @@
 #include "IComponentInterface.h"
 #include "ZHM5BaseCharacter.h"
 #include "Camera/ZHM5MainCamera.h"
+#include "Input/ZHM5InputControl.h"
+#include "Physics/ICharacterCollision.h"
 
 class ZHM5Action;
 struct float4;
@@ -10,36 +12,29 @@ struct SMatrix;
 enum eMorphemeRequests;
 struct SGameUpdateEvent;
 
-class IFutureCameraState : public IComponentInterface
+class HitmanAbsolutionSDK_API IFutureCameraState : public IComponentInterface
 {
 public:
 	struct SCameraState;
 
-	virtual ~IFutureCameraState() = 0;
+	virtual ~IFutureCameraState() = default;
 	virtual SCameraState GetFutureCameraState() = 0;
 	virtual SCameraState GetCurrentCameraState() = 0;
 	virtual void DisableCameraControl() = 0;
 	virtual void EnableCameraControl() = 0;
 };
 
-class ICharacterCollision : public IComponentInterface
+class HitmanAbsolutionSDK_API IHM5ActionEntityListener : public IComponentInterface
 {
 public:
-	virtual ~ICharacterCollision() = 0;
-	virtual SMatrix GetCollisionCheckedMatPos(const SMatrix& matrix) = 0;
-};
-
-class IHM5ActionEntityListener : public IComponentInterface
-{
-public:
-	virtual ~IHM5ActionEntityListener() = 0;
+	virtual ~IHM5ActionEntityListener() = default;
 	virtual bool GetActionAABB(const ZHM5Action* pAction, float4& vMin, float4& vMax) const = 0;
 	virtual bool IsActionValid(ZHM5Action* action, const TEntityRef<ZHM5BaseCharacter>& entityRef) = 0;
 	virtual bool DisplayFarFeedback(ZHM5Action* pAction, const TEntityRef<ZHM5BaseCharacter>& pOperator) = 0;
 	virtual bool ActivateAction(ZHM5Action* pAction, const TEntityRef<ZHM5BaseCharacter>& pOperator) = 0;
 };
 
-class ZHM5MorphemeNodeIds
+class HitmanAbsolutionSDK_API ZHM5MorphemeNodeIds
 {
 private:
 	unsigned int m_nFullBodySM;
@@ -333,71 +328,16 @@ private:
 	bool m_bInitialized;
 };
 
-class ZHitman5 : public ZHM5BaseCharacter, public IFutureCameraState, public ICharacterCollision, public IHM5ActionEntityListener, public ZHM5MorphemeNodeIds
+class HitmanAbsolutionSDK_API ZHitman5 : public ZHM5BaseCharacter, public IFutureCameraState, public ICharacterCollision, public IHM5ActionEntityListener, public ZHM5MorphemeNodeIds
 {
 public:
-	virtual ~ZHitman5() = 0;
-	virtual ZVariantRef GetVariantRef() const = 0;
-	virtual int AddRef() = 0;
-	virtual int Release() = 0;
-	virtual void* QueryInterface(STypeID* iid) = 0;
-	virtual void Activate(const ZString& sSubset) = 0;
-	virtual void Deactivate(const ZString& sSubset) = 0;
-	virtual void OnEnterEditMode() = 0;
-	virtual void OnExitEditMode() = 0;
-	virtual void Init() = 0;
-	virtual bool PickupItem(const TEntityRef<IHM5Item>& rItem) = 0;
-	virtual bool SwapItem(const TEntityRef<IHM5Item>& rNewItem, const TEntityRef<IHM5Item>& rDisposedItem) = 0;
-	virtual void RemoveItemFromInventory(const TEntityRef<IHM5Item>& rItem) = 0;
-	virtual void AttachItemToRHand(const TEntityRef<IHM5Item>& rItem) = 0;
-	virtual void AttachItemToLHand(const TEntityRef<IHM5Item>& rItem) = 0;
-	virtual TEntityRef<IHM5Item> DetachItemFromRHand(bool bAddToPhysicWorld) = 0;
-	virtual TEntityRef<IHM5Item> DetachItemFromLHand(bool bAddToPhysicWorld) = 0;
-	virtual void ItemDestoyed(TEntityRef<IHM5Item> pItem) = 0;
-	virtual bool IsDead() const = 0;
-	virtual void GetCharacterOBB(SMatrix& m0, float4& vSize) const = 0;
-	virtual void ReinitializeMorphemeData() = 0;
-	virtual void GetOBB(SMatrix& mvCen, float4& vHalfSize) const = 0;
-	virtual float4 GetOBBRadius() const = 0;
-	virtual bool CreateBodyCollision() = 0;
-	virtual void UpdateBodyCollisionPoses(bool bMoveTransform) = 0;
-	virtual bool ShouldDoHardCrowdPushes() const = 0;
-	virtual void SetSequenceWeight(float weight, unsigned int track) = 0;
-	virtual void BlendOutSequenceWeights() = 0;
-	virtual void HandleMorphemeEntityIDChanged() = 0;
-	virtual bool EnsureBaseCharacterInit() = 0;
-	virtual bool WillRequestBeReceived(eMorphemeRequests nRequest) = 0;
-	virtual void FrameUpdate(const SGameUpdateEvent& updateEvent) = 0;
-	virtual void FrameUpdate2(const SGameUpdateEvent& updateEvent) = 0;
-	virtual void PlayImpactAnim(const float4& vDir) = 0;
-	virtual bool HolsterCurrentWeapons() = 0;
-	virtual float CalcGetBoneDamageMultiplier(unsigned int nHitBoneIndex) = 0;
-
-	virtual void YouGotHit(const SHitInfo& HitInfo) = 0;
-	virtual bool CanProjectileHitCharacter(const SHitInfo& HitInfo) = 0;
-	virtual unsigned short GetCollisionLayer() const = 0;
-
-	virtual void CutSequenceStarted(ISequenceEntity* pSequence, const ZString& sSlotName, float fBodyPartSelector) = 0;
-	virtual void CutSequenceUpdate(ISequenceEntity* pSequence, ZString sSlotName, float fWeight) = 0;
-	virtual void CutSequenceEnded(ISequenceEntity* pSequence, ZString sSlotName) = 0;
-	virtual void AbortCutSequence() = 0;
-	virtual bool SetCutSequenceData(ISequenceEntity* pSequence, const SCutSequenceData& cutSequenceData, const ZString& sSlotName, float fBodyPartSelector) = 0;
-
-	virtual ICharacterController* GetCharacterController() const = 0;
-
-	virtual IFutureCameraState::SCameraState GetFutureCameraState() = 0;
-	virtual IFutureCameraState::SCameraState GetCurrentCameraState() = 0;
-	virtual void DisableCameraControl() = 0;
-	virtual void EnableCameraControl() = 0;
-
-	virtual SMatrix GetCollisionCheckedMatPos(const SMatrix& MatPos) = 0;
-
-	virtual bool IsActionValid(ZHM5Action* pAction, const TEntityRef<ZHM5BaseCharacter>& pOperator) = 0;
-
 	ZHM5MainCamera* GetMainCamera() const;
+	ZHM5InputControl* GetInputControl() const;
 
 private:
-	PAD(0x614);
+	PAD(0x3B0);
+	ZHM5InputControl* m_pInputControl; //0xA30
+	PAD(0x260);
 	TEntityRef<ZHM5MainCamera> m_rMainCamera; //0xC94
 	PAD(0x84);
 };

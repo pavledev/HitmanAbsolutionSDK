@@ -23,10 +23,9 @@ public:
 
 	void CreateHook(const std::string& functionName, const uintptr_t offset, HookFunction hookFunction)
 	{
-		const uintptr_t baseAddress = reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr));
 		this->functionName = functionName;
 
-		Function pFunction = reinterpret_cast<Function>(baseAddress + offset);
+		Function pFunction = reinterpret_cast<Function>(BaseAddress + offset);
 		MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(pFunction), reinterpret_cast<LPVOID>(hookFunction), reinterpret_cast<LPVOID*>(&pOriginalFunction));
 
 		if (status == MH_OK)
@@ -113,10 +112,9 @@ public:
 
 	void CreateHook(const std::string& functionName, const uintptr_t offset, HookFunction hookFunction)
 	{
-		const uintptr_t baseAddress = reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr));
 		this->functionName = functionName;
 
-		Function pFunction = reinterpret_cast<Function>(baseAddress + offset);
+		Function pFunction = reinterpret_cast<Function>(BaseAddress + offset);
 		MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(pFunction), reinterpret_cast<LPVOID>(hookFunction), reinterpret_cast<LPVOID*>(&pOriginalFunction));
 
 		if (status == MH_OK)
@@ -220,10 +218,9 @@ public:
 
 	void CreateHook(const std::string& functionName, const uintptr_t offset, HookFunction hookFunction)
 	{
-		const uintptr_t baseAddress = reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr));
 		this->functionName = functionName;
 
-		Function pFunction = reinterpret_cast<Function>(baseAddress + offset);
+		Function pFunction = reinterpret_cast<Function>(BaseAddress + offset);
 		MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(pFunction), reinterpret_cast<LPVOID>(hookFunction), reinterpret_cast<LPVOID*>(&pOriginalFunction));
 
 		if (status == MH_OK)
@@ -310,10 +307,9 @@ public:
 
 	void CreateHook(const std::string& functionName, const uintptr_t offset, HookFunction hookFunction)
 	{
-		const uintptr_t baseAddress = reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr));
 		this->functionName = functionName;
 
-		Function pFunction = reinterpret_cast<Function>(baseAddress + offset);
+		Function pFunction = reinterpret_cast<Function>(BaseAddress + offset);
 		MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(pFunction), reinterpret_cast<LPVOID>(hookFunction), reinterpret_cast<LPVOID*>(&pOriginalFunction));
 
 		if (status == MH_OK)

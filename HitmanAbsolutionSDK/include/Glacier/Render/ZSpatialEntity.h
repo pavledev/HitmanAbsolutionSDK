@@ -3,20 +3,15 @@
 #include "../Entity/ZEntityImpl.h"
 #include "../Templates/TEntityRef.h"
 #include "../Math/SMatrix.h"
-#include "Utility/Alignment.h"
+
+#include <Common.h>
 
 class ZBoundedEntity;
 struct float4;
 
-class ZSpatialEntity : public ZEntityImpl
+class HitmanAbsolutionSDK_API ZSpatialEntity : public ZEntityImpl
 {
 public:
-	virtual ~ZSpatialEntity() = 0;
-	virtual ZVariantRef GetVariantRef() const = 0;
-	virtual int AddRef() = 0;
-	virtual int Release() = 0;
-	virtual void* QueryInterface(STypeID* iid) = 0;
-	virtual void Init() = 0;
 	virtual void SetVisible(bool bVisible) = 0;
 	virtual const ZBoundedEntity* QueryBoundedEntity() const = 0;
 	virtual ZBoundedEntity* QueryBoundedEntity() = 0;
@@ -39,6 +34,7 @@ public:
 	virtual void OnSpatialChange() = 0;
 
 	SMatrix GetObjectToWorldMatrix() const;
+	void SetObjectToWorldMatrix(const SMatrix& mObjectToWorld);
 
 private:
 	PAD(0x38);

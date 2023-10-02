@@ -2,7 +2,8 @@
 
 #include "ZMouseDevice.h"
 #include "ZDirectInputInf.h"
-#include "Utility/Alignment.h"
+
+#include <Common.h>
 
 class ZMouseWindows : public ZMouseDevice
 {

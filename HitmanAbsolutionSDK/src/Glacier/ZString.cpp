@@ -44,9 +44,7 @@ ZString::~ZString()
 {
 	if (IsAllocated())
 	{
-		IAllocator* normalAllocator = memoryManager->GetNormalAllocator();
-
-		normalAllocator->Free(const_cast<char*>(m_chars));
+		Free();
 	}
 }
 
@@ -58,6 +56,11 @@ unsigned int ZString::Length() const
 const char* ZString::ToCString() const
 {
 	return m_chars;
+}
+
+void ZString::SetChars(const char* chars)
+{
+	m_chars = chars;
 }
 
 bool ZString::operator==(const ZString& other) const
@@ -106,10 +109,17 @@ ZString ZString::CopyFrom(const ZString& other)
 
 void ZString::Allocate(const char* str, size_t size)
 {
-	IAllocator* normalAllocator = memoryManager->GetNormalAllocator();
+	IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
 
 	m_length = static_cast<uint32_t>(size);
 	m_chars = reinterpret_cast<char*>(normalAllocator->Allocate(size, 0));
 
 	memcpy(const_cast<char*>(m_chars), str, size);
+}
+
+void ZString::Free()
+{
+	IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
+
+	normalAllocator->Free(const_cast<char*>(m_chars));
 }

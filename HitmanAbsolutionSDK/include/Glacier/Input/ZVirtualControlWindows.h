@@ -1,9 +1,10 @@
 #pragma once
 
 #include "ZInputDevice.h"
-#include "Utility/Alignment.h"
 
-class ZVirtualControlWindows : public ZInputDevice
+#include <Common.h>
+
+class HitmanAbsolutionSDK_API ZVirtualControlWindows : public ZInputDevice
 {
 public:
     ZInputDevice* GetKeyboardDevice() const;

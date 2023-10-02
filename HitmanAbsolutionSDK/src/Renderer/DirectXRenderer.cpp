@@ -29,9 +29,9 @@ bool DirectXRenderer::Setup()
 		return true;
 	}
 
-	hwnd = graphicsSettingsManager->GetHWND();
+	hwnd = GraphicsSettingsManager->GetHWND();
 
-	ZRenderDevice* renderDevice = renderManager->GetRenderDevice();
+	ZRenderDevice* renderDevice = RenderManager->GetRenderDevice();
 	ID3D11Device* device = renderDevice->GetDirect3DDevice();
 	ID3D11DeviceContext* immediateContext = renderDevice->GetImmediateContext();
 	RECT rect = { 0, 0, 0, 0 };
@@ -97,7 +97,7 @@ void DirectXRenderer::OnPresent(ZRenderDevice* renderDevice)
 
 	ID3D11Device* device = renderDevice->GetDirect3DDevice();
 	ID3D11DeviceContext* immediateContext = renderDevice->GetImmediateContext();
-	ZHitman5* player = levelManager->GetHitman().GetRawPointer();
+	ZHitman5* player = LevelManager->GetHitman().GetRawPointer();
 
 	if (player)
 	{
@@ -224,7 +224,7 @@ bool DirectXRenderer::WorldToScreen(const SVector3& worldPos, SVector2& out)
 
 bool DirectXRenderer::ScreenToWorld(const SVector2& screenPos, SVector3& worldPosOut, SVector3& directionOut)
 {
-	ZHitman5* player = levelManager->GetHitman().GetRawPointer();
+	ZHitman5* player = LevelManager->GetHitman().GetRawPointer();
 
 	if (!player)
 	{

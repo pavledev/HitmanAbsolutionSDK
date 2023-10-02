@@ -4,6 +4,8 @@
 #include <queue>
 #include <functional>
 
+#include "../Common.h"
+
 #undef SendMessage
 
 class PipeServer
@@ -13,14 +15,14 @@ public:
 	using ConnectionCallback = std::function<void()>;
 
 	~PipeServer();
-	static PipeServer& GetInstance();
+	HitmanAbsolutionSDK_API static PipeServer& GetInstance();
 	void Start();
 	void Stop();
 	void Update();
-	void SendMessage(const std::string& type, const std::string& content);
+	HitmanAbsolutionSDK_API void SendMessage(const std::string& type, const std::string& content);
 	void SetMessageCallback(MessageCallback messageCallback);
 	void SetConnectionCallback(ConnectionCallback connectionCallback);
-	bool IsConnectedWithEditor() const;
+	HitmanAbsolutionSDK_API bool IsConnectedWithEditor() const;
 
 private:
 	PipeServer();

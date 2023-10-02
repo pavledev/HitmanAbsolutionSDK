@@ -2,8 +2,13 @@
 
 struct SVector2
 {
-	SVector2();
-	SVector2(float x, float y);
+	SVector2() : x(0.f), y(0.f)
+	{
+	}
+
+	SVector2(float x, float y) : x(x), y(y)
+	{
+	}
 
 	union
 	{

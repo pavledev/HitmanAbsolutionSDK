@@ -1,7 +1,8 @@
 #pragma once
 
 #include "IPageAllocator.h"
-#include "Utility/Alignment.h"
+
+#include <Common.h>
 
 class ZMemoryManager
 {

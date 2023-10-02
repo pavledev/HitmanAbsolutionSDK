@@ -2,16 +2,12 @@
 
 #include "ZSimpleModuleBase.h"
 #include "ZConfiguration.h"
+#include "../Scene/ZEntitySceneContext.h"
 
-#include <Utility/Alignment.h>
-
-class ZEntitySceneContext;
+#include <Common.h>
 
 class ZHitman5Module : public ZSimpleModuleBase, public ZConfiguration
 {
-public:
-	const bool IsEngineInitialized() const;
-
 private:
 	PAD(0x44);
 	ZEntitySceneContext* m_pSceneContext;

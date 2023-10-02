@@ -1,0 +1,12 @@
+#pragma once
+
+enum EActorDeathType
+{
+	eADT_UNDEFINED = 0,
+	eADT_INVISIBLE = 1,
+	eADT_ACCIDENT = 2,
+	eADT_PACIFIED = 3,
+	eADT_PACIFIEDACCIDENT = 4,
+	eADT_MURDER = 5,
+	eADT_BLOODY_MURDER = 6
+};

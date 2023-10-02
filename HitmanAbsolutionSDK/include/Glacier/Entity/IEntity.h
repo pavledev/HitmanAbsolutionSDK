@@ -2,15 +2,17 @@
 
 #include "../IComponentInterface.h"
 
+#include <Common.h>
+
 class ZEntityRef;
 class ZString;
 template <typename TKey, typename TValue> class THashSet;
 template <typename T> class TDefaultHashSetPolicy;
 
-class IEntity : public IComponentInterface
+class HitmanAbsolutionSDK_API IEntity : public IComponentInterface
 {
 public:
-	virtual ~IEntity() = 0;
+	virtual ~IEntity() = default;
 	virtual ZEntityRef GetID() const = 0;
 	virtual void Activate(const ZString& string) = 0;
 	virtual void Deactivate(const ZString& string) = 0;

@@ -8,7 +8,7 @@ void ZMouseWindows::Update()
     IDirectInputDevice8A* directInputDevice = dif.GetDirectInputDevice();
     SharedMemoryServer::Data* data = SharedMemoryServer::GetInstance().GetData();
 
-    m_updatetime = gameTimeManager->GetRealTime();
+    m_updatetime = GameTimeManager->GetRealTime();
 
     if (directInputDevice && m_active)
     {

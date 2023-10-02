@@ -2,11 +2,15 @@
 
 #include "Glacier/IComponentInterface.h"
 #include "ZRenderDevice.h"
+#include "../Templates/TEntityRef.h"
+#include "IRenderDestinationEntity.h"
 
-class alignas(8) ZRenderManager : public IComponentInterface
+class HitmanAbsolutionSDK_API alignas(8) ZRenderManager : public IComponentInterface
 {
 public:
 	ZRenderDevice* GetRenderDevice() const;
+	TEntityRef<IRenderDestinationEntity> GetGameRenderDestinationEntity();
+	TEntityRef<IRenderDestinationEntity> GetActiveRenderDestinationEntity() const;
 
 private:
 	PAD(0x8C);

@@ -14,7 +14,7 @@ file(GLOB_RECURSE HEADER_FILES
 add_library(HitmanAbsolutionSDK SHARED
 	${SRC_FILES}
 	${HEADER_FILES}
-)
+ )
 
 target_include_directories(HitmanAbsolutionSDK PRIVATE
 	${CMAKE_SOURCE_DIR}/External/mINI/src/mini
@@ -29,6 +29,10 @@ target_link_libraries(HitmanAbsolutionSDK PUBLIC
 	Microsoft::DirectXTK
 	imgui-docking
 	minhook::minhook
+)
+
+target_compile_definitions(HitmanAbsolutionSDK PRIVATE
+	EXPORTS
 )
 
 install(TARGETS HitmanAbsolutionSDK

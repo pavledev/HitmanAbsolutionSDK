@@ -2,9 +2,10 @@
 
 #include "IComponentInterface.h"
 #include "ZGameTime.h"
-#include "Utility/Alignment.h"
 
-class ZGameTimeManager : public IComponentInterface
+#include <Common.h>
+
+class HitmanAbsolutionSDK_API ZGameTimeManager : public IComponentInterface
 {
 public:
     const ZGameTime& GetRealTime() const;

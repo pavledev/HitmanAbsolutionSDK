@@ -1,8 +1,10 @@
 #pragma once
 
+#include <Common.h>
+
 class ZGameTime;
 
-class IInputDevice
+class HitmanAbsolutionSDK_API IInputDevice
 {
 public:
     enum EDeviceType

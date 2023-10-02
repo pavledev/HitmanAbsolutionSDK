@@ -4,9 +4,9 @@
 #include "Templates/TEntityRef.h"
 #include "ZHitman5.h"
 
-#include "Utility/Alignment.h"
+#include <Common.h>
 
-class ZLevelManager : public IComponentInterface
+class HitmanAbsolutionSDK_API ZLevelManager : public IComponentInterface
 {
 public:
 	const TEntityRef<ZHitman5>& GetHitman() const;

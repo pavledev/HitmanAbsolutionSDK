@@ -3,7 +3,7 @@
 #include "IInputDevice.h"
 #include "../ZGameTime.h"
 
-class ZInputDevice : public IInputDevice
+class HitmanAbsolutionSDK_API ZInputDevice : public IInputDevice
 {
 public:
     struct CtrlInfo
@@ -12,7 +12,7 @@ public:
         int nr;
     };
 
-    virtual ~ZInputDevice() = 0;
+    virtual ~ZInputDevice() = default;
     virtual IInputDevice::EDeviceType Type() const = 0;
     virtual int DigitalCount() const = 0;
     virtual int DigitalState(int nr) const = 0;

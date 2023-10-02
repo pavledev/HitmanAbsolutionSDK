@@ -1,6 +1,8 @@
 #pragma once
 
-class ZGameTime
+#include <Common.h>
+
+class HitmanAbsolutionSDK_API ZGameTime
 {
 public:
     long long GetTicks() const;

@@ -8,17 +8,19 @@
 
 class ZMemoryManager;
 class ZHitman5Module;
+class ZEngineAppCommon;
 
 void __fastcall ZRenderDevice_PresentHook(ZRenderDevice* pThis, int edx);
 void __fastcall ZRenderSwapChain_ResizeHook(ZRenderSwapChain* pThis, int edx, const SRenderDestinationDesc* pDescription);
 long __stdcall ZApplicationEngineWin32_MainWindowProcHook(ZApplicationEngineWin32* pThis, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
 bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx);
+bool __fastcall ZEngineAppCommon_InitializeHook(ZEngineAppCommon* pThis, int edx, const SRenderDestinationDesc& description);
 
 class SDK
 {
 public:
 	~SDK();
-	static SDK& GetInstance();
+	HitmanAbsolutionSDK_API static SDK& GetInstance();
 	void Setup();
 	void Cleanup();
 
@@ -36,12 +38,12 @@ public:
 
 	long MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
 
-	ImGuiContext* GetImGuiContext();
-	ImGuiMemAllocFunc GetImGuiMemAllocFunc();
-	ImGuiMemFreeFunc GetImGuiMemFreeFunc();
-	void* GetImGuiUserDataAllocator();
-	ImFont* GetRegularFont();
-	ImFont* GetBoldFont();
+	HitmanAbsolutionSDK_API ImGuiContext* GetImGuiContext();
+	HitmanAbsolutionSDK_API ImGuiMemAllocFunc GetImGuiMemAllocFunc();
+	HitmanAbsolutionSDK_API ImGuiMemFreeFunc GetImGuiMemFreeFunc();
+	HitmanAbsolutionSDK_API void* GetImGuiUserDataAllocator();
+	HitmanAbsolutionSDK_API ImFont* GetRegularFont();
+	HitmanAbsolutionSDK_API ImFont* GetBoldFont();
 
 	std::shared_ptr<ModManager> GetModManager();
 

@@ -1,11 +1,14 @@
 #pragma once
 
-#include "ZVariantRef.h"
+#include <Common.h>
 
-class IComponentInterface
+class ZVariantRef;
+struct STypeID;
+
+class HitmanAbsolutionSDK_API IComponentInterface
 {
 public:
-	virtual ~IComponentInterface() = 0;
+	virtual ~IComponentInterface() = default;
 	virtual ZVariantRef GetVariantRef() const = 0;
 	virtual int AddRef() = 0;
 	virtual int Release() = 0;

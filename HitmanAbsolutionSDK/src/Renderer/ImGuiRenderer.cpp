@@ -9,6 +9,9 @@
 #include "Glacier/Render/ZRenderManager.h"
 #include "Glacier/ZGraphicsSettingsManager.h"
 #include "Glacier/Input/ZInputActionManager.h"
+#include "Glacier/UI/ZGameWideUI.h"
+#include "Glacier/UI/ZScaleformManager.h"
+#include "Glacier/UI/ZHUDManager.h"
 
 #include "Renderer/ImGuiRenderer.h"
 #include "Global.h"
@@ -25,20 +28,6 @@ ImGuiRenderer::ImGuiRenderer()
     imguiHasFocus = false;
     regularFont = nullptr;
     boldFont = nullptr;
-}
-
-ImGuiRenderer::~ImGuiRenderer()
-{
-}
-
-bool ImGuiRenderer::Setup()
-{
-    if (isRendererSetup)
-    {
-        return true;
-    }
-
-    ZRenderDevice* renderDevice = renderManager->GetRenderDevice();
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -64,7 +53,23 @@ bool ImGuiRenderer::Setup()
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
 
-    if (!ImGui_ImplWin32_Init(graphicsSettingsManager->GetHWND()))
+    SetStyle();
+}
+
+ImGuiRenderer::~ImGuiRenderer()
+{
+}
+
+bool ImGuiRenderer::Setup()
+{
+    if (isRendererSetup)
+    {
+        return true;
+    }
+
+    ZRenderDevice* renderDevice = RenderManager->GetRenderDevice();
+
+    if (!ImGui_ImplWin32_Init(GraphicsSettingsManager->GetHWND()))
     {
         return false;
     }
@@ -74,6 +79,7 @@ bool ImGuiRenderer::Setup()
         return false;
     }
 
+    ImGuiIO& io = ImGui::GetIO();
     ImFontConfig iconsConfig{};
     iconsConfig.MergeMode = true;
     iconsConfig.GlyphOffset = { 0.f, 6.f };
@@ -92,8 +98,6 @@ bool ImGuiRenderer::Setup()
     io.Fonts->Build();
 
     io.FontDefault = regularFont;
-
-    SetStyle();
 
     Logger::GetInstance().Log(Logger::Level::Info, "ImGui renderer successfully set up.");
 
@@ -239,7 +243,7 @@ void ImGuiRenderer::SetStyle()
 
 long ImGuiRenderer::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam)
 {
-    if (ImGui::GetCurrentContext() == nullptr)
+    if (!ImGui::GetCurrentContext())
     {
         return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
     }
@@ -252,11 +256,13 @@ long ImGuiRenderer::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin
         imguiHasFocus = !imguiHasFocus;
     }
 
-    inputActionManager->SetEnabled(!imguiHasFocus);
+    InputActionManager->SetEnabled(!imguiHasFocus);
 
-    if (!imguiHasFocus)
+    ZGameWideUIScaleformHandler* gameWideUIScaleformHandler = GameWideUI->GetGameWideUIScaleformHandler();
+
+    if (gameWideUIScaleformHandler && !ScaleformManager->IsInMainMenu() && !HUDManager->IsPauseMenuActive())
     {
-        return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
+        gameWideUIScaleformHandler->ShowUICursor(imguiHasFocus);
     }
 
     if (uMsgId == WM_QUIT || uMsgId == WM_DESTROY || uMsgId == WM_NCDESTROY || uMsgId == WM_CLOSE)
@@ -266,17 +272,12 @@ long ImGuiRenderer::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin
         return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
     }
 
-    if (uMsgId == WM_SIZE)
+    if (imguiHasFocus)
     {
-        return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
+        ImGui_ImplWin32_WndProcHandler(hWnd, uMsgId, wParam, lParam);
     }
 
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsgId, wParam, lParam))
-    {
-        return true;
-    }
-
-    return DefWindowProcW(hWnd, uMsgId, wParam, lParam);
+    return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
 }
 
 ImGuiContext* ImGuiRenderer::GetImGuiContext()

@@ -5,5 +5,6 @@
 class StringUtility
 {
 public:
-	static std::string ToLowerCase(std::string string);
+	static std::string ToUpperCase(const std::string& string);
+	static std::string ToLowerCase(const std::string& string);
 };

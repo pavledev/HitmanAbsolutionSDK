@@ -6,6 +6,7 @@
 
 #include "Mutex.h"
 #include "Connection/PipeServer.h"
+#include "Common.h"
 
 #undef GetCurrentTime
 
@@ -35,13 +36,13 @@ public:
 	};
 
 	~Logger();
-	static Logger& GetInstance();
-	static unsigned int LevelToNumber(const Level level);
-	static const char* LevelToString(const Level level);
+	HitmanAbsolutionSDK_API static Logger& GetInstance();
+	HitmanAbsolutionSDK_API static unsigned int LevelToNumber(const Level level);
+	HitmanAbsolutionSDK_API static const char* LevelToString(const Level level);
 	std::vector<Message>& GetMessages();
 	void ClearMessage(const unsigned int index);
 	void ClearAllMessages();
-	static std::string GetCurrentTime();
+	HitmanAbsolutionSDK_API static std::string GetCurrentTime();
 	static std::string GetLastError();
 
 	template <typename... Args>
@@ -66,7 +67,7 @@ public:
 		message.id = static_cast<int>(messages.size());
 		message.level = level;
 		message.content = std::vformat(format, std::make_format_args(args...));
-		message.time = GetCurrentTime();
+		//message.time = GetCurrentTime();
 
 		messages.push_back(message);
 	}

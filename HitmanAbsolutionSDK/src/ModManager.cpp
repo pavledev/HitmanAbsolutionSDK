@@ -1,10 +1,13 @@
 #include <filesystem>
 
+#define MINI_CASE_SENSITIVE
+
 #include <ini.h>
 
 #include "ModManager.h"
 #include "Logger.h"
 #include "SDK.h"
+#include "ModInterface.h"
 
 ModManager::ModManager()
 {
@@ -31,7 +34,7 @@ std::unordered_map<std::string, ModManager::LoadedMod>& ModManager::GetLoadedMod
 
 void ModManager::FindAvailableMods()
 {
-	std::filesystem::path modsFolderPath = std::format("{}\\Mods", std::filesystem::current_path().string());
+	std::filesystem::path modsFolderPath = std::format("{}\\mods", std::filesystem::current_path().string());
 
 	if (std::filesystem::exists(modsFolderPath))
 	{
@@ -49,7 +52,7 @@ void ModManager::FindAvailableMods()
 	}
 	else
 	{
-		Logger::GetInstance().Log(Logger::Level::Warning, "Mods directory not found!");
+		Logger::GetInstance().Log(Logger::Level::Warning, "mods directory not found!");
 	}
 }
 
@@ -108,7 +111,7 @@ void ModManager::LoadMod(const std::string& name, const bool liveLoad)
 		return;
 	}
 
-	std::string modFilePath = std::format("{}\\Mods\\{}.dll", std::filesystem::current_path().string(), name);
+	std::string modFilePath = std::format("{}\\mods\\{}.dll", std::filesystem::current_path().string(), name);
 
 	if (!std::filesystem::exists(modFilePath))
 	{
@@ -121,13 +124,13 @@ void ModManager::LoadMod(const std::string& name, const bool liveLoad)
 
 	if (module)
 	{
-		Logger::GetInstance().Log(Logger::Level::Info, "Successfully loaded {} mod. Error: {}", name);
-
-		return;
+		Logger::GetInstance().Log(Logger::Level::Info, "Successfully loaded {} mod.", name);
 	}
 	else
 	{
 		Logger::GetInstance().Log(Logger::Level::Error, "Failed to load {} mod. Error: {}", name, Logger::GetLastError());
+
+		return;
 	}
 
 	const auto GetModInterfaceAddress = GetProcAddress(module, "GetModInterface");

@@ -4,8 +4,13 @@
 
 struct SVector4
 {
-	SVector4();
-	SVector4(float x, float y, float z, float w);
+	SVector4() : x(0.f), y(0.f), z(0.f), w(0.f)
+	{
+	}
+
+	SVector4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w)
+	{
+	}
 
 	union
 	{

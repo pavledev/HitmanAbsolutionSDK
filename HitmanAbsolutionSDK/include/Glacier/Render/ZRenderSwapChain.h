@@ -1,10 +1,12 @@
 #pragma once
 
 #include <dxgi.h>
-#include "Utility/Alignment.h"
+
 #include "ZRenderTexture2D.h"
 #include "ZRenderTargetView.h"
 #include "SRenderDestinationDesc.h"
+
+#include <Common.h>
 
 class ZRenderSwapChain
 {

@@ -5,10 +5,11 @@
 
 class ZActionMapTree;
 
-class ZInputActionManager : public IComponentInterface
+class HitmanAbsolutionSDK_API ZInputActionManager : public IComponentInterface
 {
 public:
 	void SetEnabled(const bool enabled);
+	bool AddBindings(const char* binds);
 
 private:
 	ZActionMapTree* m_pkRoot;
