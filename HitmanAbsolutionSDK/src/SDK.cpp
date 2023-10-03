@@ -26,6 +26,7 @@ ZScaleformManager* ScaleformManager;
 ZInputAction* HM5InputControl;
 ZCollisionManager* CollisionManager;
 ZTypeRegistry** TypeRegistry;
+bool IsEngineInitialized;
 
 SDK::SDK()
 {
@@ -90,7 +91,7 @@ void SDK::Setup()
 
     modManager->UnlockRead();*/
 
-    if (Hitman5Module->IsEngineInitialized())
+    if (IsEngineInitialized)
     {
         OnEngineInitialized();
     }
@@ -156,7 +157,7 @@ void SDK::OnModLoaded(const std::string& name, ModInterface* modInterface, const
     modInterface->SetupUI();
     modInterface->Initialize();
 
-    if (liveLoad && Hitman5Module->IsEngineInitialized())
+    if (liveLoad && IsEngineInitialized)
     {
         modInterface->OnEngineInitialized();
     }
@@ -287,9 +288,9 @@ bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx)
 
 bool __fastcall ZEngineAppCommon_InitializeHook(ZEngineAppCommon* pThis, int edx, const SRenderDestinationDesc& description)
 {
-    bool result = Hooks::ZEngineAppCommon_Initialize.CallOriginalFunction(pThis, description);
+    IsEngineInitialized = Hooks::ZEngineAppCommon_Initialize.CallOriginalFunction(pThis, description);
 
     SDK::GetInstance().OnEngineInitialized();
 
-    return result;
+    return IsEngineInitialized;
 }

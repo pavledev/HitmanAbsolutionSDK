@@ -41,3 +41,4 @@ extern HitmanAbsolutionSDK_API ZScaleformManager* ScaleformManager;
 extern HitmanAbsolutionSDK_API ZInputAction* HM5InputControl;
 extern HitmanAbsolutionSDK_API ZCollisionManager* CollisionManager;
 extern HitmanAbsolutionSDK_API ZTypeRegistry** TypeRegistry;
+extern HitmanAbsolutionSDK_API bool IsEngineInitialized;
