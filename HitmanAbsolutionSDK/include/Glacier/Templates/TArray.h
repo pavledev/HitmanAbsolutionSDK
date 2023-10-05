@@ -1,108 +1,276 @@
 #pragma once
 
-template <class T>
+#include <algorithm>
+
+template <typename T>
 class TArray
 {
 public:
-    TArray() :
-        m_pStart(nullptr),
-        m_pEnd(nullptr),
-        m_pLast(nullptr)
+    TArray()
     {
+        m_pStart = nullptr;
+        m_pEnd = nullptr;
+        m_pLast = nullptr;
     }
 
-    size_t Size() const
+    TArray(const size_t initialSize)
     {
-        if (HasInlineFlag())
+        m_pStart = new T[initialSize];
+        m_pEnd = m_pStart + initialSize;
+        m_pLast = m_pEnd;
+    }
+
+    TArray(const TArray& other)
+    {
+        const size_t size = other.Size();
+        m_pStart = new T[size];
+
+        std::copy(other.m_pStart, other.m_pEnd, m_pStart);
+
+        m_pEnd = m_pStart + size;
+        m_pLast = m_pEnd;
+    }
+
+    TArray(TArray&& other) noexcept : m_pStart(other.m_pStart), m_pEnd(other.m_pEnd), m_pLast(other.m_pLast)
+    {
+        other.m_pStart = nullptr;
+        other.m_pEnd = nullptr;
+        other.m_pLast = nullptr;
+    }
+
+    TArray& operator=(const TArray& other)
+    {
+        if (this != &other)
         {
-            return m_nInlineCount;
+            for (T* p = m_pStart; p != m_pEnd; ++p)
+            {
+                p->~T();
+            }
+
+            delete[] reinterpret_cast<char*>(m_pStart);
+
+            size_t size = other.Size();
+            m_pStart = new T[size];
+
+            std::copy(other.m_pStart, other.m_pEnd, m_pStart);
+
+            m_pEnd = m_pStart + size;
+            m_pLast = m_pEnd;
         }
 
+        return *this;
+    }
+
+    TArray& operator=(TArray&& other) noexcept
+    {
+        if (this != &other)
+        {
+            for (T* p = m_pStart; p != m_pEnd; ++p)
+            {
+                p->~T();
+            }
+
+            delete[] reinterpret_cast<char*>(m_pStart);
+
+            m_pStart = other.m_pStart;
+            m_pEnd = other.m_pEnd;
+            m_pLast = other.m_pLast;
+
+            other.m_pStart = nullptr;
+            other.m_pEnd = nullptr;
+            other.m_pLast = nullptr;
+        }
+
+        return *this;
+    }
+
+    ~TArray()
+    {
+        for (T* p = m_pStart; p != m_pEnd; ++p)
+        {
+            p->~T();
+        }
+
+        delete[] reinterpret_cast<char*>(m_pStart);
+    }
+
+    const T* GetStart() const
+    {
+        return m_pStart;
+    }
+
+    T* GetStart()
+    {
+        return m_pStart;
+    }
+
+    const T* GetEnd() const
+    {
+        return m_pEnd;
+    }
+
+    T* GetEnd()
+    {
+        return m_pEnd;
+    }
+
+    const T* GetLast() const
+    {
+        return m_pLast;
+    }
+
+    T* GetLast()
+    {
+        return m_pLast;
+    }
+
+    void SetStart(T* pStart)
+    {
+        m_pStart = pStart;
+    }
+
+    void SetEnd(T* pEnd)
+    {
+        m_pEnd = pEnd;
+    }
+
+    void Reserve(const size_t capacity)
+    {
+        if (capacity <= Capacity())
+        {
+            return;
+        }
+
+        T* newStart = reinterpret_cast<T*>(new char[capacity * sizeof(T)]);
+        size_t currentSize = Size();
+
+        for (size_t i = 0; i < currentSize; ++i)
+        {
+            new(newStart + i) T(std::move(m_pStart[i]));
+        }
+
+        for (size_t i = 0; i < currentSize; ++i)
+        {
+            m_pStart[i].~T();
+        }
+
+        delete[] reinterpret_cast<char*>(m_pStart);
+
+        m_pStart = newStart;
+        m_pEnd = m_pStart + currentSize;
+        m_pLast = m_pStart + capacity;
+    }
+
+    void Resize(const size_t newSize)
+    {
+        if (newSize > Capacity())
+        {
+            Reserve(newSize);
+        }
+
+        if (newSize < Size())
+        {
+            for (T* p = m_pStart + newSize; p != m_pEnd; ++p)
+            {
+                p->~T();
+            }
+        }
+        else if (newSize > Size())
+        {
+            for (T* p = m_pEnd; p != m_pStart + newSize; ++p)
+            {
+                new(p) T();
+            }
+        }
+
+        m_pEnd = m_pStart + newSize;
+    }
+
+    const size_t Size() const
+    {
         return m_pEnd - m_pStart;
     }
 
-    size_t Capacity() const
+    const size_t Capacity() const
     {
-        if (HasInlineFlag())
-        {
-            return m_nInlineCapacity;
-        }
-
         return m_pLast - m_pStart;
     }
 
-    const T& operator[](size_t index) const
+    T& operator[](const size_t index)
     {
-        const T* begin = Begin();
-
-        return begin[index];
+        return m_pStart[index];
     }
 
-    T& operator[](size_t index)
+    const T& operator[](const size_t index) const
     {
-        T* begin = Begin();
-
-        return begin[index];
+        return m_pStart[index];
     }
 
-    T* Begin()
+    void Clear()
     {
-        if (HasInlineFlag())
+        for (T* p = m_pStart; p != m_pEnd; ++p)
         {
-            return reinterpret_cast<T*>(&m_pStart);
+            p->~T();
         }
 
-        return m_pStart;
+        m_pEnd = m_pStart;
     }
 
-    T* End()
+    void PushBack(const T& element)
     {
-        if (HasInlineFlag())
+        const unsigned int size = Size();
+        const unsigned int capacity = Capacity();
+
+        if (size == capacity)
         {
-            return Begin() + m_nInlineCount;
+            Resize(size + 1);
         }
 
-        return m_pEnd;
-    }
-
-    const T* Begin() const
-    {
-        if (HasInlineFlag())
+        if (m_pEnd == m_pLast)
         {
-            return reinterpret_cast<const T*>(&m_pStart);
+            size_t currentSize = Size();
+            size_t newSize = (currentSize == 0) ? 1 : currentSize * 2;
+
+            Reserve(newSize);
         }
 
-        return m_pStart;
+        new (m_pEnd) T(element);
+        ++m_pEnd;
     }
 
-    const T* End() const
+    void RemoveAt(const size_t index)
     {
-        if (HasInlineFlag())
+        if (index >= Size())
         {
-            return Begin() + m_nInlineCount;
+            return;
         }
 
-        return m_pEnd;
+        T* element = m_pStart + index;
+
+        element->~T();
+
+        std::move(element + 1, m_pEnd, element);
+
+        --m_pEnd;
     }
 
-    const bool HasInlineFlag() const
+    bool operator==(const TArray& other) const
     {
-        return (m_nFlags & 0x4000000000000000) != 0;
+        const TArray& array = *this;
+
+        for (unsigned int i = 0; i < Size(); ++i)
+        {
+            if (array[i] != other[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 private:
     T* m_pStart;
     T* m_pEnd;
-
-    union
-    {
-        T* m_pLast;
-        unsigned long long m_nFlags;
-
-        struct
-        {
-            unsigned char m_nInlineCount;
-            unsigned char m_nInlineCapacity;
-        };
-    };
+    T* m_pLast;
 };

@@ -15,6 +15,7 @@ class ZInputAction;
 class ZEntitySceneContext;
 class ZString;
 class ZFreeCameraControlEntity;
+class ZIniFile;
 
 namespace Hooks
 {

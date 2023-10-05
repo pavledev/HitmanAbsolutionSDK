@@ -59,7 +59,7 @@ public:
         return result;
     }
 
-    TBinaryTreeIterator<TPair<TKey, TValue>> Find(const T& key)
+    TBinaryTreeIterator<TPair<TKey, TValue>> Find(const TKey& key)
     {
         TBinaryTreeNode<TPair<TKey, TValue>>* node = Find(m_container.m_tree.m_pLeftRoot, key);
 
@@ -71,7 +71,7 @@ public:
         return End();
     }
 
-    TBinaryTreeIterator<TPair<TKey, TValue>> Find(TBinaryTreeNode<TPair<TKey, TValue>>* root, const T& key)
+    TBinaryTreeIterator<TPair<TKey, TValue>> Find(TBinaryTreeNode<TPair<TKey, TValue>>* root, const TKey& key)
     {
         if (root == nullptr || root->m_data == key)
         {

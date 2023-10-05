@@ -55,7 +55,7 @@ public:
         return m_data;
     }
 
-private:
+public:
     int m_nBalance;
     TBinaryTreeNode* m_pParent;
     TBinaryTreeNode* m_pLeft;

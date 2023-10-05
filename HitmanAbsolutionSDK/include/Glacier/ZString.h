@@ -24,6 +24,7 @@ public:
 	static ZString CopyFrom(const ZString& other);
 	void Allocate(const char* str, size_t size);
 	void Free();
+	bool IsEmpty() const;
 	
 private:
 	unsigned int m_length;

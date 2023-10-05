@@ -34,6 +34,6 @@ public:
         return *m_pCurrent;
     }
 
-protected:
+public:
     T* m_pCurrent;
 };

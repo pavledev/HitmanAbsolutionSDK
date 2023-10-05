@@ -4,10 +4,10 @@
 #include "../Entity/ZEntityRef.h"
 #include "ZPhysicsObjectRef.h"
 #include "../Templates/TEntityRef.h"
+#include "SBoneCollision.h"
 
 class ZSpatialEntity;
 class ZRenderPrimitiveResource;
-struct SBoneCollision;
 
 class HitmanAbsolutionSDK_API ZRayQueryOutput : public ZRayQueryOutputBase
 {

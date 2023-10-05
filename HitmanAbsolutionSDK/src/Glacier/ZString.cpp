@@ -123,3 +123,8 @@ void ZString::Free()
 
 	normalAllocator->Free(const_cast<char*>(m_chars));
 }
+
+bool ZString::IsEmpty() const
+{
+	return Length() == 0;
+}

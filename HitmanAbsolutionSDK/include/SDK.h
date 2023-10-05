@@ -9,6 +9,7 @@
 class ZMemoryManager;
 class ZHitman5Module;
 class ZEngineAppCommon;
+class ZIniFile;
 
 void __fastcall ZRenderDevice_PresentHook(ZRenderDevice* pThis, int edx);
 void __fastcall ZRenderSwapChain_ResizeHook(ZRenderSwapChain* pThis, int edx, const SRenderDestinationDesc* pDescription);

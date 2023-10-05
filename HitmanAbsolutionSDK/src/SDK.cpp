@@ -1,7 +1,10 @@
+#include <filesystem>
+
 #include <MinHook.h>
 
 #include <Glacier/Module/ZHitman5Module.h>
-#include <Glacier/ZApplicationEngineWin32.h>
+#include <Glacier/Engine/ZApplicationEngineWin32.h>
+#include <Glacier/Engine/ZIniFile.h>
 
 #include "SDK.h"
 #include "Global.h"
@@ -45,16 +48,17 @@ SDK::SDK()
     mainMenu = std::make_shared<MainMenu>();
     modSelector = std::make_shared<ModSelector>();
 
+    
     Hooks::ZRenderDevice_PresentHook.CreateHook("ZRenderDevice::Present", 0x5A7F30, ZRenderDevice_PresentHook);
     Hooks::ZRenderSwapChain_ResizeHook.CreateHook("ZRenderSwapChain::Resize", 0x2FA520, ZRenderSwapChain_ResizeHook);
     Hooks::ZApplicationEngineWin32_MainWindowProc.CreateHook("ZApplicationEngineWin32::MainWindowProc", 0x4FF520, ZApplicationEngineWin32_MainWindowProcHook);
-    //Hooks::ZHitman5Module_Initialize.CreateHook("ZHitman5Module::Initialize", 0x58E8D0, ZHitman5Module_InitializeHook);
+    Hooks::ZHitman5Module_Initialize.CreateHook("ZHitman5Module::Initialize", 0x58E8D0, ZHitman5Module_InitializeHook);
     Hooks::ZEngineAppCommon_Initialize.CreateHook("ZEngineAppCommon::Initialize", 0x55A620, ZEngineAppCommon_InitializeHook);
 
     Hooks::ZRenderDevice_PresentHook.EnableHook();
     Hooks::ZRenderSwapChain_ResizeHook.EnableHook();
     Hooks::ZApplicationEngineWin32_MainWindowProc.EnableHook();
-    //Hooks::ZHitman5Module_Initialize.EnableHook();
+    Hooks::ZHitman5Module_Initialize.EnableHook();
     Hooks::ZEngineAppCommon_Initialize.EnableHook();
 }
 
@@ -137,7 +141,7 @@ void SDK::InitializeSingletons()
     CollisionManager = reinterpret_cast<ZCollisionManager*>(BaseAddress + 0xE54440);
     TypeRegistry = reinterpret_cast<ZTypeRegistry**>(BaseAddress + 0xD47BFC);
 
-    ZApplicationEngineWin32::SetInstance(reinterpret_cast<ZApplicationEngineWin32*>(BaseAddress + 0xCC6B90));
+    ZApplicationEngineWin32::SetInstance(reinterpret_cast<ZApplicationEngineWin32**>(BaseAddress + 0xCC6B90));
 }
 
 void SDK::OnEngineInitialized()
@@ -279,6 +283,33 @@ long __stdcall ZApplicationEngineWin32_MainWindowProcHook(ZApplicationEngineWin3
 
 bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx)
 {
+    std::filesystem::path iniFilePath = std::filesystem::current_path() / "HMA.ini";
+
+    if (std::filesystem::exists(iniFilePath))
+    {
+        std::string iniFilePath2 = iniFilePath.string();
+
+        std::replace(iniFilePath2.begin(), iniFilePath2.end(), '\\', '/');
+
+        ZFilePath filePath3 = ZFilePath(iniFilePath2.c_str());
+        ZIniFile* iniFile = static_cast<ZIniFile*>(ZApplicationEngineWin32::GetInstance()->GetIniFile());
+        TArray<unsigned char> buffer;
+
+        ZIniFile::LoadIniFileContent(filePath3, buffer, true);
+
+        if (buffer.Size() > 0)
+        {
+            ZString fileContent = ZString(reinterpret_cast<char*>(buffer.GetStart()));
+
+            iniFile->LoadFromStringInternal(fileContent, filePath3);
+
+            int argc = 0;
+
+            ZApplicationEngineWin32::GetInstance()->AddApplicationSpecificOptions(iniFile);
+            ZApplicationEngineWin32::GetInstance()->ApplyOptionOverrides(argc, nullptr);
+        }
+    }
+
     bool result = Hooks::ZHitman5Module_Initialize.CallOriginalFunction(pThis);
 
     //SDK::GetInstance().OnEngineInitialized();

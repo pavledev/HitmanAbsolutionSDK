@@ -64,7 +64,7 @@ public:
         return m_nSize == 0;
     }
 
-private:
+public:
     struct SFakeTreeNode
     {
         int m_reserved1;
