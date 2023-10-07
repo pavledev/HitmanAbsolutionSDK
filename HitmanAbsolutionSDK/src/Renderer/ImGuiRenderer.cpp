@@ -275,9 +275,26 @@ long ImGuiRenderer::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin
     if (imguiHasFocus)
     {
         ImGui_ImplWin32_WndProcHandler(hWnd, uMsgId, wParam, lParam);
+
+        //Block mouse and keyboard input in main menu and pause menu
+        if (ScaleformManager->IsInMainMenu() || HUDManager->IsPauseMenuActive()) 
+        {
+            return DefWindowProcW(hWnd, uMsgId, wParam, lParam);
+        }
     }
 
     return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
+}
+
+void ImGuiRenderer::OnUpdateInputDeviceManager(ZEngineAppCommon* engineAppCommon)
+{
+    //Block mouse and keyboard input in main menu and pause menu
+    if (imguiHasFocus && (ScaleformManager->IsInMainMenu() || HUDManager->IsPauseMenuActive()))
+    {
+        return;
+    }
+
+    return Hooks::ZEngineAppCommon_UpdateInputDeviceManager.CallOriginalFunction(engineAppCommon);
 }
 
 ImGuiContext* ImGuiRenderer::GetImGuiContext()

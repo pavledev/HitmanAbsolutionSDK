@@ -10,6 +10,7 @@
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 class ZApplicationEngineWin32;
+class ZEngineAppCommon;
 
 class ImGuiRenderer
 {
@@ -23,6 +24,7 @@ public:
 	void Cleanup();
 	void SetStyle();
 	long MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
+	void OnUpdateInputDeviceManager(ZEngineAppCommon* engineAppCommon);
 	ImGuiContext* GetImGuiContext();
 	ImGuiMemAllocFunc GetImGuiMemAllocFunc();
 	ImGuiMemFreeFunc GetImGuiMemFreeFunc();

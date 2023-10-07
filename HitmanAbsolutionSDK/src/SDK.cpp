@@ -54,12 +54,14 @@ SDK::SDK()
     Hooks::ZApplicationEngineWin32_MainWindowProc.CreateHook("ZApplicationEngineWin32::MainWindowProc", 0x4FF520, ZApplicationEngineWin32_MainWindowProcHook);
     Hooks::ZHitman5Module_Initialize.CreateHook("ZHitman5Module::Initialize", 0x58E8D0, ZHitman5Module_InitializeHook);
     Hooks::ZEngineAppCommon_Initialize.CreateHook("ZEngineAppCommon::Initialize", 0x55A620, ZEngineAppCommon_InitializeHook);
+    Hooks::ZEngineAppCommon_UpdateInputDeviceManager.CreateHook("ZEngineAppCommon::UpdateInputDeviceManager", 0x46C1D0, ZEngineAppCommon_UpdateInputDeviceManagerHook);
 
     Hooks::ZRenderDevice_PresentHook.EnableHook();
     Hooks::ZRenderSwapChain_ResizeHook.EnableHook();
     Hooks::ZApplicationEngineWin32_MainWindowProc.EnableHook();
     Hooks::ZHitman5Module_Initialize.EnableHook();
     Hooks::ZEngineAppCommon_Initialize.EnableHook();
+    Hooks::ZEngineAppCommon_UpdateInputDeviceManager.EnableHook();
 }
 
 SDK::~SDK()
@@ -222,6 +224,11 @@ long SDK::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND h
     return imGuiRenderer->MainWindowProc(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
 }
 
+void SDK::OnUpdateInputDeviceManager(ZEngineAppCommon* engineAppCommon)
+{
+    imGuiRenderer->OnUpdateInputDeviceManager(engineAppCommon);
+}
+
 ImGuiContext* SDK::GetImGuiContext()
 {
     return imGuiRenderer->GetImGuiContext();
@@ -324,4 +331,9 @@ bool __fastcall ZEngineAppCommon_InitializeHook(ZEngineAppCommon* pThis, int edx
     SDK::GetInstance().OnEngineInitialized();
 
     return IsEngineInitialized;
+}
+
+void __fastcall ZEngineAppCommon_UpdateInputDeviceManagerHook(ZEngineAppCommon* pThis, int edx)
+{
+    SDK::GetInstance().OnUpdateInputDeviceManager(pThis);
 }
