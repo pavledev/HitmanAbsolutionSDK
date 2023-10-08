@@ -188,7 +188,7 @@ void ModManager::SetEnabledMods(const std::set<std::string>& mods)
 
 	for (auto& pair : loadedMods)
 	{
-		if (!loadedMods.contains(pair.first))
+		if (!mods.contains(pair.first))
 		{
 			modsToUnload.push_back(pair.first);
 		}
