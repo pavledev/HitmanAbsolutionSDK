@@ -49,16 +49,19 @@ public:
 	HitmanAbsolutionSDK_API ImFont* GetRegularFont();
 	HitmanAbsolutionSDK_API ImFont* GetBoldFont();
 
-	std::shared_ptr<ModManager> GetModManager();
+	std::shared_ptr<DirectXRenderer> GetDirectXRenderer() const;
+	std::shared_ptr<ImGuiRenderer> GetImGuiRenderer() const;
 
-	std::shared_ptr<ModSelector> GetModSelector();
+	std::shared_ptr<ModManager> GetModManager() const;
+
+	std::shared_ptr<ModSelector> GetModSelector() const;
 
 private:
 	SDK();
 	SDK(const SDK& other) = delete;
 	SDK& operator=(const SDK& other) = delete;
 
-	std::shared_ptr<DirectXRenderer> directxRenderer;
+	std::shared_ptr<DirectXRenderer> directXRenderer;
 	std::shared_ptr<ImGuiRenderer> imGuiRenderer;
 
 	std::shared_ptr<ModManager> modManager;

@@ -30,7 +30,7 @@ public:
     void Initialize() override;
     void OnEngineInitialized() override;
     void OnDrawMenu() override;
-    void OnDrawUI(bool hasFocus) override;
+    void OnDrawUI(const bool hasFocus) override;
 
     void OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState);
     void OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnloadScene);

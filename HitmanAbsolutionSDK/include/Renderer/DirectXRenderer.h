@@ -24,7 +24,7 @@ enum class TextAlignment
 	Right,
 };
 
-class DirectXRenderer
+class HitmanAbsolutionSDK_API DirectXRenderer
 {
 public:
 	DirectXRenderer();
@@ -41,6 +41,8 @@ public:
 	bool ScreenToWorld(const SVector2& screenPos, SVector3& worldPosOut, SVector3& directionOut);
 	void DrawBox3D(const SVector3& min, const SVector3& max, const SVector4& color);
 	void DrawOBB3D(const SVector3& min, const SVector3& max, const SMatrix& transform, const SVector4& color);
+
+	static void CreateDDSTextureFromMemory(const void* data, const unsigned int resourceDataSize, ID3D11Resource** texture, ID3D11ShaderResourceView** textureView, float& width, float& height);
 
 private:
 	bool isRendererSetup;

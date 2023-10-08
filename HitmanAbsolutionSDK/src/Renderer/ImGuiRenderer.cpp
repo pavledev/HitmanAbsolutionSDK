@@ -21,6 +21,7 @@
 #include "SDK.h"
 
 #include <imgui_internal.h>
+#include <unordered_set>
 
 ImGuiRenderer::ImGuiRenderer()
 {
@@ -119,8 +120,21 @@ void ImGuiRenderer::OnPresent(ZRenderDevice* renderDevice)
     Render();
 }
 
+std::mutex mtx;     // Mutex to protect the set
+std::unordered_set<std::thread::id> threadIDs; // Set to store thread IDs
+std::unordered_set<std::thread::id> threadIDs2;
+
 void ImGuiRenderer::Render()
 {
+    std::unique_lock<std::mutex> lock(mtx);
+    threadIDs.insert(std::this_thread::get_id());
+    lock.unlock();
+
+    if (threadIDs.size() > 1)
+    {
+        int a = 2;
+    }
+
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     // Start the Dear ImGui frame
@@ -177,11 +191,12 @@ void ImGuiRenderer::SetStyle()
     style.ScrollbarSize = 20.f;
     style.GrabMinSize = 20.f;
 
-    style.WindowBorderSize = 0.f;
+    /*style.WindowBorderSize = 0.f;
     style.ChildBorderSize = 0.f;
     style.PopupBorderSize = 0.f;
     style.FrameBorderSize = 0.f;
-    style.TabBorderSize = 0.f;
+    style.TabBorderSize = 0.f;*/
+    style.FrameBorderSize = 1.f;
 
     ImVec4* colors = style.Colors;
     colors[ImGuiCol_Text] = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
@@ -202,7 +217,7 @@ void ImGuiRenderer::SetStyle()
     colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.40f, 0.40f, 0.80f, 0.30f);
     colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.80f, 0.40f);
     colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.41f, 0.39f, 0.80f, 0.60f);
-    colors[ImGuiCol_CheckMark] = ImVec4(0.90f, 0.90f, 0.90f, 0.50f);
+    colors[ImGuiCol_CheckMark] = ImVec4(0.427f, 0.023f, 0.423f, 1.f);
     colors[ImGuiCol_SliderGrab] = ImVec4(1.00f, 1.00f, 1.00f, 0.30f);
     colors[ImGuiCol_SliderGrabActive] = ImVec4(0.41f, 0.39f, 0.80f, 0.60f);
     colors[ImGuiCol_Button] = ImVec4(0.349f, 0.023f, 0.427f, 1.f);
@@ -274,6 +289,15 @@ long ImGuiRenderer::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin
 
     if (imguiHasFocus)
     {
+        std::unique_lock<std::mutex> lock(mtx);
+        threadIDs2.insert(std::this_thread::get_id());
+        lock.unlock();
+
+        if (threadIDs2.size() > 1)
+        {
+            int a = 2;
+        }
+
         ImGui_ImplWin32_WndProcHandler(hWnd, uMsgId, wParam, lParam);
 
         //Block mouse and keyboard input in main menu and pause menu

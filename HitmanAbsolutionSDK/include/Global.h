@@ -24,6 +24,8 @@ class ZScaleformManager;
 class ZInputAction;
 class ZCollisionManager;
 class ZTypeRegistry;
+class ZContentKitManager;
+class ZResourceManager;
 
 extern HitmanAbsolutionSDK_API uintptr_t BaseAddress;
 extern HitmanAbsolutionSDK_API ZRenderManager* RenderManager;
@@ -41,4 +43,6 @@ extern HitmanAbsolutionSDK_API ZScaleformManager* ScaleformManager;
 extern HitmanAbsolutionSDK_API ZInputAction* HM5InputControl;
 extern HitmanAbsolutionSDK_API ZCollisionManager* CollisionManager;
 extern HitmanAbsolutionSDK_API ZTypeRegistry** TypeRegistry;
+extern HitmanAbsolutionSDK_API ZContentKitManager* ContentKitManager;
+extern HitmanAbsolutionSDK_API ZResourceManager* ResourceManager;
 extern HitmanAbsolutionSDK_API bool IsEngineInitialized;

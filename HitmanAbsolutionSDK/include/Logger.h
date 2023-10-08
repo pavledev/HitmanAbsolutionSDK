@@ -26,13 +26,12 @@ public:
 		{
 			std::string level = LevelToString(this->level);
 
-			return std::format("ID: {}, Level: {}, Time: {}, Content: {}", id, level, time, content);
+			return std::format("ID: {}, Level: {}, Content: {}", id, level, content);
 		}
 
 		int id;
 		Level level;
 		std::string content;
-		std::string time;
 	};
 
 	~Logger();
@@ -67,7 +66,6 @@ public:
 		message.id = static_cast<int>(messages.size());
 		message.level = level;
 		message.content = std::vformat(format, std::make_format_args(args...));
-		//message.time = GetCurrentTime();
 
 		messages.push_back(message);
 	}

@@ -16,6 +16,11 @@ public:
 		return m_pInterfaceRef;
 	}
 
+	T* operator->()
+	{
+		return GetRawPointer();
+	}
+
 private:
 	ZEntityRef m_entityRef;
 	T* m_pInterfaceRef;

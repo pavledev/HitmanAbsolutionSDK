@@ -20,12 +20,13 @@ void ModSelector::Draw(const bool hasFocus)
     }
 
     ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+    ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_FirstUseEver);
 
-    const bool isShowing = ImGui::Begin(ICON_MD_TOKEN " Mods", &isOpen, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
+    const bool isWindowVisible = ImGui::Begin(ICON_MD_TOKEN " Mods", &isOpen, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
 
     ImGui::PushFont(SDK::GetInstance().GetRegularFont());
 
-    if (isShowing)
+    if (isWindowVisible)
     {
         ImGui::TextUnformatted("Select mods:");
         ImGui::Separator();

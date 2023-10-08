@@ -4,12 +4,19 @@
 #include "ZRuntimeResourceID.h"
 #include "EResourceReferenceFlags.h"
 #include "../Templates/TArray.h"
+#include "EResourceStatus.h"
 
-class ZResourceStub
+class HitmanAbsolutionSDK_API ZResourceStub
 {
 public:
 	virtual ~ZResourceStub() = default;
 
+	EResourceStatus GetResourceStatus() const;
+	const ZRuntimeResourceID& GetRuntimeResourceID() const;
+	void* GetResourceData() const;
+	unsigned int GetResourceTag() const;
+
+private:
 	struct SResourceReference
 	{
 		EResourceReferenceFlags m_Flags;

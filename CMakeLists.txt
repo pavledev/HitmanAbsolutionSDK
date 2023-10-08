@@ -16,6 +16,7 @@ add_subdirectory(DirectInputProxy)
 
 set(MODS
 	FreeCamera
+	StartingOutfitAndWeaponModifier
 )
 
 foreach(MOD IN LISTS MODS)

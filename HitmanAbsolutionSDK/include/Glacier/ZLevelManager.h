@@ -3,16 +3,20 @@
 #include "IComponentInterface.h"
 #include "Templates/TEntityRef.h"
 #include "ZHitman5.h"
+#include "SSceneParameters.h"
 
 #include <Common.h>
 
 class HitmanAbsolutionSDK_API ZLevelManager : public IComponentInterface
 {
 public:
+	const SSceneParameters& GetSceneParameters() const;
+	SSceneParameters& GetSceneParameters();
 	const TEntityRef<ZHitman5>& GetHitman() const;
 
 private:
-	PAD(0x40);
+	SSceneParameters m_SceneTransitionData; //0x4
+	PAD(0x10);
 	TEntityRef<ZHitman5> m_rHitman; //0x44
 	PAD(0xF4);
 };

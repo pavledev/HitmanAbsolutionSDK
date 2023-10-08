@@ -1,3 +1,5 @@
+#include <directxtk/DDSTextureLoader.h>
+
 #include "Glacier/Render/ZRenderManager.h"
 #include "Glacier/ZLevelManager.h"
 #include "Glacier/ZGraphicsSettingsManager.h"
@@ -320,4 +322,39 @@ void DirectXRenderer::DrawOBB3D(const SVector3& min, const SVector3& max, const 
 
 	DrawLine3D(XMVecToSVec3(corners[2]), XMVecToSVec3(corners[4]), color, color);
 	DrawLine3D(XMVecToSVec3(corners[3]), XMVecToSVec3(corners[7]), color, color);
+}
+
+void DirectXRenderer::CreateDDSTextureFromMemory(const void* data, const unsigned int resourceDataSize, ID3D11Resource** texture, ID3D11ShaderResourceView** textureView, float& width, float& height)
+{
+	ID3D11Device* device = RenderManager->GetRenderDevice()->GetDirect3DDevice();
+	HRESULT result = DirectX::CreateDDSTextureFromMemory(device, static_cast<const unsigned char*>(data), resourceDataSize, texture, textureView);
+
+	if (FAILED(result))
+	{
+		Logger::GetInstance().Log(Logger::Level::Error, "Failed to create DDS texture!");
+
+		return;
+	}
+
+	ID3D11Texture2D* texture2D = nullptr;
+	result = (*texture)->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&texture2D));
+
+	if (FAILED(result))
+	{
+		Logger::GetInstance().Log(Logger::Level::Error, "Failed to query ID3D11Texture2D interface!");
+
+		return;
+	}
+
+	if (texture2D)
+	{
+		D3D11_TEXTURE2D_DESC desc;
+
+		texture2D->GetDesc(&desc);
+
+		width = static_cast<float>(desc.Width);
+		height = static_cast<float>(desc.Height);
+
+		texture2D->Release();
+	}
 }

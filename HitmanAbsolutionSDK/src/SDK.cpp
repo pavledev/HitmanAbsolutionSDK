@@ -12,6 +12,7 @@
 #include "Logger.h"
 #include "Hooks.h"
 #include "ModInterface.h"
+#include "Registry/ResourceIDRegistry.h"
 
 uintptr_t BaseAddress;
 ZRenderManager* RenderManager;
@@ -29,6 +30,8 @@ ZScaleformManager* ScaleformManager;
 ZInputAction* HM5InputControl;
 ZCollisionManager* CollisionManager;
 ZTypeRegistry** TypeRegistry;
+ZContentKitManager* ContentKitManager;
+ZResourceManager* ResourceManager;
 bool IsEngineInitialized;
 
 SDK::SDK()
@@ -40,7 +43,7 @@ SDK::SDK()
         Logger::GetInstance().Log(Logger::Level::Error, "Failed to initialize MinHook!");
     }
 
-    directxRenderer = std::make_shared<DirectXRenderer>();
+    directXRenderer = std::make_shared<DirectXRenderer>();
     imGuiRenderer = std::make_shared<ImGuiRenderer>();
 
     modManager = std::make_shared<ModManager>();
@@ -48,6 +51,10 @@ SDK::SDK()
     mainMenu = std::make_shared<MainMenu>();
     modSelector = std::make_shared<ModSelector>();
 
+    ResourceIDRegistry& resourceIDRegistry = ResourceIDRegistry::GetInstance();
+    std::thread thread = std::thread(&ResourceIDRegistry::Load, &resourceIDRegistry);
+
+    thread.detach();
     
     Hooks::ZRenderDevice_PresentHook.CreateHook("ZRenderDevice::Present", 0x5A7F30, ZRenderDevice_PresentHook);
     Hooks::ZRenderSwapChain_ResizeHook.CreateHook("ZRenderSwapChain::Resize", 0x2FA520, ZRenderSwapChain_ResizeHook);
@@ -105,7 +112,7 @@ void SDK::Setup()
 
 void SDK::Cleanup()
 {
-    directxRenderer->Cleanup();
+    directXRenderer->Cleanup();
     imGuiRenderer->Cleanup();
 
     if (MH_DisableHook(MH_ALL_HOOKS) != MH_OK)
@@ -142,6 +149,8 @@ void SDK::InitializeSingletons()
     HM5InputControl = reinterpret_cast<ZInputAction*>(BaseAddress + 0xD4DE98);
     CollisionManager = reinterpret_cast<ZCollisionManager*>(BaseAddress + 0xE54440);
     TypeRegistry = reinterpret_cast<ZTypeRegistry**>(BaseAddress + 0xD47BFC);
+    ContentKitManager = reinterpret_cast<ZContentKitManager*>(BaseAddress + 0xD58F30);
+    ResourceManager = reinterpret_cast<ZResourceManager*>(BaseAddress + 0xE258C0);
 
     ZApplicationEngineWin32::SetInstance(reinterpret_cast<ZApplicationEngineWin32**>(BaseAddress + 0xCC6B90));
 }
@@ -210,13 +219,13 @@ void SDK::OnDrawMenu()
 
 void SDK::OnPresent(ZRenderDevice* renderDevice)
 {
-    directxRenderer->OnPresent(renderDevice);
+    directXRenderer->OnPresent(renderDevice);
     imGuiRenderer->OnPresent(renderDevice);
 }
 
 void SDK::OnResize(const SRenderDestinationDesc* pDescription)
 {
-    directxRenderer->OnResize(pDescription);
+    directXRenderer->OnResize(pDescription);
 }
 
 long SDK::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam)
@@ -259,12 +268,22 @@ ImFont* SDK::GetBoldFont()
     return imGuiRenderer->GetBoldFont();
 }
 
-std::shared_ptr<ModManager> SDK::GetModManager()
+std::shared_ptr<DirectXRenderer> SDK::GetDirectXRenderer() const
+{
+    return directXRenderer;
+}
+
+std::shared_ptr<ImGuiRenderer> SDK::GetImGuiRenderer() const
+{
+    return imGuiRenderer;
+}
+
+std::shared_ptr<ModManager> SDK::GetModManager() const
 {
     return modManager;
 }
 
-std::shared_ptr<ModSelector> SDK::GetModSelector()
+std::shared_ptr<ModSelector> SDK::GetModSelector() const
 {
     return modSelector;
 }

@@ -150,9 +150,9 @@ void FreeCamera::OnEngineInitialized()
 
 void FreeCamera::OnDrawMenu()
 {
-    bool s_FreeCamActive = isFreeCameraActive;
+    bool isFreeCameraActive = this->isFreeCameraActive;
 
-    if (ImGui::Checkbox(ICON_MD_PHOTO_CAMERA " Free Camera", &s_FreeCamActive))
+    if (ImGui::Checkbox(ICON_MD_PHOTO_CAMERA " Free Camera", &isFreeCameraActive))
     {
         ToggleFreeCamera();
     }
@@ -163,7 +163,7 @@ void FreeCamera::OnDrawMenu()
     }
 }
 
-void FreeCamera::OnDrawUI(bool hasFocus)
+void FreeCamera::OnDrawUI(const bool hasFocus)
 {
     if (areControlsVisible)
     {
@@ -306,6 +306,12 @@ void FreeCamera::EnableFreeCamera()
     ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
 
     TEntityRef<ZCameraEntity> freeCamera = engineAppCommon.GetFreeCamera();
+
+    if (!freeCamera.GetRawPointer())
+    {
+        return;
+    }
+
     TEntityRef<IRenderDestinationEntity> renderDestinationEntity = RenderManager->GetGameRenderDestinationEntity();
 
     originalCamera = renderDestinationEntity.GetRawPointer()->GetSource();

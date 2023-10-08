@@ -16,6 +16,8 @@ class ZEntitySceneContext;
 class ZString;
 class ZFreeCameraControlEntity;
 class ZIniFile;
+class ZHitman5;
+class ZComponentCreateInfo;
 
 namespace Hooks
 {
@@ -32,4 +34,5 @@ namespace Hooks
 	inline ThisCallHook<void, ZFreeCameraControlEntity> ZFreeCameraControlEntity_UpdateMovementFromInput;
 	inline ThisCallHook<bool, ZInputActionManager, const char*> ZInputActionManager_AddBindings;
 	inline ThisCallHook<bool, ZEngineAppCommon, const SRenderDestinationDesc&> ZEngineAppCommon_Initialize;
+	inline ThisCallHook<void, ZHitman5, ZComponentCreateInfo&> ZHitman5_ZHitman5;
 }

@@ -1,4 +1,14 @@
-#include "Glacier/ZLevelManager.h"
+#include <Glacier/ZLevelManager.h>
+
+const SSceneParameters& ZLevelManager::GetSceneParameters() const
+{
+	return m_SceneTransitionData;
+}
+
+SSceneParameters& ZLevelManager::GetSceneParameters()
+{
+	return m_SceneTransitionData;
+}
 
 const TEntityRef<ZHitman5>& ZLevelManager::GetHitman() const
 {

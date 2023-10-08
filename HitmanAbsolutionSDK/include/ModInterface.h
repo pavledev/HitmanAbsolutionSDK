@@ -22,7 +22,7 @@ public:
     {
     }
 
-    virtual void OnDrawUI(bool hasFocus)
+    virtual void OnDrawUI(const bool hasFocus)
     {
     }
 
