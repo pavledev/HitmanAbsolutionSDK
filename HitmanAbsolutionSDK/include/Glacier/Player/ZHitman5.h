@@ -333,11 +333,14 @@ class HitmanAbsolutionSDK_API ZHitman5 : public ZHM5BaseCharacter, public IFutur
 public:
 	ZHM5MainCamera* GetMainCamera() const;
 	ZHM5InputControl* GetInputControl() const;
+	ZHM5FocusController* GetFocusController() const;
 
 private:
 	PAD(0x3B0);
 	ZHM5InputControl* m_pInputControl; //0xA30
-	PAD(0x260);
+	PAD(0x24);
+	ZHM5FocusController* m_pFocusController; //0xA58
+	PAD(0x238);
 	TEntityRef<ZHM5MainCamera> m_rMainCamera; //0xC94
 	PAD(0x84);
 };
