@@ -20,8 +20,6 @@ public:
 	ImGuiRenderer();
 	~ImGuiRenderer();
 	bool Setup();
-	void OnPresent(ZRenderDevice* renderDevice);
-	void OnResize(const SRenderDestinationDesc* pDescription);
 	void Render();
 	void RenderContent();
 	void Cleanup();
@@ -30,16 +28,19 @@ public:
 	void SetStyle();
 	void SetScale();
 
-	long MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
-	void OnMouseWindowsUpdate(ZMouseWindows* mouseWindows, bool bIgnoreOldEvents);
-	void OnKeyboardWindowsUpdate(ZKeyboardWindows* keyboardWindows, bool bIgnoreOldEvents);
-
 	ImGuiContext* GetImGuiContext();
 	ImGuiMemAllocFunc GetImGuiMemAllocFunc();
 	ImGuiMemFreeFunc GetImGuiMemFreeFunc();
 	void* GetImGuiUserDataAllocator();
 	ImFont* GetRegularFont();
 	ImFont* GetBoldFont();
+
+	void OnPresent(ZRenderDevice* renderDevice);
+	void OnResize(const SRenderDestinationDesc* pDescription);
+
+	long OnMainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
+	void OnMouseWindowsUpdate(ZMouseWindows* mouseWindows, bool bIgnoreOldEvents);
+	void OnKeyboardWindowsUpdate(ZKeyboardWindows* keyboardWindows, bool bIgnoreOldEvents);
 
 private:
 	bool isRendererSetup;

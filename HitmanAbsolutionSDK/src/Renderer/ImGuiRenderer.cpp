@@ -90,24 +90,6 @@ bool ImGuiRenderer::Setup()
     return true;
 }
 
-void ImGuiRenderer::OnPresent(ZRenderDevice* renderDevice)
-{
-    if (!Setup())
-    {
-        Logger::GetInstance().Log(Logger::Level::Error, "Failed to set up ImGui renderer.");
-        Cleanup();
-
-        return;
-    }
-
-    Render();
-}
-
-void ImGuiRenderer::OnResize(const SRenderDestinationDesc* pDescription)
-{
-    SetScale();
-}
-
 void ImGuiRenderer::Render()
 {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -263,10 +245,76 @@ void ImGuiRenderer::SetScale()
     GetClientRect(hwnd, &rect);
 
     io.DisplaySize = ImVec2(static_cast<float>(rect.right - rect.left), static_cast<float>(rect.bottom - rect.top));
-    io.FontGlobalScale = (io.DisplaySize.y / 2048.f);
+    io.FontGlobalScale = io.DisplaySize.y / 2048.f;
 }
 
-long ImGuiRenderer::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam)
+ImGuiContext* ImGuiRenderer::GetImGuiContext()
+{
+    return ImGui::GetCurrentContext();
+}
+
+ImGuiMemAllocFunc ImGuiRenderer::GetImGuiMemAllocFunc()
+{
+    ImGuiMemAllocFunc imGuiMemAllocFunc;
+    ImGuiMemFreeFunc imGuiMemFreeFunc;
+    void* userData;
+
+    ImGui::GetAllocatorFunctions(&imGuiMemAllocFunc, &imGuiMemFreeFunc, &userData);
+
+    return imGuiMemAllocFunc;
+}
+
+ImGuiMemFreeFunc ImGuiRenderer::GetImGuiMemFreeFunc()
+{
+    ImGuiMemAllocFunc imGuiMemAllocFunc;
+    ImGuiMemFreeFunc imGuiMemFreeFunc;
+    void* userData;
+
+    ImGui::GetAllocatorFunctions(&imGuiMemAllocFunc, &imGuiMemFreeFunc, &userData);
+
+    return imGuiMemFreeFunc;
+}
+
+void* ImGuiRenderer::GetImGuiUserDataAllocator()
+{
+    ImGuiMemAllocFunc imGuiMemAllocFunc;
+    ImGuiMemFreeFunc imGuiMemFreeFunc;
+    void* userData;
+
+    ImGui::GetAllocatorFunctions(&imGuiMemAllocFunc, &imGuiMemFreeFunc, &userData);
+
+    return userData;
+}
+
+ImFont* ImGuiRenderer::GetRegularFont()
+{
+    return regularFont;
+}
+
+ImFont* ImGuiRenderer::GetBoldFont()
+{
+    return boldFont;
+}
+
+void ImGuiRenderer::OnPresent(ZRenderDevice* renderDevice)
+{
+    if (!Setup())
+    {
+        Logger::GetInstance().Log(Logger::Level::Error, "Failed to set up ImGui renderer.");
+        Cleanup();
+
+        return;
+    }
+
+    Render();
+}
+
+void ImGuiRenderer::OnResize(const SRenderDestinationDesc* pDescription)
+{
+    SetScale();
+}
+
+long ImGuiRenderer::OnMainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam)
 {
     if (!ImGui::GetCurrentContext())
     {
@@ -331,52 +379,4 @@ void ImGuiRenderer::OnKeyboardWindowsUpdate(ZKeyboardWindows* keyboardWindows, b
     }
 
     return Hooks::ZKeyboardWindows_Update.CallOriginalFunction(keyboardWindows, bIgnoreOldEvents);
-}
-
-ImGuiContext* ImGuiRenderer::GetImGuiContext()
-{
-    return ImGui::GetCurrentContext();
-}
-
-ImGuiMemAllocFunc ImGuiRenderer::GetImGuiMemAllocFunc()
-{
-    ImGuiMemAllocFunc imGuiMemAllocFunc;
-    ImGuiMemFreeFunc imGuiMemFreeFunc;
-    void* userData;
-
-    ImGui::GetAllocatorFunctions(&imGuiMemAllocFunc, &imGuiMemFreeFunc, &userData);
-
-    return imGuiMemAllocFunc;
-}
-
-ImGuiMemFreeFunc ImGuiRenderer::GetImGuiMemFreeFunc()
-{
-    ImGuiMemAllocFunc imGuiMemAllocFunc;
-    ImGuiMemFreeFunc imGuiMemFreeFunc;
-    void* userData;
-
-    ImGui::GetAllocatorFunctions(&imGuiMemAllocFunc, &imGuiMemFreeFunc, &userData);
-
-    return imGuiMemFreeFunc;
-}
-
-void* ImGuiRenderer::GetImGuiUserDataAllocator()
-{
-    ImGuiMemAllocFunc imGuiMemAllocFunc;
-    ImGuiMemFreeFunc imGuiMemFreeFunc;
-    void* userData;
-
-    ImGui::GetAllocatorFunctions(&imGuiMemAllocFunc, &imGuiMemFreeFunc, &userData);
-
-    return userData;
-}
-
-ImFont* ImGuiRenderer::GetRegularFont()
-{
-    return regularFont;
-}
-
-ImFont* ImGuiRenderer::GetBoldFont()
-{
-    return boldFont;
 }
