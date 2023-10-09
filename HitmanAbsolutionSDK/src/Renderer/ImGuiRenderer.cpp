@@ -81,6 +81,7 @@ bool ImGuiRenderer::Setup()
     }
 
     AddFonts();
+    SetScale();
 
     Logger::GetInstance().Log(Logger::Level::Info, "ImGui renderer successfully set up.");
 
@@ -246,6 +247,18 @@ void ImGuiRenderer::SetStyle()
     colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
     colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
     colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+}
+
+void ImGuiRenderer::SetScale()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    const HWND hwnd = GraphicsSettingsManager->GetHWND();
+    RECT rect = { 0, 0, 0, 0 };
+
+    GetClientRect(hwnd, &rect);
+
+    io.DisplaySize = ImVec2(static_cast<float>(rect.right - rect.left), static_cast<float>(rect.bottom - rect.top));
+    io.FontGlobalScale = (io.DisplaySize.y / 2048.f);
 }
 
 long ImGuiRenderer::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam)

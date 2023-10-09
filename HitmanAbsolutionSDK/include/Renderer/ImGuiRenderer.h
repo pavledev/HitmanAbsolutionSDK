@@ -24,6 +24,7 @@ public:
 	void Cleanup();
 	void AddFonts();
 	void SetStyle();
+	void SetScale();
 	long MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
 	void OnUpdateInputDeviceManager(ZEngineAppCommon* engineAppCommon);
 	ImGuiContext* GetImGuiContext();
