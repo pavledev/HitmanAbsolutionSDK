@@ -103,6 +103,11 @@ void ImGuiRenderer::OnPresent(ZRenderDevice* renderDevice)
     Render();
 }
 
+void ImGuiRenderer::OnResize(const SRenderDestinationDesc* pDescription)
+{
+    SetScale();
+}
+
 void ImGuiRenderer::Render()
 {
     ImGuiIO& io = ImGui::GetIO(); (void)io;

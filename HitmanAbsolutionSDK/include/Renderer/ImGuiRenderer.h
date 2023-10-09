@@ -19,6 +19,7 @@ public:
 	~ImGuiRenderer();
 	bool Setup();
 	void OnPresent(ZRenderDevice* renderDevice);
+	void OnResize(const SRenderDestinationDesc* pDescription);
 	void Render();
 	void RenderContent();
 	void Cleanup();

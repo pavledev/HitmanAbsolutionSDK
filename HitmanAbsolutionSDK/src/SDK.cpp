@@ -226,6 +226,7 @@ void SDK::OnPresent(ZRenderDevice* renderDevice)
 void SDK::OnResize(const SRenderDestinationDesc* pDescription)
 {
     directXRenderer->OnResize(pDescription);
+    imGuiRenderer->OnResize(pDescription);
 }
 
 long SDK::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam)
