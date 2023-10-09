@@ -11,6 +11,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 class ZApplicationEngineWin32;
 class ZEngineAppCommon;
+class ZMouseWindows;
+class ZKeyboardWindows;
 
 class ImGuiRenderer
 {
@@ -23,11 +25,15 @@ public:
 	void Render();
 	void RenderContent();
 	void Cleanup();
+
 	void AddFonts();
 	void SetStyle();
 	void SetScale();
+
 	long MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
-	void OnUpdateInputDeviceManager(ZEngineAppCommon* engineAppCommon);
+	void OnMouseWindowsUpdate(ZMouseWindows* mouseWindows, bool bIgnoreOldEvents);
+	void OnKeyboardWindowsUpdate(ZKeyboardWindows* keyboardWindows, bool bIgnoreOldEvents);
+
 	ImGuiContext* GetImGuiContext();
 	ImGuiMemAllocFunc GetImGuiMemAllocFunc();
 	ImGuiMemFreeFunc GetImGuiMemFreeFunc();

@@ -311,7 +311,7 @@ long ImGuiRenderer::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin
     return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
 }
 
-void ImGuiRenderer::OnUpdateInputDeviceManager(ZEngineAppCommon* engineAppCommon)
+void ImGuiRenderer::OnMouseWindowsUpdate(ZMouseWindows* mouseWindows, bool bIgnoreOldEvents)
 {
     //Block mouse and keyboard input in main menu and pause menu
     if (imguiHasFocus && (ScaleformManager->IsInMainMenu() || HUDManager->IsPauseMenuActive()))
@@ -319,7 +319,18 @@ void ImGuiRenderer::OnUpdateInputDeviceManager(ZEngineAppCommon* engineAppCommon
         return;
     }
 
-    return Hooks::ZEngineAppCommon_UpdateInputDeviceManager.CallOriginalFunction(engineAppCommon);
+    return Hooks::ZMouseWindows_Update.CallOriginalFunction(mouseWindows, bIgnoreOldEvents);
+}
+
+void ImGuiRenderer::OnKeyboardWindowsUpdate(ZKeyboardWindows* keyboardWindows, bool bIgnoreOldEvents)
+{
+    //Block mouse and keyboard input in main menu and pause menu
+    if (imguiHasFocus && (ScaleformManager->IsInMainMenu() || HUDManager->IsPauseMenuActive()))
+    {
+        return;
+    }
+
+    return Hooks::ZKeyboardWindows_Update.CallOriginalFunction(keyboardWindows, bIgnoreOldEvents);
 }
 
 ImGuiContext* ImGuiRenderer::GetImGuiContext()

@@ -55,20 +55,22 @@ SDK::SDK()
     std::thread thread = std::thread(&ResourceIDRegistry::Load, &resourceIDRegistry);
 
     thread.detach();
-    
+
     Hooks::ZRenderDevice_PresentHook.CreateHook("ZRenderDevice::Present", 0x5A7F30, ZRenderDevice_PresentHook);
     Hooks::ZRenderSwapChain_ResizeHook.CreateHook("ZRenderSwapChain::Resize", 0x2FA520, ZRenderSwapChain_ResizeHook);
     Hooks::ZApplicationEngineWin32_MainWindowProc.CreateHook("ZApplicationEngineWin32::MainWindowProc", 0x4FF520, ZApplicationEngineWin32_MainWindowProcHook);
     Hooks::ZHitman5Module_Initialize.CreateHook("ZHitman5Module::Initialize", 0x58E8D0, ZHitman5Module_InitializeHook);
     Hooks::ZEngineAppCommon_Initialize.CreateHook("ZEngineAppCommon::Initialize", 0x55A620, ZEngineAppCommon_InitializeHook);
-    Hooks::ZEngineAppCommon_UpdateInputDeviceManager.CreateHook("ZEngineAppCommon::UpdateInputDeviceManager", 0x46C1D0, ZEngineAppCommon_UpdateInputDeviceManagerHook);
+    Hooks::ZMouseWindows_Update.CreateHook("ZMouseWindows::Update", 0x3F1D90, ZMouseWindows_UpdateHook);
+    Hooks::ZKeyboardWindows_Update.CreateHook("ZKeyboardWindows::Update", 0x1EF2C0, ZKeyboardWindows_UpdateHook);
 
     Hooks::ZRenderDevice_PresentHook.EnableHook();
     Hooks::ZRenderSwapChain_ResizeHook.EnableHook();
     Hooks::ZApplicationEngineWin32_MainWindowProc.EnableHook();
     Hooks::ZHitman5Module_Initialize.EnableHook();
     Hooks::ZEngineAppCommon_Initialize.EnableHook();
-    Hooks::ZEngineAppCommon_UpdateInputDeviceManager.EnableHook();
+    Hooks::ZMouseWindows_Update.EnableHook();
+    Hooks::ZKeyboardWindows_Update.EnableHook();
 }
 
 SDK::~SDK()
@@ -234,9 +236,14 @@ long SDK::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND h
     return imGuiRenderer->MainWindowProc(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
 }
 
-void SDK::OnUpdateInputDeviceManager(ZEngineAppCommon* engineAppCommon)
+void SDK::OnMouseWindowsUpdate(ZMouseWindows* mouseWindows, bool bIgnoreOldEvents)
 {
-    imGuiRenderer->OnUpdateInputDeviceManager(engineAppCommon);
+    imGuiRenderer->OnMouseWindowsUpdate(mouseWindows, bIgnoreOldEvents);
+}
+
+void SDK::OnKeyboardWindowsUpdate(ZKeyboardWindows* keyboardWindows, bool bIgnoreOldEvents)
+{
+    imGuiRenderer->OnKeyboardWindowsUpdate(keyboardWindows, bIgnoreOldEvents);
 }
 
 ImGuiContext* SDK::GetImGuiContext()
@@ -353,7 +360,12 @@ bool __fastcall ZEngineAppCommon_InitializeHook(ZEngineAppCommon* pThis, int edx
     return IsEngineInitialized;
 }
 
-void __fastcall ZEngineAppCommon_UpdateInputDeviceManagerHook(ZEngineAppCommon* pThis, int edx)
+void __fastcall ZMouseWindows_UpdateHook(ZMouseWindows* pThis, int edx, bool bIgnoreOldEvents)
 {
-    SDK::GetInstance().OnUpdateInputDeviceManager(pThis);
+    SDK::GetInstance().OnMouseWindowsUpdate(pThis, bIgnoreOldEvents);
+}
+
+void __fastcall ZKeyboardWindows_UpdateHook(ZKeyboardWindows* pThis, int edx, bool bIgnoreOldEvents)
+{
+    SDK::GetInstance().OnKeyboardWindowsUpdate(pThis, bIgnoreOldEvents);
 }

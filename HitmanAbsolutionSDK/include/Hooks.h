@@ -8,7 +8,6 @@ class ZRenderDevice;
 struct SRenderDestinationDesc;
 class ZInputDeviceManager;
 class ZVirtualControlWindows;
-class ZMouseWindows;
 class ZEngineAppCommon;
 class ZHitman5Module;
 class ZInputAction;
@@ -18,6 +17,8 @@ class ZFreeCameraControlEntity;
 class ZIniFile;
 class ZHitman5;
 class ZComponentCreateInfo;
+class ZMouseWindows;
+class ZKeyboardWindows;
 
 namespace Hooks
 {
@@ -25,7 +26,6 @@ namespace Hooks
 	inline ThisCallHook<void, ZRenderDevice> ZRenderDevice_PresentHook;
 	inline ThisCallHook<void, ZRenderSwapChain, const SRenderDestinationDesc*> ZRenderSwapChain_ResizeHook;
 	inline StdCallHook<BOOL, const RECT*> ClipCursor;
-	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_UpdateInputDeviceManager;
 	inline ThisCallHook<bool, ZHitman5Module> ZHitman5Module_Initialize;
 	inline ThisCallHook<bool, ZInputAction> ZInputAction_Digital;
 	inline ThisCallHook<void, ZEntitySceneContext, const ZString&> ZEntitySceneContext_CreateScene;
@@ -35,4 +35,6 @@ namespace Hooks
 	inline ThisCallHook<bool, ZInputActionManager, const char*> ZInputActionManager_AddBindings;
 	inline ThisCallHook<bool, ZEngineAppCommon, const SRenderDestinationDesc&> ZEngineAppCommon_Initialize;
 	inline ThisCallHook<void, ZHitman5, ZComponentCreateInfo&> ZHitman5_ZHitman5;
+	inline ThisCallHook<void, ZMouseWindows, bool> ZMouseWindows_Update;
+	inline ThisCallHook<void, ZKeyboardWindows, bool> ZKeyboardWindows_Update;
 }

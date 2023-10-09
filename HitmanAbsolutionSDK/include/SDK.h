@@ -10,13 +10,16 @@ class ZMemoryManager;
 class ZHitman5Module;
 class ZEngineAppCommon;
 class ZIniFile;
+class ZMouseWindows;
+class ZKeyboardWindows;
 
 void __fastcall ZRenderDevice_PresentHook(ZRenderDevice* pThis, int edx);
 void __fastcall ZRenderSwapChain_ResizeHook(ZRenderSwapChain* pThis, int edx, const SRenderDestinationDesc* pDescription);
 long __stdcall ZApplicationEngineWin32_MainWindowProcHook(ZApplicationEngineWin32* pThis, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
 bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx);
 bool __fastcall ZEngineAppCommon_InitializeHook(ZEngineAppCommon* pThis, int edx, const SRenderDestinationDesc& description);
-void __fastcall ZEngineAppCommon_UpdateInputDeviceManagerHook(ZEngineAppCommon* pThis, int edx);
+void __fastcall ZMouseWindows_UpdateHook(ZMouseWindows* pThis, int edx, bool bIgnoreOldEvents);
+void __fastcall ZKeyboardWindows_UpdateHook(ZKeyboardWindows* pThis, int edx, bool bIgnoreOldEvents);
 
 class SDK
 {
@@ -40,7 +43,8 @@ public:
 
 	long MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
 
-	void OnUpdateInputDeviceManager(ZEngineAppCommon* engineAppCommon);
+	void OnMouseWindowsUpdate(ZMouseWindows* mouseWindows, bool bIgnoreOldEvents);
+	void OnKeyboardWindowsUpdate(ZKeyboardWindows* keyboardWindows, bool bIgnoreOldEvents);
 
 	HitmanAbsolutionSDK_API ImGuiContext* GetImGuiContext();
 	HitmanAbsolutionSDK_API ImGuiMemAllocFunc GetImGuiMemAllocFunc();
