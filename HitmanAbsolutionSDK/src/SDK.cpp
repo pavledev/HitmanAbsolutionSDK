@@ -233,7 +233,7 @@ void SDK::OnResize(const SRenderDestinationDesc* pDescription)
 
 long SDK::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam)
 {
-    return imGuiRenderer->MainWindowProc(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
+    return imGuiRenderer->OnMainWindowProc(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
 }
 
 void SDK::OnMouseWindowsUpdate(ZMouseWindows* mouseWindows, bool bIgnoreOldEvents)
