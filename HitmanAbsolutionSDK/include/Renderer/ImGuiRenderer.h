@@ -22,6 +22,7 @@ public:
 	void Render();
 	void RenderContent();
 	void Cleanup();
+	void AddFonts();
 	void SetStyle();
 	long MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
 	void OnUpdateInputDeviceManager(ZEngineAppCommon* engineAppCommon);

@@ -80,25 +80,7 @@ bool ImGuiRenderer::Setup()
         return false;
     }
 
-    ImGuiIO& io = ImGui::GetIO();
-    ImFontConfig iconsConfig{};
-    iconsConfig.MergeMode = true;
-    iconsConfig.GlyphOffset = { 0.f, 6.f };
-
-    static constexpr ImWchar iconRanges[] = { ICON_MIN_MD, ICON_MAX_16_MD, 0 };
-    static constexpr const char* regularFontPath = "assets/fonts/Roboto-Regular.ttf";
-    static constexpr const char* boldFontPath = "assets/fonts/Roboto-Bold.ttf";
-    static constexpr const char* materialIconsRegularFontPath = "assets/fonts/MaterialIcons-Regular.ttf";
-
-    regularFont = io.Fonts->AddFontFromFileTTF(regularFontPath, 32.f);
-    io.Fonts->AddFontFromFileTTF(materialIconsRegularFontPath, 32.f, &iconsConfig, iconRanges);
-    io.Fonts->Build();
-
-    boldFont = io.Fonts->AddFontFromFileTTF(boldFontPath, 32.f);
-    io.Fonts->AddFontFromFileTTF(materialIconsRegularFontPath, 32.f, &iconsConfig, iconRanges);
-    io.Fonts->Build();
-
-    io.FontDefault = regularFont;
+    AddFonts();
 
     Logger::GetInstance().Log(Logger::Level::Info, "ImGui renderer successfully set up.");
 
@@ -153,6 +135,29 @@ void ImGuiRenderer::Cleanup()
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
+}
+
+void ImGuiRenderer::AddFonts()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    ImFontConfig iconsConfig{};
+    iconsConfig.MergeMode = true;
+    iconsConfig.GlyphOffset = { 0.f, 6.f };
+
+    static constexpr ImWchar iconRanges[] = { ICON_MIN_MD, ICON_MAX_16_MD, 0 };
+    static constexpr const char* regularFontPath = "assets/fonts/Roboto-Regular.ttf";
+    static constexpr const char* boldFontPath = "assets/fonts/Roboto-Bold.ttf";
+    static constexpr const char* materialIconsRegularFontPath = "assets/fonts/MaterialIcons-Regular.ttf";
+
+    regularFont = io.Fonts->AddFontFromFileTTF(regularFontPath, 32.f);
+    io.Fonts->AddFontFromFileTTF(materialIconsRegularFontPath, 32.f, &iconsConfig, iconRanges);
+    io.Fonts->Build();
+
+    boldFont = io.Fonts->AddFontFromFileTTF(boldFontPath, 32.f);
+    io.Fonts->AddFontFromFileTTF(materialIconsRegularFontPath, 32.f, &iconsConfig, iconRanges);
+    io.Fonts->Build();
+
+    io.FontDefault = regularFont;
 }
 
 void ImGuiRenderer::SetStyle()
