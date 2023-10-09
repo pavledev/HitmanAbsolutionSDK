@@ -2,6 +2,11 @@
 
 #include <algorithm>
 
+#include "../Memory/ZMemoryManager.h"
+#include "../Memory/IAllocator.h"
+
+#include <Global.h>
+
 template <typename T>
 class TArray
 {
@@ -15,15 +20,18 @@ public:
 
     TArray(const size_t initialSize)
     {
-        m_pStart = new T[initialSize];
+        IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
+
+        m_pStart = static_cast<T*>(normalAllocator->AllocateAligned(sizeof(T) * initialSize, alignof(T), 0));
         m_pEnd = m_pStart + initialSize;
         m_pLast = m_pEnd;
     }
 
     TArray(const TArray& other)
     {
+        IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
         const size_t size = other.Size();
-        m_pStart = new T[size];
+        m_pStart = static_cast<T*>(normalAllocator->AllocateAligned(sizeof(T) * size, alignof(T), 0));
 
         std::copy(other.m_pStart, other.m_pEnd, m_pStart);
 
@@ -38,6 +46,18 @@ public:
         other.m_pLast = nullptr;
     }
 
+    ~TArray()
+    {
+        for (T* p = m_pStart; p != m_pEnd; ++p)
+        {
+            p->~T();
+        }
+
+        IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
+
+        normalAllocator->Free(m_pStart);
+    }
+
     TArray& operator=(const TArray& other)
     {
         if (this != &other)
@@ -47,10 +67,12 @@ public:
                 p->~T();
             }
 
-            delete[] reinterpret_cast<char*>(m_pStart);
+            IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
+
+            normalAllocator->Free(m_pStart);
 
             size_t size = other.Size();
-            m_pStart = new T[size];
+            m_pStart = static_cast<T*>(normalAllocator->AllocateAligned(sizeof(T) * size, alignof(T), 0));
 
             std::copy(other.m_pStart, other.m_pEnd, m_pStart);
 
@@ -70,7 +92,9 @@ public:
                 p->~T();
             }
 
-            delete[] reinterpret_cast<char*>(m_pStart);
+            IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
+
+            normalAllocator->Free(m_pStart);
 
             m_pStart = other.m_pStart;
             m_pEnd = other.m_pEnd;
@@ -82,16 +106,6 @@ public:
         }
 
         return *this;
-    }
-
-    ~TArray()
-    {
-        for (T* p = m_pStart; p != m_pEnd; ++p)
-        {
-            p->~T();
-        }
-
-        delete[] reinterpret_cast<char*>(m_pStart);
     }
 
     const T* GetStart() const
@@ -141,7 +155,8 @@ public:
             return;
         }
 
-        T* newStart = reinterpret_cast<T*>(new char[capacity * sizeof(T)]);
+        IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
+        T* newStart = static_cast<T*>(normalAllocator->AllocateAligned(sizeof(T) * capacity, alignof(T), 0));
         size_t currentSize = Size();
 
         for (size_t i = 0; i < currentSize; ++i)
@@ -154,7 +169,7 @@ public:
             m_pStart[i].~T();
         }
 
-        delete[] reinterpret_cast<char*>(m_pStart);
+        normalAllocator->Free(m_pStart);
 
         m_pStart = newStart;
         m_pEnd = m_pStart + currentSize;
