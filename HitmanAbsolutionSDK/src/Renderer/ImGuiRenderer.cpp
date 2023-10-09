@@ -120,21 +120,8 @@ void ImGuiRenderer::OnPresent(ZRenderDevice* renderDevice)
     Render();
 }
 
-std::mutex mtx;     // Mutex to protect the set
-std::unordered_set<std::thread::id> threadIDs; // Set to store thread IDs
-std::unordered_set<std::thread::id> threadIDs2;
-
 void ImGuiRenderer::Render()
 {
-    std::unique_lock<std::mutex> lock(mtx);
-    threadIDs.insert(std::this_thread::get_id());
-    lock.unlock();
-
-    if (threadIDs.size() > 1)
-    {
-        int a = 2;
-    }
-
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     // Start the Dear ImGui frame
@@ -289,15 +276,6 @@ long ImGuiRenderer::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin
 
     if (imguiHasFocus)
     {
-        std::unique_lock<std::mutex> lock(mtx);
-        threadIDs2.insert(std::this_thread::get_id());
-        lock.unlock();
-
-        if (threadIDs2.size() > 1)
-        {
-            int a = 2;
-        }
-
         ImGui_ImplWin32_WndProcHandler(hWnd, uMsgId, wParam, lParam);
 
         //Block mouse and keyboard input in main menu and pause menu
