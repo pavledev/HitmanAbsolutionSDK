@@ -1,10 +1,11 @@
 #pragma once
 
-#include "IComponentInterface.h"
-#include "ZHM5BaseCharacter.h"
-#include "Camera/ZHM5MainCamera.h"
-#include "Input/ZHM5InputControl.h"
-#include "Physics/ICharacterCollision.h"
+#include "../IComponentInterface.h"
+#include "../ZHM5BaseCharacter.h"
+#include "../Camera/ZHM5MainCamera.h"
+#include "../Input/ZHM5InputControl.h"
+#include "../Physics/ICharacterCollision.h"
+#include "ZHM5FocusController.h"
 
 class ZHM5Action;
 struct float4;

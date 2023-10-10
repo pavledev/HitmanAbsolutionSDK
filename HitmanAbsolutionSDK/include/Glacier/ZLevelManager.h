@@ -2,7 +2,7 @@
 
 #include "IComponentInterface.h"
 #include "Templates/TEntityRef.h"
-#include "ZHitman5.h"
+#include "Player/ZHitman5.h"
 #include "SSceneParameters.h"
 
 #include <Common.h>
