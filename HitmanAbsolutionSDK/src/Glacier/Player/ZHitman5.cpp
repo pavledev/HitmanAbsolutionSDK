@@ -9,3 +9,8 @@ ZHM5InputControl* ZHitman5::GetInputControl() const
 {
 	return m_pInputControl;
 }
+
+ZHM5FocusController* ZHitman5::GetFocusController() const
+{
+	return m_pFocusController;
+}
