@@ -21,7 +21,7 @@ class Player : public ModInterface
 {
 public:
     Player();
-    ~Player();
+    ~Player() override;
     void Initialize() override;
     void OnEngineInitialized() override;
     void OnDrawMenu() override;
