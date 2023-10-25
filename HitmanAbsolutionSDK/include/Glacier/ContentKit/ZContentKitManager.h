@@ -4,8 +4,10 @@
 #include "../IComponentInterface.h"
 #include "../Resource/ZResourcePtr.h"
 #include "../Templates/TEntityRef.h"
-#include "ZOutfitKitEntity.h"
 #include "ZFireArmKitEntity.h"
+#include "ZOutfitKitEntity.h"
+#include "ZPropKitEntity.h"
+#include "ZGlobalOutfitKit.h"
 
 class ZFireArmKitMenuSetup;
 struct SFireArmKitSaveData;
@@ -13,12 +15,10 @@ struct SFireArmKitState;
 class ZOutfitKitMenuSetup;
 struct SOutfitKitSaveData;
 struct SOutfitKitState;
-class ZPropKitEntity;
 class ZPropKitMenuSetup;
 struct SPropKitSaveData;
 struct SPropKitState;
 class ZContentKitDLCInfo;
-class ZGlobalOutfitKit;
 class ZGlobalItemKit;
 class ZDLCDescriptor;
 
@@ -27,6 +27,8 @@ class HitmanAbsolutionSDK_API ZContentKitManager : public IComponentInterface
 public:
 	const ZContentKitList<ZFireArmKitEntity, ZFireArmKitMenuSetup, SFireArmKitSaveData, SFireArmKitState>& GetFireArms() const;
 	const ZContentKitList<ZOutfitKitEntity, ZOutfitKitMenuSetup, SOutfitKitSaveData, SOutfitKitState>& GetOutfits() const;
+	const ZContentKitList<ZPropKitEntity, ZPropKitMenuSetup, SPropKitSaveData, SPropKitState>& GetProps() const;
+	const TMap<STokenID const, TEntityRef<ZGlobalOutfitKit>>& GetGlobalOutfitKits() const;
 
 private:
 	struct SRuntimeItemResource

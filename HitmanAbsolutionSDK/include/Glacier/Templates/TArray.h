@@ -4,6 +4,7 @@
 
 #include "../Memory/ZMemoryManager.h"
 #include "../Memory/IAllocator.h"
+#include "../Serializer/ZBinarySerializer.h"
 
 #include <Global.h>
 
@@ -23,6 +24,12 @@ public:
         IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
 
         m_pStart = static_cast<T*>(normalAllocator->AllocateAligned(sizeof(T) * initialSize, alignof(T), 0));
+
+        for (size_t i = 0; i < initialSize; ++i)
+        {
+            new (m_pStart + i) T();
+        }
+
         m_pEnd = m_pStart + initialSize;
         m_pLast = m_pEnd;
     }
@@ -33,7 +40,10 @@ public:
         const size_t size = other.Size();
         m_pStart = static_cast<T*>(normalAllocator->AllocateAligned(sizeof(T) * size, alignof(T), 0));
 
-        std::copy(other.m_pStart, other.m_pEnd, m_pStart);
+        for (size_t i = 0; i < size; ++i)
+        {
+            new (m_pStart + i) T(other.m_pStart[i]);
+        }
 
         m_pEnd = m_pStart + size;
         m_pLast = m_pEnd;
@@ -233,14 +243,6 @@ public:
 
     void PushBack(const T& element)
     {
-        const unsigned int size = Size();
-        const unsigned int capacity = Capacity();
-
-        if (size == capacity)
-        {
-            Resize(size + 1);
-        }
-
         if (m_pEnd == m_pLast)
         {
             size_t currentSize = Size();
@@ -267,10 +269,17 @@ public:
         std::move(element + 1, m_pEnd, element);
 
         --m_pEnd;
+
+        m_pEnd->~T();
     }
 
     bool operator==(const TArray& other) const
     {
+        if (Size() != other.Size())
+        {
+            return false;
+        }
+
         const TArray& array = *this;
 
         for (unsigned int i = 0; i < Size(); ++i)
@@ -282,6 +291,51 @@ public:
         }
 
         return true;
+    }
+
+    void SerializeToMemory(ZBinarySerializer& binarySerializer, const unsigned int offset)
+    {
+        const unsigned int elementsCount = Size();
+        unsigned int elementsStartOffset;
+
+        if (elementsCount > 0)
+        {
+            const unsigned int size = sizeof(T) * elementsCount;
+
+            elementsStartOffset = binarySerializer.ReserveLayoutFor(elementsCount, sizeof(T), alignof(T), 4);
+
+            const unsigned int elementsEndOffset = elementsStartOffset + size;
+
+            binarySerializer.WriteToMemory(&elementsCount, sizeof(unsigned int), elementsStartOffset - 4);
+
+            binarySerializer.WriteToMemory(&elementsStartOffset, sizeof(unsigned int), offset);
+            binarySerializer.WriteToMemory(&elementsEndOffset, sizeof(unsigned int), offset + 4);
+            binarySerializer.WriteToMemory(&elementsEndOffset, sizeof(unsigned int), offset + 8);
+        }
+
+        binarySerializer.RecordOffsetForRebasing(offset);
+        binarySerializer.RecordOffsetForRebasing(offset + 4);
+        binarySerializer.RecordOffsetForRebasing(offset + 8);
+
+        for (unsigned int i = 0; i < elementsCount; ++i)
+        {
+            const unsigned int elementOffset = elementsStartOffset + sizeof(T) * i;
+            T* type = &this->operator[](i);
+
+            if (i == 0)
+            {
+                binarySerializer.SetLayoutPointer(binarySerializer.GetAlignedLayoutPointer(binarySerializer.GetLayoutPointer(), alignof(TArray)));
+            }
+
+            if constexpr (std::is_class_v<T>)
+            {
+                type->SerializeToMemory(binarySerializer, elementOffset);
+            }
+            else
+            {
+                binarySerializer.WriteToMemory(type, sizeof(T), elementOffset);
+            }
+        }
     }
 
 private:

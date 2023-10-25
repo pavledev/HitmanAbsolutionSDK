@@ -17,6 +17,7 @@ class HitmanAbsolutionSDK_API ZEntityType
 {
 public:
 	SInterfaceData* GetInterfaceData(const STypeID* type);
+	SPropertyData* GetPropertyData(const unsigned int propertyID);
 
 private:
 	enum EntityTypeOwner

@@ -1,0 +1,334 @@
+{
+    "items": [
+        {
+            "title": "Axe",
+            "description": "A lumberjack's tool.",
+            "hiResNotebookImage": 4080488733837118,
+            "runtimeResourceID": 22515430212427019
+        },
+        {
+            "title": "Wrench",
+            "description": "A heavy duty steel tool used in plumbing.",
+            "hiResNotebookImage": 49386698019191158,
+            "runtimeResourceID": 20320235517284098
+        },
+        {
+            "title": "Fiber Wire",
+            "description": "A strand of a non-metallic fiber wire. The handles allow Agent 47 to apply all of his strength into pulling the wire tightly around the victim's neck.",
+            "hiResNotebookImage": 16684162487963181,
+            "runtimeResourceID": 9223381490145803966
+        },
+        {
+            "title": "Glass Shiv",
+            "description": "A broken piece of glass with a makeshift handle. Often known as a prison knife.",
+            "hiResNotebookImage": 50020666455467682,
+            "runtimeResourceID": 42515179567215856
+        },
+        {
+            "title": "Golf Club",
+            "description": "A 7 iron. Ideal for shorter approach shots.",
+            "hiResNotebookImage": 21102142262499945,
+            "runtimeResourceID": 2081865047182007
+        },
+        {
+            "title": "Hammer",
+            "description": "A handheld tool, primarily used for driving in nails.",
+            "hiResNotebookImage": 1666202407546984,
+            "runtimeResourceID": 43188351283749234
+        },
+        {
+            "title": "Remote Explosive",
+            "description": "Explosives fitted with a radio controlled detonator.",
+            "hiResNotebookImage": 5483847311423596,
+            "runtimeResourceID": 9223372199224746548
+        },
+        {
+            "title": "Proximity Mine",
+            "description": "A powerful anti-vehicle mine. Explodes on proximity, when armed.",
+            "hiResNotebookImage": 21880506048999300,
+            "runtimeResourceID": 46407251005997388
+        },
+        {
+            "title": "Gasoline Can",
+            "description": "A can of flammable gasoline.",
+            "hiResNotebookImage": 4890057528564138,
+            "runtimeResourceID": 26620804044715471
+        },
+        {
+            "title": "Gavel",
+            "description": "A delicate wooden judge's gavel.",
+            "hiResNotebookImage": 3620211008436677,
+            "runtimeResourceID": 63035959993452585
+        },
+        {
+            "title": "Bill Spike",
+            "description": "A pointy spike for storing bills.",
+            "hiResNotebookImage": 46820256555391144,
+            "runtimeResourceID": 9223372085962129752
+        },
+        {
+            "title": "Mace",
+            "description": "A flanged medieval mace.",
+            "hiResNotebookImage": 40167547278953629,
+            "runtimeResourceID": 67941170639768514
+        },
+        {
+            "title": "Power Cord",
+            "description": "A strong and flexible piece of power cable made from copper wires sheathed in plastic.",
+            "hiResNotebookImage": 14229879977025513,
+            "runtimeResourceID": 67432496110729921
+        },
+        {
+            "title": "Scissors",
+            "description": "A large pair of shears for cutting various materials.",
+            "hiResNotebookImage": 29944729524776404,
+            "runtimeResourceID": 9919795653814076
+        },
+        {
+            "title": "Toy Robot",
+            "description": "A battery powered toy robot.",
+            "hiResNotebookImage": 38211625456108434,
+            "runtimeResourceID": 62381867067812761
+        },
+        {
+            "title": "Radio",
+            "description": "A portable transistor radio.",
+            "hiResNotebookImage": 24080651226427727,
+            "runtimeResourceID": 66378114173693369
+        },
+        {
+            "title": "Fire Extinguisher",
+            "description": "A heavy, pressurized cylinder.",
+            "hiResNotebookImage": 49625685578958495,
+            "runtimeResourceID": 4973765982866531
+        },
+        {
+            "title": "Battle Axe",
+            "description": "A medieval battle axe.",
+            "hiResNotebookImage": 67132076375670475,
+            "runtimeResourceID": 33722777326239520
+        },
+        {
+            "title": "Vase",
+            "description": "A heavy, but fragile piece of home decor.",
+            "hiResNotebookImage": 71030263665811436,
+            "runtimeResourceID": 9223372098159642270
+        },
+        {
+            "title": "Bottle",
+            "description": "An empty glass bottle.",
+            "hiResNotebookImage": 59095237040831341,
+            "runtimeResourceID": 17694880629645781
+        },
+        {
+            "title": "Hula Girl",
+            "description": "A colorful statuette of a female hula dancer.",
+            "hiResNotebookImage": 56498366187537353,
+            "runtimeResourceID": 36293272863577872
+        },
+        {
+            "title": "Statue Bust",
+            "description": "A heavy bust cast in the likeness of a famous artist.",
+            "hiResNotebookImage": 59467521049611749,
+            "runtimeResourceID": 32567975896149860
+        },
+        {
+            "title": "Proximity Mine",
+            "description": "A powerful anti-vehicle mine. Explodes on proximity, when armed.",
+            "hiResNotebookImage": 24591449446702537,
+            "runtimeResourceID": 63392701303484124
+        },
+        {
+            "title": "Tomahawk",
+            "description": "A Native American axe. Can be used in hand-to-hand combat and for throwing.",
+            "hiResNotebookImage": 67038139195115673,
+            "runtimeResourceID": 9223372082047702915
+        },
+        {
+            "title": "Cleaver",
+            "description": "A large knife with a tough edge for cutting bone and meat.",
+            "hiResNotebookImage": 33818163467985505,
+            "runtimeResourceID": 70545572179134110
+        },
+        {
+            "title": "Knife",
+            "description": "A large, general purpose chef's knife. Good for cutting and piercing.",
+            "hiResNotebookImage": 20109268507394966,
+            "runtimeResourceID": 52240231244604870
+        },
+        {
+            "title": "TNT",
+            "description": "[TEXT ID ITEM_DESCRIPTION_CC_TNT]",
+            "hiResNotebookImage": 1613599994200317,
+            "runtimeResourceID": 9223373845662425194
+        },
+        {
+            "title": "Metal Pipe",
+            "description": "A large piece of steel plumbing.",
+            "hiResNotebookImage": 59007378823397763,
+            "runtimeResourceID": 32705446793353663
+        },
+        {
+            "title": "Police Baton",
+            "description": "A forced compliance tool used by law enforcement officers.",
+            "hiResNotebookImage": 23270968243789902,
+            "runtimeResourceID": 32797479202302194
+        },
+        {
+            "title": "C4 Brick",
+            "description": "Explosives fitted with a time delayed detonator.",
+            "hiResNotebookImage": 22094773009995975,
+            "runtimeResourceID": 52069556054920180
+        },
+        {
+            "title": "Syringe",
+            "description": "A medical syringe containing a powerful sedative.",
+            "hiResNotebookImage": 36591566481208780,
+            "runtimeResourceID": 45204432750989145
+        },
+        {
+            "title": "Cattle Prod",
+            "description": "A prodding device for encouraging stubborn cattle. This one is old, and out of order.",
+            "hiResNotebookImage": 70639361513952171,
+            "runtimeResourceID": 68647500298815184
+        },
+        {
+            "title": "Bottle2",
+            "description": "An empty glass bottle.",
+            "hiResNotebookImage": 51236438701412767,
+            "runtimeResourceID": 33412599269443278
+        },
+        {
+            "title": "Screwdriver",
+            "description": "A pointy tool for driving screws.",
+            "hiResNotebookImage": 47208366492688212,
+            "runtimeResourceID": 59532748247825405
+        },
+        {
+            "title": "Crowbar",
+            "description": "A carbon-steel crowbar.",
+            "hiResNotebookImage": 43956800357278996,
+            "runtimeResourceID": 64632321963381363
+        },
+        {
+            "title": "War Hammer",
+            "description": "A medieval close combat weapon. Designed to deliver concussive blows through thick steel armor.",
+            "hiResNotebookImage": 17958999295584245,
+            "runtimeResourceID": 9223375054393105021
+        },
+        {
+            "title": "Dog's Bone",
+            "description": "A bone with no meat.",
+            "hiResNotebookImage": 48505738429333594,
+            "runtimeResourceID": 9223372063680620622
+        },
+        {
+            "title": "Katana",
+            "description": "An ancient Japanese samurai sword.",
+            "hiResNotebookImage": 51706603142966431,
+            "runtimeResourceID": 9223372089618025629
+        },
+        {
+            "title": "Baseball Bat",
+            "description": "A wooden baseball bat.",
+            "hiResNotebookImage": 50478875729354675,
+            "runtimeResourceID": 1286517360815578
+        },
+        {
+            "title": "Plunger",
+            "description": "A common device that is used to release stoppages in plumbing.",
+            "hiResNotebookImage": 36518522576721811,
+            "runtimeResourceID": 8275107369543075
+        },
+        {
+            "title": "Fire Poker",
+            "description": "A solid metal rod with a pointed end.",
+            "hiResNotebookImage": 36685643109332411,
+            "runtimeResourceID": 9223372079842658112
+        },
+        {
+            "title": "Sledge Hammer",
+            "description": "A large, heavy hammer commonly used for fracturing concrete, and other demolition work.",
+            "hiResNotebookImage": 33545537237248413,
+            "runtimeResourceID": 49831353449414131
+        },
+        {
+            "title": "Brick",
+            "description": "A heavy brick.",
+            "hiResNotebookImage": 57944968139816081,
+            "runtimeResourceID": 38021147542545420
+        },
+        {
+            "title": "Measuring Tape",
+            "description": "A measuring tape made from strong plastic.",
+            "hiResNotebookImage": 21247407052562908,
+            "runtimeResourceID": 9223372106378314996
+        },
+        {
+            "title": "Bong",
+            "description": "A filtration apparatus generally used for smoking tobacco...or other herbal substances.",
+            "hiResNotebookImage": 64711339989853280,
+            "runtimeResourceID": 65838006756217353
+        },
+        {
+            "title": "Iron",
+            "description": "A heavy vintage iron.",
+            "hiResNotebookImage": 38962569292996052,
+            "runtimeResourceID": 27327992624294285
+        },
+        {
+            "title": "Folding Knife",
+            "description": "Features a fine wood handle and a blade made from top quality Swedish laminated steel, easy to sharpen in the field.",
+            "hiResNotebookImage": 55153311518020582,
+            "runtimeResourceID": 20774847189640235
+        },
+        {
+            "title": "Filet Knife",
+            "description": "This knife features a thin blade for those delicate cuts.",
+            "hiResNotebookImage": 3300160418779156,
+            "runtimeResourceID": 58330873073529833
+        },
+        {
+            "title": "Dummy Arm",
+            "description": "The severed arm from a crash test dummy.",
+            "hiResNotebookImage": 24563137397549441,
+            "runtimeResourceID": 17974579109636429
+        },
+        {
+            "title": "Banana",
+            "description": "",
+            "hiResNotebookImage": 63269036241924006,
+            "runtimeResourceID": 46014208254560040
+        },
+        {
+            "title": "Agency Tanto Knife",
+            "description": "Treated with a black anodized coating for corrosion resistance and a non-reflective appearance, this knife is designed for function, not show.",
+            "hiResNotebookImage": 24456278796632115,
+            "runtimeResourceID": 34633691086046757
+        },
+        {
+            "title": "Fire Axe",
+            "description": "A large axe featuring a pick-shaped poll.",
+            "hiResNotebookImage": 52014856914430174,
+            "runtimeResourceID": 50616919657050864
+        },
+        {
+            "title": "Morning Star",
+            "description": "A spiked club used for inflicting blunt force trauma.",
+            "hiResNotebookImage": 44801637746819819,
+            "runtimeResourceID": 5185425714013739
+        },
+        {
+            "title": "Book",
+            "description": "A heavy book titled: \"Fauske City Moments\" by A. Whist",
+            "hiResNotebookImage": 10327480911591420,
+            "runtimeResourceID": 29422465007410498
+        },
+        {
+            "title": "Coffee Mug",
+            "description": "An empty drinking mug.",
+            "hiResNotebookImage": 55333262379207693,
+            "runtimeResourceID": 18795143373862416
+        }
+    ]
+}

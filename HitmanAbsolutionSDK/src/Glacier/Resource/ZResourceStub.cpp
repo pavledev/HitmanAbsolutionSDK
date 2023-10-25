@@ -1,4 +1,5 @@
 #include <Glacier/Resource/ZResourceStub.h>
+#include <Glacier/Resource/ZResourceManager.h>
 
 EResourceStatus ZResourceStub::GetResourceStatus() const
 {
@@ -18,4 +19,16 @@ void* ZResourceStub::GetResourceData() const
 unsigned int ZResourceStub::GetResourceTag() const
 {
 	return m_nResourceTag;
+}
+
+void ZResourceStub::Release()
+{
+	long referenceCount = _InterlockedDecrement(&m_nRef);
+
+	_InterlockedExchangeAdd(&m_nHeaderRef, -1);
+
+	if (referenceCount == 0)
+	{
+		ResourceManager->ReleaseStub(this);
+	}
 }

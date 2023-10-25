@@ -15,6 +15,7 @@ public:
 	const ZRuntimeResourceID& GetRuntimeResourceID() const;
 	void* GetResourceData() const;
 	unsigned int GetResourceTag() const;
+	void Release();
 
 private:
 	struct SResourceReference

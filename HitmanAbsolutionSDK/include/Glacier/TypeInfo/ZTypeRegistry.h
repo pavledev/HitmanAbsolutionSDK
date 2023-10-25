@@ -5,6 +5,8 @@
 #include "Hash.h"
 #include "../ZString.h"
 
+#include "Reflection.h"
+
 struct STypeID;
 class IType;
 class ITypeConverter;
@@ -16,7 +18,13 @@ class HitmanAbsolutionSDK_API ZTypeRegistry
 public:
 	virtual ~ZTypeRegistry() = default;
 
-	const STypeID* GetType(const ZString& typeName);
+	STypeID* GetType(const ZString& typeName);
+
+	template <typename T>
+	STypeID* GetType() const
+	{
+		return GetType(GlacierTypeName<T>);
+	}
 
 private:
 	class ZTypeMapHashPolicy

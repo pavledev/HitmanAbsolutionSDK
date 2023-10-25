@@ -1,6 +1,6 @@
 #pragma once
 
-struct SPropertyInfo;
+#include "SPropertyInfo.h"
 
 struct SPropertyData
 {

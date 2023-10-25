@@ -1,4 +1,13 @@
 #include <Glacier/Entity/ZObjectRef.h>
+#include <Glacier/TypeInfo/ZTypeRegistry.h>
+
+#include <Global.h>
+
+ZObjectRef::ZObjectRef()
+{
+	m_TypeID = (*TypeRegistry)->GetType("void");
+	m_pData = nullptr;
+}
 
 ZObjectRef::ZObjectRef(void* pObject, STypeID* const typeID)
 {

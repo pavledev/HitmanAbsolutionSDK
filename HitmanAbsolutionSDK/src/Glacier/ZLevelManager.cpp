@@ -14,3 +14,8 @@ const TEntityRef<ZHitman5>& ZLevelManager::GetHitman() const
 {
 	return m_rHitman;
 }
+
+TEntityRef<ZOutfitManagerEntity> ZLevelManager::GetOutfitManager() const
+{
+	return m_pOutfitManager;
+}

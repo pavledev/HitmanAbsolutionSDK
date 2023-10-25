@@ -1,6 +1,10 @@
 #include <Glacier/Resource/ZRuntimeResourceID.h>
+#include <Glacier/Resource/LocalResourceIDsResolver.h>
 
 #include <Registry/ResourceIDRegistry.h>
+#include <Global.h>
+#include <Hash.h>
+#include <Utility/StringUtility.h>
 
 ZRuntimeResourceID::ZRuntimeResourceID()
 {
@@ -40,7 +44,26 @@ bool ZRuntimeResourceID::operator!=(const ZRuntimeResourceID& other) const
 	return GetID() != other.GetID();
 }
 
-std::string ZRuntimeResourceID::QueryResourceID(const ZRuntimeResourceID& ridResource)
+ZRuntimeResourceID ZRuntimeResourceID::QueryRuntimeResourceID(const ZResourceID& idResource)
+{
+    ZRuntimeResourceID runtimeResourceID = ResourceIDRegistry::GetInstance().GetRuntimeResourceID(idResource.GetURI().ToCString());
+
+    if (runtimeResourceID.GetID() == -1)
+    {
+        const std::string resourceID = StringUtility::ToLowerCase(idResource.GetURI().ToCString());
+
+        runtimeResourceID = Hash::GetMD5(resourceID);
+    }
+
+    if (LocalResourceIDsResolverSingleton && !idResource.IsLibraryResource())
+    {
+        (*LocalResourceIDsResolverSingleton)->RecordMapping(runtimeResourceID, idResource);
+    }
+
+    return runtimeResourceID;
+}
+
+ZResourceID ZRuntimeResourceID::QueryResourceID(const ZRuntimeResourceID& ridResource)
 {
 	return ResourceIDRegistry::GetInstance().GetResourceID(ridResource);
 }
@@ -88,4 +111,14 @@ ZRuntimeResourceID ZRuntimeResourceID::GetLibraryRuntimeResourceID() const
 int ZRuntimeResourceID::GetIndexInLibrary() const
 {
     return m_IDHigh & 0xFFFFFF;
+}
+
+const unsigned int ZRuntimeResourceID::GetIDHigh() const
+{
+    return m_IDHigh;
+}
+
+const unsigned int ZRuntimeResourceID::GetIDLow() const
+{
+    return m_IDLow;
 }

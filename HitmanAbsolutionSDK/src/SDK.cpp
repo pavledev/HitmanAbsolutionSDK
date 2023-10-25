@@ -32,7 +32,14 @@ ZCollisionManager* CollisionManager;
 ZTypeRegistry** TypeRegistry;
 ZContentKitManager* ContentKitManager;
 ZResourceManager* ResourceManager;
+ZActorManager* ActorManager;
+LocalResourceIDsResolver** LocalResourceIDsResolverSingleton;
+ZCheckPointManager* CheckPointManager;
+ZHM5ActionManager* HM5ActionManager;
 bool IsEngineInitialized;
+void* ZTemplateEntityFactoryVFTbl;
+void* ZTemplateEntityBlueprintFactoryVFTbl;
+void* ZAspectEntityFactoryVFTbl;
 
 SDK::SDK()
 {
@@ -153,6 +160,13 @@ void SDK::InitializeSingletons()
     TypeRegistry = reinterpret_cast<ZTypeRegistry**>(BaseAddress + 0xD47BFC);
     ContentKitManager = reinterpret_cast<ZContentKitManager*>(BaseAddress + 0xD58F30);
     ResourceManager = reinterpret_cast<ZResourceManager*>(BaseAddress + 0xE258C0);
+    ActorManager = reinterpret_cast<ZActorManager*>(BaseAddress + 0xDFDE70);
+    LocalResourceIDsResolverSingleton = reinterpret_cast<LocalResourceIDsResolver**>(BaseAddress + 0xE25CCC);
+    CheckPointManager = reinterpret_cast<ZCheckPointManager*>(BaseAddress + 0xE21580);
+    HM5ActionManager = reinterpret_cast<ZHM5ActionManager*>(BaseAddress + 0xD64C30);
+    ZTemplateEntityFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADC8EC);
+    ZTemplateEntityBlueprintFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADC714);
+    ZAspectEntityFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADB874);
 
     ZApplicationEngineWin32::SetInstance(reinterpret_cast<ZApplicationEngineWin32**>(BaseAddress + 0xCC6B90));
 }

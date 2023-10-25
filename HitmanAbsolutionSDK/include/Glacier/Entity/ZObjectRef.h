@@ -2,9 +2,12 @@
 
 #include "../TypeInfo/STypeID.h"
 
-class ZObjectRef
+#include <Common.h>
+
+class HitmanAbsolutionSDK_API ZObjectRef
 {
 public:
+	ZObjectRef();
 	ZObjectRef(void* pObject, STypeID* const typeID);
 	STypeID* GetTypeID() const;
 	void* GetData() const;

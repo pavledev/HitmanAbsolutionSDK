@@ -9,3 +9,13 @@ const ZContentKitList<ZOutfitKitEntity, ZOutfitKitMenuSetup, SOutfitKitSaveData,
 {
 	return m_Outfits;
 }
+
+const ZContentKitList<ZPropKitEntity, ZPropKitMenuSetup, SPropKitSaveData, SPropKitState>& ZContentKitManager::GetProps() const
+{
+	return m_Props;
+}
+
+const TMap<STokenID const, TEntityRef<ZGlobalOutfitKit>>& ZContentKitManager::GetGlobalOutfitKits() const
+{
+	return m_GlobalOutfitKits;
+}

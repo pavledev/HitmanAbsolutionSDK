@@ -19,6 +19,8 @@ class ZHitman5;
 class ZComponentCreateInfo;
 class ZMouseWindows;
 class ZKeyboardWindows;
+class ZEntityManager;
+class IEntityFactory;
 
 namespace Hooks
 {
@@ -37,4 +39,6 @@ namespace Hooks
 	inline ThisCallHook<void, ZHitman5, ZComponentCreateInfo&> ZHitman5_ZHitman5;
 	inline ThisCallHook<void, ZMouseWindows, bool> ZMouseWindows_Update;
 	inline ThisCallHook<void, ZKeyboardWindows, bool> ZKeyboardWindows_Update;
+	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_DefaultMainLoopSequence;
+	inline ThisCallHook<ZEntityType**, ZEntityManager, const ZString&, IEntityFactory*, unsigned char*> ZEntityManager_ConstructUninitializedEntity;
 }

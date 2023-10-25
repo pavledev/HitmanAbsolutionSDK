@@ -45,7 +45,8 @@ void ResourceIDRegistry::Load()
             unsigned long long hash = std::stoull(line.substr(0, line.find(' ')), nullptr, 16);
             std::string resourceID = line.substr(line.find(' ') + 1);
 
-            resourceIDs.insert(std::make_pair(hash, resourceID));
+            runtimeResourceIDsToResourceIDs.insert(std::make_pair(hash, resourceID));
+            resourceIDsToRuntimeResourceIDs.insert(std::make_pair(resourceID, hash));
 
             lastPosition = position + 1;
         }
@@ -65,21 +66,33 @@ void ResourceIDRegistry::Load()
     Logger::GetInstance().Log(Logger::Level::Info, "Sucessfully loaded hash map.");
 }
 
-std::string ResourceIDRegistry::GetResourceID(const unsigned long long runtimeResourceID) const
+const char* ResourceIDRegistry::GetResourceID(const unsigned long long runtimeResourceID) const
 {
-    auto it = resourceIDs.find(runtimeResourceID);
+    auto it = runtimeResourceIDsToResourceIDs.find(runtimeResourceID);
 
-    if (it != resourceIDs.end())
+    if (it != runtimeResourceIDsToResourceIDs.end())
     {
-        return it->second;
+        return it->second.c_str();
     }
 
     return "";
 }
 
+unsigned long long ResourceIDRegistry::GetRuntimeResourceID(const std::string& resourceID) const
+{
+    auto it = resourceIDsToRuntimeResourceIDs.find(resourceID);
+
+    if (it != resourceIDsToRuntimeResourceIDs.end())
+    {
+        return it->second;
+    }
+
+    return -1;
+}
+
 const std::unordered_map<unsigned long long, std::string>& ResourceIDRegistry::GetResourceIDs() const
 {
-    return resourceIDs;
+    return runtimeResourceIDsToResourceIDs;
 }
 
 const bool ResourceIDRegistry::IsLoaded() const

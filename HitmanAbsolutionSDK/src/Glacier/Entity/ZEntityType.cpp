@@ -17,3 +17,21 @@ SInterfaceData* ZEntityType::GetInterfaceData(const STypeID* type)
 
 	return nullptr;
 }
+
+SPropertyData* ZEntityType::GetPropertyData(const unsigned int propertyID)
+{
+	if (!m_pPropertyData)
+	{
+		return nullptr;
+	}
+
+	for (size_t i = 0; i < m_pPropertyData->Size(); ++i)
+	{
+		if ((*m_pPropertyData)[i].m_nPropertyID == propertyID)
+		{
+			return &(*m_pPropertyData)[i];
+		}
+	}
+
+	return nullptr;
+}

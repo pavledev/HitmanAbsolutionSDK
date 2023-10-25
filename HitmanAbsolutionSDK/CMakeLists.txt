@@ -29,6 +29,7 @@ target_link_libraries(HitmanAbsolutionSDK PUBLIC
 	Microsoft::DirectXTK
 	imgui-docking
 	minhook::minhook
+	winmm
 )
 
 target_compile_definitions(HitmanAbsolutionSDK PRIVATE

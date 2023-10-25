@@ -1,6 +1,6 @@
 #include <Glacier/TypeInfo/ZTypeRegistry.h>
 
-const STypeID* ZTypeRegistry::GetType(const ZString& typeName)
+STypeID* ZTypeRegistry::GetType(const ZString& typeName)
 {
 	auto iterator = m_typeNameMap.Find(typeName);
 

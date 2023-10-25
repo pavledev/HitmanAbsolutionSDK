@@ -1,7 +1,9 @@
-#include "Glacier/ZString.h"
-#include "Glacier/Memory/ZMemoryManager.h"
-#include "Glacier/Memory/IAllocator.h"
-#include "Global.h"
+#include <Glacier/ZString.h>
+#include <Glacier/Memory/ZMemoryManager.h>
+#include <Glacier/Memory/IAllocator.h>
+#include <Glacier/Serializer/ZBinarySerializer.h>
+
+#include <Global.h>
 
 ZString::ZString()
 {
@@ -42,10 +44,10 @@ ZString::ZString(const ZString& other)
 
 ZString::~ZString()
 {
-	if (IsAllocated())
+	/*if (IsAllocated())
 	{
 		Free();
-	}
+	}*/
 }
 
 unsigned int ZString::Length() const
@@ -110,11 +112,12 @@ ZString ZString::CopyFrom(const ZString& other)
 void ZString::Allocate(const char* str, size_t size)
 {
 	IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
+	char* chars = reinterpret_cast<char*>(normalAllocator->Allocate(size + 1, 0));
+
+	strncpy_s(chars, size + 1, str, size + 1);
 
 	m_length = static_cast<uint32_t>(size);
-	m_chars = reinterpret_cast<char*>(normalAllocator->Allocate(size, 0));
-
-	memcpy(const_cast<char*>(m_chars), str, size);
+	m_chars = chars;
 }
 
 void ZString::Free()
@@ -127,4 +130,44 @@ void ZString::Free()
 bool ZString::IsEmpty() const
 {
 	return Length() == 0;
+}
+
+int ZString::IndexOf(const char* rhs) const
+{
+	const char* foundPtr = strstr(m_chars, rhs);
+
+	if (foundPtr)
+	{
+		return static_cast<int>(foundPtr - m_chars);
+	}
+
+	return -1;
+}
+
+void ZString::SerializeToMemory(ZBinarySerializer& binarySerializer, const unsigned int offset)
+{
+	binarySerializer.SetLayoutPointer(binarySerializer.GetAlignedLayoutPointer(binarySerializer.GetLayoutPointer(), alignof(ZString)));
+
+	unsigned int length = Length() + 1;
+
+	unsigned int lengthOffset = offset + offsetof(ZString, m_length);
+	unsigned int charsOffset = offset + offsetof(ZString, m_chars);
+	bool useMaxAlignment = true;
+
+	if (binarySerializer.GetMaxAlignment() >= 8)
+	{
+		useMaxAlignment = false;
+	}
+
+	unsigned int charsOffset2 = binarySerializer.ReserveLayoutFor(length, sizeof(char), 1, 4, useMaxAlignment);
+
+	binarySerializer.WriteToMemory(&length, sizeof(length), charsOffset2 - 4);
+	binarySerializer.WriteToMemory(m_chars, length, charsOffset2);
+
+	unsigned int length2 = Length() | 0x40000000;
+
+	binarySerializer.WriteToMemory(&length2, sizeof(unsigned int), lengthOffset);
+	binarySerializer.WriteToMemory(&charsOffset2, sizeof(unsigned int), charsOffset);
+
+	binarySerializer.RecordOffsetForRebasing(charsOffset);
 }

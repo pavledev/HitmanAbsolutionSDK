@@ -19,3 +19,32 @@ std::string StringUtility::ToLowerCase(const std::string& string)
 
     return string2;
 }
+
+void StringUtility::Replace(std::string& string, const std::string& from, const std::string& to)
+{
+    const size_t startPos = string.find(from);
+
+    if (startPos == std::string::npos)
+    {
+        return;
+    }
+
+    string.replace(startPos, from.length(), to);
+}
+
+void StringUtility::ReplaceAll(std::string& string, const std::string& from, const std::string& to)
+{
+    if (from.empty())
+    {
+        return;
+    }
+
+    size_t startPos = 0;
+
+    while ((startPos = string.find(from, startPos)) != std::string::npos)
+    {
+        string.replace(startPos, from.length(), to);
+
+        startPos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+    }
+}

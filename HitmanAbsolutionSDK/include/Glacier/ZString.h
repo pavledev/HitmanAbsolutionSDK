@@ -4,6 +4,8 @@
 
 #include <Common.h>
 
+class ZBinarySerializer;
+
 class HitmanAbsolutionSDK_API ZString
 {
 public:
@@ -25,6 +27,8 @@ public:
 	void Allocate(const char* str, size_t size);
 	void Free();
 	bool IsEmpty() const;
+	int IndexOf(const char* rhs) const;
+	void SerializeToMemory(ZBinarySerializer& binarySerializer, const unsigned int offset);
 	
 private:
 	unsigned int m_length;

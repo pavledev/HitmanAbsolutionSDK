@@ -6,6 +6,8 @@
 #include "../Input/ZHM5InputControl.h"
 #include "../Physics/ICharacterCollision.h"
 #include "ZHM5FocusController.h"
+#include "../Resource/ZRuntimeResourceID.h"
+#include "ZHM5BaseInventory.h"
 
 class ZHM5Action;
 struct float4;
@@ -334,12 +336,16 @@ class HitmanAbsolutionSDK_API ZHitman5 : public ZHM5BaseCharacter, public IFutur
 public:
 	ZHM5MainCamera* GetMainCamera() const;
 	ZHM5InputControl* GetInputControl() const;
+	ZHM5BaseInventory* GetBaseInventory() const;
 	ZHM5FocusController* GetFocusController() const;
+	void EquipOutfitResource(ZRuntimeResourceID ridNewOutfitLibrary, const TEntityRef<IHM5Outfit> Outfit, bool bPlaceClothBundle, bool bForce);
 
 private:
 	PAD(0x3B0);
 	ZHM5InputControl* m_pInputControl; //0xA30
-	PAD(0x24);
+	PAD(0x10);
+	ZHM5BaseInventory* m_pBaseInventory; //0xA44
+	PAD(0x10);
 	ZHM5FocusController* m_pFocusController; //0xA58
 	PAD(0x238);
 	TEntityRef<ZHM5MainCamera> m_rMainCamera; //0xC94

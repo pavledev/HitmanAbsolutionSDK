@@ -1,0 +1,10 @@
+#pragma once
+
+enum EPropertyInfoFlags
+{
+	E_RUNTIME_EDITABLE = 1,
+	E_CONST_AFTER_START = 2,
+	E_STREAMABLE = 4,
+	E_MEDIA_STREAMABLE = 8,
+	E_HAS_GETTER_SETTER = 16
+};

@@ -1,0 +1,340 @@
+{
+    "outfits": [
+        {
+            "title": "Judge",
+            "description": "This robe is worn by the Anglophile Hope County Judge. The powdered wig is an homage to his recently discovered British ancestry.",
+            "hiResNotebookImage": 71590103827075752,
+            "hash": 3315743131
+        },
+        {
+            "title": "Researcher",
+            "description": "This outfit is worn by the researchers employed at the Dexter Industries research facility.",
+            "hiResNotebookImage": 4672014316603791,
+            "hash": 3741264074
+        },
+        {
+            "title": "The Patriot",
+            "description": "This is a masked wrestler's outfit, worn by the full contact fighter known as The Patriot.",
+            "hiResNotebookImage": 71679063993727545,
+            "hash": 3260711141
+        },
+        {
+            "title": "Hope Goon",
+            "description": "This outfit is worn by Blake Dexter's hired enforcers. Mostly local muscle from Hope, South Dakota.",
+            "hiResNotebookImage": 64039080496226285,
+            "hash": 3083424112
+        },
+        {
+            "title": "Blackwater Park Exterior Guard",
+            "description": "This outfit is worn by the security detail assigned to guard the compound and entrance of Blackwater Park. They are subordinate to, but have no formal connection with Blake Dexter's security force.",
+            "hiResNotebookImage": 44952796558575532,
+            "hash": 3682619428
+        },
+        {
+            "title": "Store Clerk",
+            "description": "This outfit is worn by the clerks at the Easi Mart convenience store in Chinatown, Chicago.",
+            "hiResNotebookImage": 48402079160013917,
+            "hash": 3132669896
+        },
+        {
+            "title": "Patriot's Entourage",
+            "description": "This outfit is worn by the Patriot's well-wishers and hangarounds.",
+            "hiResNotebookImage": 53313436145542274,
+            "hash": 1539898711
+        },
+        {
+            "title": "Court Usher",
+            "description": "This outfit is worn by the ushers at the Hope County Courthouse.",
+            "hiResNotebookImage": 39272783195054948,
+            "hash": 3129374773
+        },
+        {
+            "title": "Blackwater Custodian",
+            "description": "This outfit is worn by the custodian at Blackwater Park.",
+            "hiResNotebookImage": 55018825099137175,
+            "hash": 455551293
+        },
+        {
+            "title": "Mechanic",
+            "description": "This outfit is worn by the mechanics employed by Bennet's Garage. Equally adept at car repairs and concealing stolen vehicles.",
+            "hiResNotebookImage": 15553871794629625,
+            "hash": 4045218045
+        },
+        {
+            "title": "Scientist",
+            "description": "This outfit is worn by the scientists employed at the Dexter Industries research facility. The full-body hazmat suit provides protection from bodily fluids and bacteria.",
+            "hiResNotebookImage": 23807162123200212,
+            "hash": 810289006
+        },
+        {
+            "title": "Chicago SWAT Officer",
+            "description": "This outfit is worn by the Chicago PD SWAT units. The flak jacket provides extra protection against shrapnel and low-velocity projectiles.",
+            "hiResNotebookImage": 36075110163270165,
+            "hash": 1499195349
+        },
+        {
+            "title": "Electrician",
+            "description": "This outfit is worn by the electricians hired to fix the main elevator at Terminus Hotel.",
+            "hiResNotebookImage": 57676258256726255,
+            "hash": 2596670301
+        },
+        {
+            "title": "Hope Plumber",
+            "description": "This outfit is worn by the employees of the original Joe's Plumbing store in Hope, South Dakota. This fast-expanding chain now holds offices in New York, Chicago and San Francisco.",
+            "hiResNotebookImage": 12649422337942677,
+            "hash": 1409769244
+        },
+        {
+            "title": "Chicago Police Officer",
+            "description": "This uniform is worn by the officers of the Chicago PD.",
+            "hiResNotebookImage": 56785936218653908,
+            "hash": 1402454814
+        },
+        {
+            "title": "Plumber",
+            "description": "This outfit is worn by the plumber assigned to fix a broken pipe at Blackwater Park. An employee of the newly founded Joe's Plumbing Chicago branch.",
+            "hiResNotebookImage": 23236265404925222,
+            "hash": 503447535
+        },
+        {
+            "title": "Samurai",
+            "description": "This ancient Japanese armor is from the Heian period. Constructed in leather and iron. On display in Blake Dexter's trophy room.",
+            "hiResNotebookImage": 26169290280753565,
+            "hash": 3999488756
+        },
+        {
+            "title": "Tin Foil Hat Man",
+            "description": "This outfit is worn by Timothy Hawke; Hope's leading conspiracy theorist and crusader for justice. The cone-shaped tin foil hat serves as protection against UN mind control rays. If one believes in that sort of thing.",
+            "hiResNotebookImage": 32619048724944648,
+            "hash": 1772895107
+        },
+        {
+            "title": "Agent 47's Suit",
+            "description": "The iconic black suit worn by Agent 47. A slim cut, single-button suit, tailormade specifically for Agent 47 by Tommy the Tailor.",
+            "hiResNotebookImage": 56880599206552645,
+            "hash": 3347489868
+        },
+        {
+            "title": "Truck Driver",
+            "description": "This outfit is worn by the employees of the logistics department at Dexter Industries.",
+            "hiResNotebookImage": 66526527973074711,
+            "hash": 1989825624
+        },
+        {
+            "title": "Hope Police Officer",
+            "description": "This uniform is worn by the officers of the Hope County Police Department.",
+            "hiResNotebookImage": 55457809990135096,
+            "hash": 3639893213
+        },
+        {
+            "title": "Blackwater Receptionist",
+            "description": "This uniform is worn by the Blackwater Park receptionist.",
+            "hiResNotebookImage": 52968415839377060,
+            "hash": 3568015728
+        },
+        {
+            "title": "Factory Guard",
+            "description": "This outfit is worn by the security units patrolling the weapons factory compound. The attire includes a light tactical vest.",
+            "hiResNotebookImage": 31447296628688172,
+            "hash": 2068572483
+        },
+        {
+            "title": "Blackwater Tactical Team",
+            "description": "This outfit is worn by Blake Dexter's personal security force at the Blackwater Park residential building. They are led by Head of Security Mia Michaelson.",
+            "hiResNotebookImage": 19811526492098858,
+            "hash": 2635004180
+        },
+        {
+            "title": "Rosewood Security Guard",
+            "description": "This outfit is worn by the security personnel at the Rosewood orphanage.",
+            "hiResNotebookImage": 52676882185823832,
+            "hash": 3521730971
+        },
+        {
+            "title": "Scarecrow",
+            "description": "These rags belong to a scarecrow placed in the fields surrounding the Waikiki Inn.",
+            "hiResNotebookImage": 11335882586291210,
+            "hash": 3361957227
+        },
+        {
+            "title": "Chipmunk",
+            "description": "This is the official company mascot of the world-renowned Charlie Chipmunk Hot Sauce brand. Despite being somewhat conspicuous, the costume provides both concealment and bodily protection.",
+            "hiResNotebookImage": 6370548554332302,
+            "hash": 2191133929
+        },
+        {
+            "title": "Arms Dealer",
+            "description": "This is a unique outfit worn by a VIP client of Dexter Industries.",
+            "hiResNotebookImage": 14760862139817441,
+            "hash": 3879609565
+        },
+        {
+            "title": "Janitor",
+            "description": "This outfit is worn by the janitors employed at Terminus Hotel.",
+            "hiResNotebookImage": 71472709949904496,
+            "hash": 1361152462
+        },
+        {
+            "title": "Court Security Guard",
+            "description": "This outfit is worn by the security guards at the Hope County Courthouse.",
+            "hiResNotebookImage": 59241217802466586,
+            "hash": 2895513707
+        },
+        {
+            "title": "Agency Soldier",
+            "description": "This outfit is worn by ICA assault teams. The ballistic vest provides excellent protection.",
+            "hiResNotebookImage": 44138755777633963,
+            "hash": 2818023278
+        },
+        {
+            "title": "Agency Technician",
+            "description": "This outfit is worn by the ICA forensics expert. The contamination suit is standard field equipment for all technical operatives.",
+            "hiResNotebookImage": 53625257513448994,
+            "hash": 735829344
+        },
+        {
+            "title": "Agency Grunt",
+            "description": "This outfit is worn by lower level ICA combat units.",
+            "hiResNotebookImage": 40748026622549077,
+            "hash": 2472476075
+        },
+        {
+            "title": "Henchman",
+            "description": "This outfit is worn by the homicidal street thugs employed by the mercenary Wade. The mask is a practice that Wade adapted from local death squads during his years as a mercenary for the Colombian drug cartels.",
+            "hiResNotebookImage": 69692798234008620,
+            "hash": 1009069862
+        },
+        {
+            "title": "Blackwater Bodyguard",
+            "description": "This outfit is worn by the close protection units assigned to Blake Dexter.",
+            "hiResNotebookImage": 13838672913831259,
+            "hash": 2681194794
+        },
+        {
+            "title": "Hope Bouncer",
+            "description": "This outfit is worn by the bouncers employed at the Great Balls of Fire; a rough-and-tumble roadside bar on the outskirts of Hope, South Dakota.",
+            "hiResNotebookImage": 66427167197781684,
+            "hash": 3685043298
+        },
+        {
+            "title": "Blackwater Manager",
+            "description": "This uniform is worn by the building manager at Blackwater Park.",
+            "hiResNotebookImage": 64604285366571484,
+            "hash": 4290497279
+        },
+        {
+            "title": "Barber",
+            "description": "This outfit is worn by the owner of Todd's Barbershop on Main Street. Lenny Dexter is a frequent customer.",
+            "hiResNotebookImage": 39363378282170734,
+            "hash": 989154855
+        },
+        {
+            "title": "Blackwater Park Interior Guard",
+            "description": "This outfit is worn by the security detail assigned to guard the Blackwater Park lobby. They are subordinate to, but have no formal connection with Blake Dexter's security force.",
+            "hiResNotebookImage": 29035558500366496,
+            "hash": 3142948611
+        },
+        {
+            "title": "Bird Costume",
+            "description": "This iconic costume was once worn at the New Orleans Mardi Gras.",
+            "hiResNotebookImage": 61879700970612855,
+            "hash": 3710069723
+        },
+        {
+            "title": "Chef",
+            "description": "This uniform is worn by the master chef employed at Diana Burnwood's mansion.",
+            "hiResNotebookImage": 36680072835783172,
+            "hash": 2442373399
+        },
+        {
+            "title": "Factory Guard",
+            "description": "This outfit is worn by the security units patrolling the weapons factory compound. The attire includes a light tactical vest.",
+            "hiResNotebookImage": 14432176304214756,
+            "hash": 3763644546
+        },
+        {
+            "title": "Gardener",
+            "description": "This outfit is worn by the garden staff attached to Diana Burnwood's mansion.",
+            "hiResNotebookImage": 39257287618383275,
+            "hash": 3499089072
+        },
+        {
+            "title": "Hot Sauce Factory Chef",
+            "description": "This outfit is worn by a chef at the famous Charlie Chipmunk Hot Sauce factory.",
+            "hiResNotebookImage": 20010524537892198,
+            "hash": 1374984715
+        },
+        {
+            "title": "Agent 47's Brand New Suit",
+            "description": "An updated version of the iconic black suit worn by Agent 47. A slim cut, single-button suit, tailormade specifically for Agent 47 by Tommy The Tailor.",
+            "hiResNotebookImage": 56880599206552645,
+            "hash": 1033922354
+        },
+        {
+            "title": "Agent 47's Brand New Gloveless Suit",
+            "description": "An updated version of the iconic black suit worn by Agent 47. A slim cut, single-button suit, tailormade specifically for Agent 47 by Tommy The Tailor.",
+            "hiResNotebookImage": 31799259114027335,
+            "hash": 3143952214
+        },
+        {
+            "title": "Robe",
+            "description": "A complimentary cocoon silk robe from the Waikiki 5 star Motel.",
+            "hiResNotebookImage": 29211186675126284,
+            "hash": 2671471717
+        },
+        {
+            "title": "Ice Cream Truck Driver",
+            "description": "This outfit is worn by the drivers of a Chicago-based ice cream truck company.",
+            "hiResNotebookImage": 4224172047798424,
+            "hash": 1194117188
+        },
+        {
+            "title": "Mansion Interior Guard",
+            "description": "This outfit is worn by the elite security force assigned to Diana Burnwood. Primarily close protection specialists and ex-special forces officers.",
+            "hiResNotebookImage": 30813595903682622,
+            "hash": 3864366959
+        },
+        {
+            "title": "Mansion Exterior Guard",
+            "description": "This outfit is worn by the lower level security guards patrolling the outside perimeter of Diana Burnwood's mansion.",
+            "hiResNotebookImage": 10253925943670187,
+            "hash": 1889101057
+        },
+        {
+            "title": "Priest",
+            "description": "This traditional robe is worn by ministers of the Holy Roman Catholic Church.",
+            "hiResNotebookImage": 3734880833811515,
+            "hash": 604493340
+        },
+        {
+            "title": "Sewer Worker",
+            "description": "This outfit is worn by the City of Chicago sewer workers.",
+            "hiResNotebookImage": 12105049294560828,
+            "hash": 1138254233
+        },
+        {
+            "title": "Strip Club Bouncer",
+            "description": "This outfit is worn by the bouncers employed at the Vixen Club, owned by the infamous Dom Osmond.",
+            "hiResNotebookImage": 30114196328921009,
+            "hash": 3415069997
+        },
+        {
+            "title": "Market Vendor",
+            "description": "This outfit is worn by market vendors throughout Chinatown, Chicago.",
+            "hiResNotebookImage": 41969504035170237,
+            "hash": 3253292909
+        },
+        {
+            "title": "Dealer",
+            "description": "This outfit is worn by a local, street-smart drug dealer operating in Chinatown, Chicago. The main cocaine supplier for the King of Chinatown.",
+            "hiResNotebookImage": 51188129200017758,
+            "hash": 1360977537
+        },
+        {
+            "title": "Agency Heavy Trooper",
+            "description": "This outfit is worn by the ICA's tactical assault division. The ballistic vest, helmet and Kevlar reinforced combat uniform provide excellent protection.",
+            "hiResNotebookImage": 24597798439787466,
+            "hash": 3911357983
+        }
+    ]
+}

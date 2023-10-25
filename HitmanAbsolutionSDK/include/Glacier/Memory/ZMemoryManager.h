@@ -4,7 +4,7 @@
 
 #include <Common.h>
 
-class ZMemoryManager
+class HitmanAbsolutionSDK_API ZMemoryManager
 {
 public:
 	IPageAllocator* GetPageAllocator() const;

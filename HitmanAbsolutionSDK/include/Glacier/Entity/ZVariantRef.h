@@ -2,8 +2,11 @@
 
 #include "ZObjectRef.h"
 
-class ZVariantRef : public ZObjectRef
+class ZVariant;
+
+class HitmanAbsolutionSDK_API ZVariantRef : public ZObjectRef
 {
 public:
+	ZVariantRef(const ZVariant& rhs);
 	ZVariantRef(void* pObject, STypeID* const typeID);
 };

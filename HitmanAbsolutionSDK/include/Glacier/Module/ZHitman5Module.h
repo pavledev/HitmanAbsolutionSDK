@@ -8,7 +8,7 @@
 
 class ZHitman5Module : public ZSimpleModuleBase, public ZConfiguration
 {
-private:
+public:
 	PAD(0x44);
 	ZEntitySceneContext* m_pSceneContext;
 };

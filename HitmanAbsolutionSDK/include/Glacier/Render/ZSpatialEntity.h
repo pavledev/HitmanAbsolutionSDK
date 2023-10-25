@@ -12,6 +12,12 @@ struct float4;
 class HitmanAbsolutionSDK_API ZSpatialEntity : public ZEntityImpl
 {
 public:
+	enum ERoomBehaviour
+	{
+		ROOM_STATIC = 0,
+		ROOM_DYNAMIC = 1
+	};
+
 	virtual void SetVisible(bool bVisible) = 0;
 	virtual const ZBoundedEntity* QueryBoundedEntity() const = 0;
 	virtual ZBoundedEntity* QueryBoundedEntity() = 0;
@@ -35,6 +41,8 @@ public:
 
 	SMatrix GetObjectToWorldMatrix() const;
 	void SetObjectToWorldMatrix(const SMatrix& mObjectToWorld);
+	float4 GetWorldPosition() const;
+	void SetWorldPosition(const float4& vWorldPosition);
 
 private:
 	PAD(0x38);

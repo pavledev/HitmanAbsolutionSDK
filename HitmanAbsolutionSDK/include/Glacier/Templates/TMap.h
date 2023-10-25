@@ -40,11 +40,11 @@ public:
 
         if (m_container.m_tree.m_pLeftRoot)
         {
-            result.m_pCurrent = &TBinaryTreeNode<TPair<TKey, TValue>>::GetNextNode(reinterpret_cast<TBinaryTreeNode<TPair<TKey, TValue>>*>(this))->m_data;
+            result.m_pCurrent = &TBinaryTreeNode<TPair<TKey, TValue>>::GetNextNode((TBinaryTreeNode<TPair<TKey, TValue>>*)this)->m_data;
         }
         else
         {
-            result.m_pCurrent = reinterpret_cast<TPair<TKey, TValue>*>(&m_container.m_nSize);
+            result.m_pCurrent = (TPair<TKey, TValue>*)(&m_container.m_nSize);
         }
 
         return result;
@@ -54,7 +54,7 @@ public:
     {
         TBinaryTreeIterator<TPair<TKey, TValue>> result;
 
-        result.m_pCurrent = reinterpret_cast<TPair<TKey, TValue>*>(&m_container.m_nSize);
+        result.m_pCurrent = (TPair<TKey, TValue>*)(&m_container.m_nSize);
 
         return result;
     }
@@ -71,14 +71,14 @@ public:
         return End();
     }
 
-    TBinaryTreeIterator<TPair<TKey, TValue>> Find(TBinaryTreeNode<TPair<TKey, TValue>>* root, const TKey& key)
+    TBinaryTreeNode<TPair<TKey, TValue>>* Find(TBinaryTreeNode<TPair<TKey, TValue>>* root, const TKey& key)
     {
         if (root == nullptr || root->m_data == key)
         {
             return root;
         }
 
-        if (root->m_dat < key)
+        if (root->m_data < key)
         {
             return Find(root->m_pRight, key);
         }

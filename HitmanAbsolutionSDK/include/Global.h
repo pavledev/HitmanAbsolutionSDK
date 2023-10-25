@@ -26,6 +26,12 @@ class ZCollisionManager;
 class ZTypeRegistry;
 class ZContentKitManager;
 class ZResourceManager;
+class ZActorManager;
+class LocalResourceIDsResolver;
+class ZCheckPointManager;
+class ZEntityType;
+class ZVariantRef;
+class ZHM5ActionManager;
 
 extern HitmanAbsolutionSDK_API uintptr_t BaseAddress;
 extern HitmanAbsolutionSDK_API ZRenderManager* RenderManager;
@@ -45,4 +51,13 @@ extern HitmanAbsolutionSDK_API ZCollisionManager* CollisionManager;
 extern HitmanAbsolutionSDK_API ZTypeRegistry** TypeRegistry;
 extern HitmanAbsolutionSDK_API ZContentKitManager* ContentKitManager;
 extern HitmanAbsolutionSDK_API ZResourceManager* ResourceManager;
+extern HitmanAbsolutionSDK_API ZActorManager* ActorManager;
+extern HitmanAbsolutionSDK_API LocalResourceIDsResolver** LocalResourceIDsResolverSingleton;
+extern HitmanAbsolutionSDK_API ZCheckPointManager* CheckPointManager;
+extern HitmanAbsolutionSDK_API ZHM5ActionManager* HM5ActionManager;
 extern HitmanAbsolutionSDK_API bool IsEngineInitialized;
+extern HitmanAbsolutionSDK_API void* ZTemplateEntityFactoryVFTbl;
+extern HitmanAbsolutionSDK_API void* ZTemplateEntityBlueprintFactoryVFTbl;
+extern HitmanAbsolutionSDK_API void* ZAspectEntityFactoryVFTbl;
+
+HitmanAbsolutionSDK_API bool SetPropertyValue(ZEntityType** pEntity, unsigned int nPropertyID, const ZVariantRef& value, bool bInvokeChangeHandlers = true);
