@@ -10,7 +10,7 @@
 #include <Glacier/Input/ZInputActionManager.h>
 #include <Glacier/Math/ZMath.h>
 #include <Glacier/Physics/ZCollisionManager.h>
-#include <Glacier/ZActor.h>
+#include <Glacier/Actor/ZActor.h>
 
 #include "FreeCamera.h"
 #include "Global.h"
