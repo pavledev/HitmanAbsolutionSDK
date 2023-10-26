@@ -4,223 +4,260 @@
             "title": "SA .44 Auto",
             "description": "The .44 Auto is a heavy semi-automatic pistol designed specifically for handgun hunters. It combines extreme stopping power with precision over long range.",
             "hiResNotebookImage": 32138184383720041,
-            "runtimeResourceID": 56580554652875048
+            "runtimeResourceID": 56580554652875048,
+			"hash": 476753173
         },
         {
             "title": "Skurky's Mustang Snub",
             "description": "A lightweight revolver which sacrifices accuracy and recoil to pack a heavy punch. This particular revolver bears the badge of the Sheriff of Hope.",
             "hiResNotebookImage": 24963054864848218,
-            "runtimeResourceID": 13737891613987251
+            "runtimeResourceID": 13737891613987251,
+			"hash": 4208340020
         },
         {
             "title": "Silverballer",
             "description": "A high-powered semi-automatic pistol with adjustable sights and a grip safety. Damage, precision and accuracy make it the perfect choice as Agent 47's signature weapon.",
             "hiResNotebookImage": 1455230203482798,
-            "runtimeResourceID": 29413674487717638
+            "runtimeResourceID": 29413674487717638,
+			"hash": 1575676105
         },
         {
             "title": "Aries Charging Ram",
             "description": "The Charging Ram is an extremely potent revolver with plenty of stopping power. However, powerful recoil makes it difficult to control.",
             "hiResNotebookImage": 23714553467451699,
-            "runtimeResourceID": 41220691154825368
+            "runtimeResourceID": 41220691154825368,
+			"hash": 3041185398
         },
         {
             "title": "Jagd P22G",
             "description": "A modern and reliable top-tier pistol, the weapon's high accuracy makes it the preferred choice of professionals.",
             "hiResNotebookImage": 63157546433115118,
-            "runtimeResourceID": 57800742305928183
+            "runtimeResourceID": 57800742305928183,
+			"hash": 2461854180
         },
         {
             "title": "The Absolver",
             "description": "The Charging Ram is the pinnacle of revolver design, powerful and intimidating with immense stopping power. Ominously, this weapon was named 'The Absolver' by its previous owner.",
             "hiResNotebookImage": 57572163787222537,
-            "runtimeResourceID": 23124956787956895
+            "runtimeResourceID": 23124956787956895,
+			"hash": 3610853160
         },
         {
             "title": "Agency JAGD P22G",
             "description": "A modern and reliable top-tier pistol, the JAGD's high accuracy makes it the preferred choice of professionals who favour modular weapons.",
             "hiResNotebookImage": 45817093450028589,
-            "runtimeResourceID": 40084690921983740
+            "runtimeResourceID": 40084690921983740,
+			"hash": 2110907031
         },
         {
             "title": "Layla's JAGD P22G",
             "description": "A modern and reliable top-tier pistol, the JAGD's high accuracy makes it the preferred choice of professionals. This weapon belonged to Layla.",
             "hiResNotebookImage": 70106726799416947,
-            "runtimeResourceID": 13538011182736896
+            "runtimeResourceID": 13538011182736896,
+			"hash": 3454637095
         },
         {
             "title": "Pink Aries Charging Ram",
             "description": "The Charging Ram is an extremely potent revolver with plenty of stopping power. However, because of the significant recoil, some shooters find it difficult to control.",
             "hiResNotebookImage": 32254898518707582,
-            "runtimeResourceID": 23402816326539008
+            "runtimeResourceID": 23402816326539008,
+			"hash": 1240604610
         },
         {
             "title": "Agency ARZ 160",
             "description": "This next-generation assault rifle is highly effective in all battlefield roles, and can be upgraded to meet almost any tactical situation.",
             "hiResNotebookImage": 60072915633220652,
-            "runtimeResourceID": 25023030038226494
+            "runtimeResourceID": 25023030038226494,
+			"hash": 2872318762
         },
         {
             "title": "Swiss 3000",
             "description": "Swiss 3000 pistols offer an unparalleled combination of high workmanship, top class accuracy and reliability in an almost indestructible all-steel design.",
             "hiResNotebookImage": 7464972181861053,
-            "runtimeResourceID": 40356506039719655
+            "runtimeResourceID": 40356506039719655,
+			"hash": 2882205327
         },
         {
             "title": "HX AP-15",
             "description": "The AP-15 is a versatile battle rifle with a high rate of fire, and a good mix of accuracy, damage and range.",
             "hiResNotebookImage": 43405305509142168,
-            "runtimeResourceID": 70725149958260681
+            "runtimeResourceID": 70725149958260681,
+			"hash": 532195171
         },
         {
             "title": "Agency Swiss 3000",
             "description": "Swiss 3000 pistols offer an unparalleled combination of craftsmanship and reliability combined with stylish design.",
             "hiResNotebookImage": 35522611774908258,
-            "runtimeResourceID": 26185850253099288
+            "runtimeResourceID": 26185850253099288,
+			"hash": 1227342716
         },
         {
             "title": "Travis' Swiss 3000",
             "description": "Swiss 3000 pistols offer an unparalleled combination of craftsmanship and reliability combined with stylish design. This customized pistol belonged to Travis.",
             "hiResNotebookImage": 55381767778773887,
-            "runtimeResourceID": 24236427905820004
+            "runtimeResourceID": 24236427905820004,
+			"hash": 894512301
         },
         {
             "title": "STG 58",
             "description": "An older assault rifle design that still has excellent stopping power and range, it is hampered by a strong recoil, making it most effective in short, controlled bursts.",
             "hiResNotebookImage": 64327595005025241,
-            "runtimeResourceID": 51197561973305663
+            "runtimeResourceID": 51197561973305663,
+			"hash": 547214690
         },
         {
             "title": "Aries 24-7",
             "description": "The Aries 24/7 is an unremarkable combat pistol, easily controllable and with a good cyclic rate. It is upstaged by other, more specialized handguns, but remains a viable choice as a side arm.",
             "hiResNotebookImage": 35141655736910011,
-            "runtimeResourceID": 3789775192607964
+            "runtimeResourceID": 3789775192607964,
+			"hash": 3704253567
         },
         {
             "title": "Worn Z&M Model 60",
             "description": "A lightweight revolver sacrifices accuracy and recoil to pack a heavy punch. Favored by law enforcement officers, this revolver is heavily worn, but still functional.",
             "hiResNotebookImage": 65813192529924948,
-            "runtimeResourceID": 34640638567738722
+            "runtimeResourceID": 34640638567738722,
+			"hash": 1699415459
         },
         {
             "title": "STG 58 Elite",
             "description": "A compact, modernized version of the STG 58, the Elite variant provides an improved rate of fire, making it a highly effective battle rifle.",
             "hiResNotebookImage": 16572105487172052,
-            "runtimeResourceID": 52905467785259616
+            "runtimeResourceID": 52905467785259616,
+			"hash": 2368004037
         },
         {
             "title": "Worn M590 12ga",
             "description": "Intended for use in harsh conditions, such as combat or hunting waterfowl, the M590 pump-action shotgun is easy to clean and maintain. This particular gun is heavily worn, but still functional.",
             "hiResNotebookImage": 2418215736090825,
-            "runtimeResourceID": 27609507277970603
+            "runtimeResourceID": 27609507277970603,
+			"hash": 1934714184
         },
         {
             "title": "Z&M Model 60",
             "description": "A lightweight revolver chambered for a hard-hitting .38 round. It is easy to carry and use effectively, making it a firm favorite with law enforcement officers.",
             "hiResNotebookImage": 64132258696135054,
-            "runtimeResourceID": 36658799267091139
+            "runtimeResourceID": 36658799267091139,
+			"hash": 3653089698
         },
         {
             "title": "Police M590 12GA",
             "description": "This M590 is a polymer-cased paramilitary pump-action shotgun. Its reduced weight makes it a highly effective weapon in situations where brute force is the deciding factor.",
             "hiResNotebookImage": 2812555597272374,
-            "runtimeResourceID": 49794841198910833
+            "runtimeResourceID": 49794841198910833,
+			"hash": 1664506614
         },
         {
             "title": "Mustang Snub",
             "description": "The Mustang is a compact, yet powerful revolver with significant stopping power.",
             "hiResNotebookImage": 16533620847172641,
-            "runtimeResourceID": 39899523401311037
+            "runtimeResourceID": 39899523401311037,
+			"hash": 2866294630
         },
         {
             "title": "SPS 12",
             "description": "A brutal semi-automatic shotgun. Its semi-automatic action allows it fire faster than any other shotgun, with the same devastating effect.",
             "hiResNotebookImage": 49361680402446952,
-            "runtimeResourceID": 67193248890158548
+            "runtimeResourceID": 67193248890158548,
+			"hash": 3140963856
         },
         {
             "title": "Agency SPS 12",
             "description": "A brutal semi-automatic shotgun that can be modified to fit a variety of tactical roles, making it a good choice for operations where discretion is unimportant.",
             "hiResNotebookImage": 3665040351197696,
-            "runtimeResourceID": 6396494343874544
+            "runtimeResourceID": 6396494343874544,
+			"hash": 4076190780
         },
         {
             "title": "SPS 12 Compact",
             "description": "This is a compact version of the SPS 12. It is concealable, making it a favorite of close-protection details (and assassins). It is hard to control in full-auto due to the lack of a stock.",
             "hiResNotebookImage": 58389343120933649,
-            "runtimeResourceID": 24405182327643778
+            "runtimeResourceID": 24405182327643778,
+			"hash": 3645515207
         },
         {
             "title": "AH 74U",
             "description": "The AH 74U SMG bears many similarities to assault rifles, including good stopping power and fire rate. However, the high recoil makes for an impractical weapon at range.",
             "hiResNotebookImage": 59094289346413101,
-            "runtimeResourceID": 38987105672537766
+            "runtimeResourceID": 38987105672537766,
+			"hash": 3805849906
         },
         {
             "title": "HX UMP",
             "description": "A powerful tactical SMG. This weapon has an excellent combination of attributes that make it a strong choice for the urban combat environment.",
             "hiResNotebookImage": 17666792311677383,
-            "runtimeResourceID": 36810095496072811
+            "runtimeResourceID": 36810095496072811,
+			"hash": 1933349261
         },
         {
             "title": "Agency HX UMP",
             "description": "A powerful, high-caliber tactical SMG. This weapon has an excellent combination of attributes and a wide range of customization options to fit any tactical environment.",
             "hiResNotebookImage": 67091888696143661,
-            "runtimeResourceID": 21715755916722916
+            "runtimeResourceID": 21715755916722916,
+			"hash": 1537995458
         },
         {
             "title": "Agency Dynamics CPW",
             "description": "The Dynamics CPW was originally designed as a backup weapon. Its modular design and light caliber makes it a flexible, adaptable weapon that can be dual-wielded.",
             "hiResNotebookImage": 31984990573031580,
-            "runtimeResourceID": 66276205077041538
+            "runtimeResourceID": 66276205077041538,
+			"hash": 336150250
         },
         {
             "title": "Zug TMP",
             "description": "The Zug TMP is an extremely compact SMG with an impressive rate of fire. The weapon's size and caliber round makes it possible to effectively use two at once.",
             "hiResNotebookImage": 54767694992820426,
-            "runtimeResourceID": 15433964571682621
+            "runtimeResourceID": 15433964571682621,
+			"hash": 2312347
         },
         {
             "title": "Ilyon R700",
             "description": "A classic hunting rifle, fitted with a scope for long range precision shots. It is not a dedicated marksman's rifle, but is a serviceable option in lieu of a specialist weapon.",
             "hiResNotebookImage": 62507010568965335,
-            "runtimeResourceID": 7890340879240170
+            "runtimeResourceID": 7890340879240170,
+			"hash": 1554216869
         },
         {
             "title": "Kazo TRG",
             "description": "The Kazo TRG is almost unique in being a purpose-designed sharpshooter rifle. Deadly, adaptable and accurate, the Kazo is 47's preferred tool for sniping.",
             "hiResNotebookImage": 45230406759019141,
-            "runtimeResourceID": 28044063628104526
+            "runtimeResourceID": 28044063628104526,
+			"hash": 2165471480
         },
         {
             "title": "M590 12ga",
             "description": "Intended for use in harsh conditions, such as combat or hunting waterfowl, the M590 pump-action shotgun is both effective, and easy to maintain.",
             "hiResNotebookImage": 63647653591527881,
-            "runtimeResourceID": 32278699022691456
+            "runtimeResourceID": 32278699022691456,
+			"hash": 1513815721
         },
         {
             "title": "Swiss Derringer",
             "description": "Because of their small size and easy availability, Derringers sometimes had a dubious reputation for being an assassin's firearm. This one belonged to Lenny.",
             "hiResNotebookImage": 68747246024401552,
-            "runtimeResourceID": 49790982509346806
+            "runtimeResourceID": 49790982509346806,
+			"hash": 3823819082
         },
         {
             "title": "Dexter's Ultramax",
             "description": "A light machine gun with a box magazine. It trades range and firepower for portability, and is a deadly addition to 47's arsenal. This weapon belonged to Dexter.",
             "hiResNotebookImage": 43564456252901573,
-            "runtimeResourceID": 50692098308250903
+            "runtimeResourceID": 50692098308250903,
+			"hash": 3760310151
         },
         {
             "title": "Agency Kazo TRG",
             "description": "The Kazo TRG is almost unique in being a purpose-designed sharpshooter rifle. Deadly, adaptable and accurate, the Kazo is 47's preferred tool for sniping.",
             "hiResNotebookImage": 34100683455378362,
-            "runtimeResourceID": 59379122694257819
+            "runtimeResourceID": 59379122694257819,
+			"hash": 2251163725
         },
         {
             "title": "Black Kazo TRG",
             "description": "The Kazo TRG is almost unique in being a purpose-designed sharpshooter rifle. Deadly, adaptable and accurate, the Kazo is 47's preferred tool for sniping.",
             "hiResNotebookImage": 62869034971456040,
-            "runtimeResourceID": 13012191870414396
+            "runtimeResourceID": 13012191870414396,
+			"hash": 3731704541
         }
     ]
 }
