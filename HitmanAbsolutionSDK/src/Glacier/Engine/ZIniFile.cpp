@@ -4,6 +4,7 @@
 #include <Glacier/Engine/ZIniFile.h>
 
 #include <Global.h>
+#include <Function.h>
 
 bool ZIniFile::LoadIniFileContent(const ZFilePath& plainTextIniFilePath, TArray<unsigned char>& aBuffer, bool bPlainText)
 {
