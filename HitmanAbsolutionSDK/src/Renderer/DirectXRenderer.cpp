@@ -10,6 +10,7 @@
 #include "Hooks.h"
 #include "Mutex.h"
 #include "Connection/PipeServer.h"
+#include "SDK.h"
 
 DirectXRenderer::DirectXRenderer()
 {
@@ -66,10 +67,9 @@ bool DirectXRenderer::Setup()
 		return false;
 	}
 
-	constexpr const wchar_t* regularFontPath = L"assets/fonts/GenEiGothicPro-Regular.otf";
+	constexpr const wchar_t* robotoRegularFontPath = L"assets/fonts/Roboto-Regular.spritefont";
 
-	//font = std::make_unique<DirectX::SpriteFont>(device, regularFontPath);
-
+	font = std::make_unique<DirectX::SpriteFont>(device, robotoRegularFontPath);
 	spriteBatch = std::make_unique<DirectX::SpriteBatch>(immediateContext);
 
 	D3D11_VIEWPORT viewport = { 0.0f, 0.0f, windowWidth, windowHeight, D3D11_MIN_DEPTH, D3D11_MAX_DEPTH };
@@ -157,7 +157,7 @@ void DirectXRenderer::Render()
 	spriteBatch->Begin();
 	lineBatch->Begin();
 
-	//Draw
+	SDK::GetInstance().OnDraw3D();
 
 	lineBatch->End();
 	spriteBatch->End();

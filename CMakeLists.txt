@@ -18,6 +18,7 @@ set(MODS
 	FreeCamera
 	StartingOutfitAndWeaponModifier
 	Player
+	Actors
 )
 
 foreach(MOD IN LISTS MODS)

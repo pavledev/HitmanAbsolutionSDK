@@ -216,9 +216,9 @@ bool ResourceUtility::CreateAndInstallDynamicResourceLibrary(ZDynamicResourceLib
 
 bool ResourceUtility::InstallDynamicResourceLibrary(ZDynamicResourceLibrary*& dynamicResourceLibrary, const std::string& headerLibraryResourceID, ZRuntimeResourceID& tempRuntimeResourceID, const unsigned int entityCount)
 {
-	const ZRuntimeResourceID headerLibraryRuntimeResourceHID = ZRuntimeResourceID::QueryRuntimeResourceID(headerLibraryResourceID.c_str());
+	const ZRuntimeResourceID headerLibraryRuntimeResourceID = ZRuntimeResourceID::QueryRuntimeResourceID(headerLibraryResourceID.c_str());
 
-	return InstallDynamicResourceLibrary(dynamicResourceLibrary, headerLibraryRuntimeResourceHID, tempRuntimeResourceID, entityCount);
+	return InstallDynamicResourceLibrary(dynamicResourceLibrary, headerLibraryRuntimeResourceID, tempRuntimeResourceID, entityCount);
 }
 
 bool ResourceUtility::InstallDynamicResourceLibrary(ZDynamicResourceLibrary*& dynamicResourceLibrary, const ZRuntimeResourceID& headerLibraryRuntimeResourceID, ZRuntimeResourceID& tempRuntimeResourceID, const unsigned int entityCount)

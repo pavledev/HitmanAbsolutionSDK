@@ -55,7 +55,7 @@ ZRuntimeResourceID ZRuntimeResourceID::QueryRuntimeResourceID(const ZResourceID&
         runtimeResourceID = Hash::GetMD5(resourceID);
     }
 
-    if (LocalResourceIDsResolverSingleton && !idResource.IsLibraryResource())
+    if (LocalResourceIDsResolverSingleton && !runtimeResourceID.IsLibraryResource())
     {
         (*LocalResourceIDsResolverSingleton)->RecordMapping(runtimeResourceID, idResource);
     }

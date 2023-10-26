@@ -13,6 +13,11 @@ ZRuntimeResourceID ZActor::GetHMAsResourceID() const
 	return m_pCharacterTemplate.GetRawPointer()->GetHMAsResourceID();
 }
 
+TArray<TEntityRef<IHM5Item>>& ZActor::GetRuntimeInventory()
+{
+	return m_runtimeInventory;
+}
+
 void ZActor::KillActor(EActorDeathType eDeathType, bool bDeathVisible)
 {
 	Function::CallMethod<ZActor*, EActorDeathType, bool>(BaseAddress + 0x174790, this, eDeathType, bDeathVisible);
