@@ -92,7 +92,7 @@ Player::Player()
     getOutfitAction = ZInputAction("GetOufit");
     getModelAction = ZInputAction("GetModel");
     changeOutfitAction = ZInputAction("ChangeOutfit");
-    teleportAction = ZInputAction("Teleport2");
+    teleportAction = ZInputAction("TeleportHitman");
 
     spawnWeapon = false;
     spawnItem = false;
@@ -215,10 +215,20 @@ void Player::OnDefaultMainLoopSequence()
     if (spawnWeapon)
     {
         SpawnWeapon(fireArmKitEntities[selectedWeaponIndex].runtimeResourceID, weaponCount, addWeaponToWorld);
+
+        if (!addWeaponToWorld)
+        {
+            spawnWeapon = false;
+        }
     }
     else if (spawnItem)
     {
         SpawnItem(propKitEntities[selectedItemIndex].runtimeResourceID, itemCount, addItemToWorld);
+
+        if (!addItemToWorld)
+        {
+            spawnItem = false;
+        }
     }
     else if (spawnProp)
     {
@@ -253,18 +263,59 @@ void Player::OnConstructUninitializedEntity(IEntityFactory* pEntityFactory, ZEnt
             }
         }
 
+        static unsigned int spawnedWeaponCount = 1;
+        static unsigned int spawnedItemCount = 1;
+        static unsigned int spawnedPropCount = 1;
+
         if (spawnWeapon)
         {
-            spawnWeapon = false;
+            if (spawnedWeaponCount == weaponCount)
+            {
+                spawnedWeaponCount = 1;
+
+                if (spawnWeapon)
+                {
+                    spawnWeapon = false;
+                }
+            }
+            else
+            {
+                ++spawnedWeaponCount;
+            }
         }
         else if (spawnItem)
         {
-            spawnItem = false;
+            if (spawnedItemCount == itemCount)
+            {
+                spawnedItemCount = 1;
+
+                if (spawnItem)
+                {
+                    spawnItem = false;
+                }
+            }
+            else
+            {
+                ++spawnedItemCount;
+            }
         }
         else if (spawnProp)
         {
-            spawnProp = false;
+            if (spawnedPropCount == propCount)
+            {
+                spawnedPropCount = 1;
+
+                if (spawnProp)
+                {
+                    spawnProp = false;
+                }
+            }
+            else
+            {
+                ++spawnedPropCount;
+            }
         }
+
     }
     else if (spawnActor && ZAspectEntityFactoryVFTbl == *reinterpret_cast<void**>(pEntityFactory))
     {
@@ -288,9 +339,23 @@ void Player::OnConstructUninitializedEntity(IEntityFactory* pEntityFactory, ZEnt
             }
         }
 
+        static unsigned int spawnedActorCount = 1;
+
         if (spawnActor)
         {
-            spawnActor = false;
+            if (spawnedActorCount == actorCount)
+            {
+                spawnedActorCount = 1;
+
+                if (spawnActor)
+                {
+                    spawnActor = false;
+                }
+            }
+            else
+            {
+                ++spawnedActorCount;
+            }
         }
     }
 }
@@ -921,6 +986,7 @@ void Player::RenderActorsTabItem()
     {
         actorCount = std::atoi(numberOfActorsToSpawn);
         spawnActor = true;
+        spawnCivilianActor = button == 1;
     }
 
     ImGui::EndTabItem();
