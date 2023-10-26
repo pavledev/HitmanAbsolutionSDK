@@ -1,7 +1,8 @@
 #pragma once
 
+#include <cstddef>
+
 #include "TIterator.h"
-#include "Function.h"
 #include "TBinaryTreeNode.h"
 
 template <typename T>
