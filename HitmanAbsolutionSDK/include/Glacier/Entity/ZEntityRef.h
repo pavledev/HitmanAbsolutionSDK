@@ -44,6 +44,29 @@ public:
 		return nullptr;
 	}
 
+	template <typename T>
+	const bool HasInterface() const
+	{
+		if (!*TypeRegistry)
+		{
+			return false;
+		}
+
+		const STypeID* typeID = (*TypeRegistry)->GetType(GlacierTypeName<T>);
+
+		if (typeID)
+		{
+			void* interfacePtr = QueryInterfacePtr(typeID);
+
+			if (interfacePtr)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	ZVariant GetProperty(const ZString& propertyName);
 	ZVariant GetProperty(const unsigned int propertyID);
 	bool SetProperty(const unsigned int propertyID, const ZVariantRef& value, bool invokeChangeHandlers = true);

@@ -15,9 +15,13 @@ class ZIllegalActionEntity;
 class ZSpatialEntity;
 class ZTextListData;
 
-class ZHM5Action : public ZEntityImpl
+class HitmanAbsolutionSDK_API ZHM5Action : public ZEntityImpl
 {
 public:
+	EActionType GetActionType() const;
+	TEntityRef<IEntity> GetActionObject() const;
+
+private:
 	EActionType m_eActionType;
 	ZEntityRef m_Object;
 	TEntityRef<ZBoxVolumeEntity> m_rActivateBoxVolume;

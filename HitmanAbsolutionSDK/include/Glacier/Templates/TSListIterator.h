@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "TIterator.h"
 #include "TSListNode.h"
 

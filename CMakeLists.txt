@@ -19,6 +19,7 @@ set(MODS
 	StartingOutfitAndWeaponModifier
 	Player
 	Actors
+	Items
 )
 
 foreach(MOD IN LISTS MODS)

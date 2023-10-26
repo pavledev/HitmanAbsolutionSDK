@@ -19,7 +19,7 @@ public:
 
 	TSListIterator<T> End()
 	{
-		return TSListIterator<T>(nullptr);
+		return TSListIterator<T>(reinterpret_cast<T*>(this + 1));
 	}
 
 	TSListIterator<T> Find(const T& element)
@@ -40,6 +40,30 @@ public:
 		}
 
 		return result;
+	}
+
+	T& operator[](unsigned int index)
+	{
+		TSListNode<T>* current = m_list.m_pFirst;
+
+		for (unsigned int i = 0; i < index; ++i)
+		{
+			current = current->m_pNext;
+		}
+
+		return current->m_data;
+	}
+
+	const T& operator[](unsigned int index) const
+	{
+		TSListNode<T>* current = m_list.m_pFirst;
+
+		for (unsigned int i = 0; i < index; ++i)
+		{
+			current = current->m_pNext;
+		}
+
+		return current->m_data;
 	}
 
 private:

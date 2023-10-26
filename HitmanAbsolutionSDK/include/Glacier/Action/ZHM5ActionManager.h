@@ -7,7 +7,7 @@
 
 class ZAABBTreeNode;
 
-class ZHM5ActionManager : public IComponentInterface
+class HitmanAbsolutionSDK_API ZHM5ActionManager : public IComponentInterface
 {
 public:
 	struct SActionTreeEntry
@@ -16,6 +16,9 @@ public:
 		void* m_pObjectNode;
 	};
 
+	TSList<SActionTreeEntry>& GetActions();
+
+private:
 	TSList<SActionTreeEntry> m_Actions;
 	ZAABBTreeNode* m_pAABBActionTree;
 	TSList<ZHM5Action*> m_ObjectlessActions;
