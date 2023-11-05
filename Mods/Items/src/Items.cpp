@@ -15,7 +15,7 @@ Items::Items()
 
 void Items::OnDrawMenu()
 {
-    if (ImGui::Button(ICON_MD_MAN " Items"))
+    if (ImGui::Button(ICON_MD_BUILD " Items"))
     {
         isOpen = !isOpen;
     }
