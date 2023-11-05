@@ -66,7 +66,7 @@ void StartingOutfitAndWeaponModifier::OnEngineInitialized()
 
 void StartingOutfitAndWeaponModifier::OnDrawMenu()
 {
-    if (ImGui::Button(ICON_MD_SPORTS_ESPORTS " Starting Outfit And Weapon Modifier"))
+    if (ImGui::Button(ICON_MD_TUNE " Starting Outfit And Weapon Modifier"))
     {
         isOpen = !isOpen;
     }
