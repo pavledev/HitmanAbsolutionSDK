@@ -1,5 +1,8 @@
 #include <directxtk/DDSTextureLoader.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include "Glacier/Render/ZRenderManager.h"
 #include "Glacier/ZLevelManager.h"
 #include "Glacier/ZGraphicsSettingsManager.h"
@@ -357,4 +360,74 @@ void DirectXRenderer::CreateDDSTextureFromMemory(const void* data, const unsigne
 
 		texture2D->Release();
 	}
+}
+
+void DirectXRenderer::LoadTextureFromFile(const char* textureFilePath, ID3D11Texture2D** texture, ID3D11ShaderResourceView** texureView, unsigned int& width, unsigned int& height)
+{
+	ID3D11Device* device = RenderManager->GetRenderDevice()->GetDirect3DDevice();
+	int imageWidth = 0;
+	int imageHeight = 0;
+	unsigned char* imageData = stbi_load(textureFilePath, &imageWidth, &imageHeight, nullptr, 4);
+
+	if (!imageData)
+	{
+		Logger::GetInstance().Log(Logger::Level::Error, "Failed to load texture!");
+
+		return;
+	}
+
+	width = static_cast<unsigned int>(imageWidth);
+	height = static_cast<unsigned int>(imageHeight);
+
+	D3D11_TEXTURE2D_DESC desc;
+
+	ZeroMemory(&desc, sizeof(desc));
+
+	desc.Width = width;
+	desc.Height = height;
+	desc.MipLevels = 1;
+	desc.ArraySize = 1;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.SampleDesc.Count = 1;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA subResource;
+	subResource.pSysMem = imageData;
+	subResource.SysMemPitch = desc.Width * 4;
+	subResource.SysMemSlicePitch = 0;
+
+	HRESULT result = device->CreateTexture2D(&desc, &subResource, texture);
+
+	if (FAILED(result))
+	{
+		Logger::GetInstance().Log(Logger::Level::Error, "Failed to create texture!");
+
+		stbi_image_free(imageData);
+
+		return;
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+
+	ZeroMemory(&srvDesc, sizeof(srvDesc));
+
+	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = desc.MipLevels;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+
+	result = device->CreateShaderResourceView(*texture, &srvDesc, texureView);
+
+	if (FAILED(result))
+	{
+		Logger::GetInstance().Log(Logger::Level::Error, "Failed to create DDS texture!");
+
+		stbi_image_free(imageData);
+
+		return;
+	}
+
+	stbi_image_free(imageData);
 }

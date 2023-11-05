@@ -32,3 +32,8 @@ void ZResourceStub::Release()
 		ResourceManager->ReleaseStub(this);
 	}
 }
+
+ZResourcePtr ZResourceStub::GetInstallDependency(unsigned int nIndex) const
+{
+	return m_resourceReferences[nIndex].m_pResource;
+}

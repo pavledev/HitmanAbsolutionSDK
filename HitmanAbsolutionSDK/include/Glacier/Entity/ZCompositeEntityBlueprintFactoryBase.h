@@ -2,10 +2,10 @@
 
 #include "ZEntityBlueprintFactoryBase.h"
 
-class ZCompositeEntityBlueprintFactoryBase : public ZEntityBlueprintFactoryBase
+class HitmanAbsolutionSDK_API ZCompositeEntityBlueprintFactoryBase : public ZEntityBlueprintFactoryBase
 {
 public:
-	virtual ~ZCompositeEntityBlueprintFactoryBase() = 0;
+	virtual ~ZCompositeEntityBlueprintFactoryBase() = default;
 
 	int GetSubEntitiesCount() const;
 	ZEntityType** GetSubEntity(ZEntityType** pRootEntity, unsigned int index) const;

@@ -14,3 +14,18 @@ ZEntityType* ZTemplateEntityBlueprintFactory::GetSubEntityType(unsigned int nSub
 {
 	return m_blueprintResources[nSubEntity]->GetFactoryEntityType();
 }
+
+IEntityBlueprintFactory* ZTemplateEntityBlueprintFactory::GetBlueprintResource(const unsigned int entityIndex) const
+{
+	return m_blueprintResources[entityIndex];
+}
+
+const int ZTemplateEntityBlueprintFactory::GetRootEntityIndex() const
+{
+	return m_rootEntityIndex;
+}
+
+const ZRuntimeResourceID& ZTemplateEntityBlueprintFactory::GetRuntimeResourceID() const
+{
+	return m_ridResource;
+}

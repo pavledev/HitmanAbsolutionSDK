@@ -16,6 +16,7 @@ public:
 	ZVariant(STypeID* type, const void* pData);
 	ZVariant(const ZVariantRef& rhs);
 	ZVariant(const ZVariant& rhs);
+	~ZVariant();
 	void Set(const ZVariantRef& rhs);
 	void Set(const ZVariant& rhs);
 	void Set(STypeID* type);

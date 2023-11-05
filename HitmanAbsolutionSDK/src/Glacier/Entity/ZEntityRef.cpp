@@ -1,5 +1,6 @@
 #include <Glacier/Entity/ZEntityRef.h>
 #include <Glacier/Entity/ZObjectRef.h>
+#include <Glacier/ZCurve.h>
 
 ZEntityRef::ZEntityRef()
 {
@@ -48,6 +49,11 @@ void* ZEntityRef::QueryInterfacePtr(const STypeID* interfaceID) const
 	return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(m_pEntityTypePtrPtr) + interfaceData->m_nInterfaceOffset);
 }
 
+TArray<SPropertyData>* ZEntityRef::GetProperties()
+{
+	return m_pEntityTypePtrPtr[0]->GetProperties();
+}
+
 ZVariant ZEntityRef::GetProperty(const ZString& propertyName)
 {
 	const unsigned int propertyID = Hash::Crc32(propertyName.ToCString(), propertyName.Length());
@@ -88,4 +94,14 @@ bool ZEntityRef::SetProperty(const unsigned int propertyID, const ZVariantRef& v
 bool ZEntityRef::SetProperty(const ZString& propertyName, const ZVariantRef& value, bool invokeChangeHandlers)
 {
 	return SetProperty(Hash::Crc32(propertyName.ToCString(), propertyName.Length()), value, invokeChangeHandlers);
+}
+
+TArray<SPinData>* ZEntityRef::GetInputPins()
+{
+	return m_pEntityTypePtrPtr[0]->GetInputPins();
+}
+
+TArray<SPinData>* ZEntityRef::GetOutputPins()
+{
+	return m_pEntityTypePtrPtr[0]->GetOutputPins();
 }

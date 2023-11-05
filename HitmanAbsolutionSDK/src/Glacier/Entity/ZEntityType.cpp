@@ -35,3 +35,18 @@ SPropertyData* ZEntityType::GetPropertyData(const unsigned int propertyID)
 
 	return nullptr;
 }
+
+TArray<SPropertyData>* ZEntityType::GetProperties()
+{
+	return m_pPropertyData;
+}
+
+TArray<SPinData>* ZEntityType::GetInputPins()
+{
+	return m_pInputPins;
+}
+
+TArray<SPinData>* ZEntityType::GetOutputPins()
+{
+	return m_pOutputPins;
+}

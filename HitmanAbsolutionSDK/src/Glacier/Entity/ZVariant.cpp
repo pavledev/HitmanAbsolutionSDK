@@ -28,6 +28,34 @@ ZVariant::ZVariant(const ZVariant& rhs) : ZObjectRef()
 	Set(rhs.m_TypeID, rhs.m_pData);
 }
 
+ZVariant::~ZVariant()
+{
+	STypeID* voidTypeID = (*TypeRegistry)->GetType("void");
+
+	if (m_TypeID != voidTypeID)
+	{
+		if (m_TypeID->flags == 2)
+		{
+			if (m_pData)
+			{
+				IPageAllocator* pageAllocator = MemoryManager->GetPageAllocator();
+				IAllocator* normalAllocator = nullptr;
+
+				if (!pageAllocator || !(normalAllocator = pageAllocator->GetAllocator(m_pData)))
+				{
+					normalAllocator = MemoryManager->GetNormalAllocator();
+				}
+
+				normalAllocator->Free(m_pData);
+			}
+		}
+		else
+		{
+			m_TypeID->pTypeInfo->DestructAndFree(m_pData);
+		}
+	}
+}
+
 void ZVariant::Set(const ZVariantRef& rhs)
 {
 	Set(rhs.GetTypeID(), rhs.GetData());
@@ -91,6 +119,8 @@ void ZVariant::Set(STypeID* type, const void* pData)
 		{
 			m_pData = normalAllocator->Allocate(typeID->pTypeInfo->GetTypeSize(), 0);
 
+			memset(m_pData, 0, type->pTypeInfo->GetTypeSize());
+
 			m_TypeID->pTypeInfo->PlacementConstruct(m_pData, pData);
 		}
 	}
@@ -104,6 +134,8 @@ void ZVariant::Allocate(STypeID* type)
 
 	m_TypeID = type;
 	m_pData = normalAllocator->AllocateAligned(type->pTypeInfo->GetTypeSize(), type->pTypeInfo->GetTypeAlignment(), 0);
+
+	memset(m_pData, 0, type->pTypeInfo->GetTypeSize());
 }
 
 void ZVariant::Clear()

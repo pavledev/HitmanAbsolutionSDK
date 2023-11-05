@@ -2,6 +2,6 @@
 
 #include "../IComponentInterface.h"
 
-class IModule : public IComponentInterface
+class HitmanAbsolutionSDK_API IModule : public IComponentInterface
 {
 };

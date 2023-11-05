@@ -115,7 +115,7 @@ public:
             nodeIndex = node->m_iNext;
         }
 
-        return node->m_data.m_value;
+        return node->m_data.Value();
     }
 
     bool Contains(const TKey& key) const

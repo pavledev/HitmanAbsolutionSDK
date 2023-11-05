@@ -2,10 +2,10 @@
 
 #include "IEntityBlueprintFactory.h"
 
-class ZEntityBlueprintFactoryBase : public IEntityBlueprintFactory
+class HitmanAbsolutionSDK_API ZEntityBlueprintFactoryBase : public IEntityBlueprintFactory
 {
 public:
-	virtual ~ZEntityBlueprintFactoryBase() = 0;
+	virtual ~ZEntityBlueprintFactoryBase() = default;
 	virtual void OnOrphanedResource() = 0;
 
 protected:

@@ -2,6 +2,6 @@
 
 #include "IModule.h"
 
-class ZSimpleModuleBase : public IModule
+class HitmanAbsolutionSDK_API ZSimpleModuleBase : public IModule
 {
 };

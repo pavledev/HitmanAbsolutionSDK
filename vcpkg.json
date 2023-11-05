@@ -4,6 +4,7 @@
     "dependencies": [
         "directxtk",
         "minhook",
-        "rapidjson"
+        "rapidjson",
+        "stb"
     ]
 }

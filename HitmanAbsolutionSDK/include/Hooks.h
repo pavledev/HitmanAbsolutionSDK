@@ -21,6 +21,9 @@ class ZMouseWindows;
 class ZKeyboardWindows;
 class ZEntityManager;
 class IEntityFactory;
+class ZTemplateEntityBlueprintFactory;
+struct STemplateEntityBlueprint;
+class ZResourcePending;
 
 namespace Hooks
 {
@@ -41,4 +44,5 @@ namespace Hooks
 	inline ThisCallHook<void, ZKeyboardWindows, bool> ZKeyboardWindows_Update;
 	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_DefaultMainLoopSequence;
 	inline ThisCallHook<ZEntityType**, ZEntityManager, const ZString&, IEntityFactory*, unsigned char*> ZEntityManager_ConstructUninitializedEntity;
+	inline ThisCallHook<void, ZTemplateEntityBlueprintFactory, STemplateEntityBlueprint*, ZResourcePending&> ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory;
 }

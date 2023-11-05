@@ -8,7 +8,7 @@
 #include "SSceneInitParameters.h"
 #include "ISceneEntity.h"
 
-class ZEntitySceneContext : public IEntitySceneContext
+class HitmanAbsolutionSDK_API ZEntitySceneContext : public IEntitySceneContext
 {
 public:
 	virtual void AddEntity(const ZEntityRef& entity, IEntityFactory* pFactory) = 0;
@@ -35,6 +35,9 @@ public:
 	virtual void ResetSceneResources() = 0;
 	virtual void SetSceneInitParameters(const SSceneInitParameters& params) = 0;
 	virtual bool IsLoaded() = 0;
+
+	TResourcePtr<IEntityBlueprintFactory>& GetSceneBlueprintResource();
+	ZEntityRef GetLoadedScene();
 
 private:
 	ZRuntimeResourceID m_ridSceneFactory;

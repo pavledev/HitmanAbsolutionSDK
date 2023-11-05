@@ -5,10 +5,12 @@
 
 struct SEntityProxyData;
 
-class ZAspectEntityBlueprintFactory : public ZCompositeEntityBlueprintFactoryBase
+class HitmanAbsolutionSDK_API ZAspectEntityBlueprintFactory : public ZCompositeEntityBlueprintFactoryBase
 {
 public:
 	virtual ~ZAspectEntityBlueprintFactory() = default;
+
+	IEntityBlueprintFactory* GetAspectFactory(const unsigned int index) const;
 
 private:
 	ZEntityType* m_pFactoryEntityType;

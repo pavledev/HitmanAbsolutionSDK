@@ -3,17 +3,19 @@
 #include "ZCompositeEntityBlueprintFactoryBase.h"
 #include "../ZBitArray.h"
 #include "../Resource/ZRuntimeResourceID.h"
+#include "SPinInfo.h"
 
-struct SPinInfo;
-
-class ZTemplateEntityBlueprintFactory : public ZCompositeEntityBlueprintFactoryBase
+class HitmanAbsolutionSDK_API ZTemplateEntityBlueprintFactory : public ZCompositeEntityBlueprintFactoryBase
 {
 public:
-	virtual ~ZTemplateEntityBlueprintFactory() = 0;
+	virtual ~ZTemplateEntityBlueprintFactory() = default;
 
 	int GetSubEntitiesCount() const;
 	ZEntityType** GetSubEntity(ZEntityType** pEntity, int index) const;
 	ZEntityType* GetSubEntityType(unsigned int nSubEntity) const;
+	IEntityBlueprintFactory* GetBlueprintResource(const unsigned int entityIndex) const;
+	const int GetRootEntityIndex() const;
+	const ZRuntimeResourceID& GetRuntimeResourceID() const;
 
 private:
 	TArray<IEntityBlueprintFactory*> m_blueprintResources;

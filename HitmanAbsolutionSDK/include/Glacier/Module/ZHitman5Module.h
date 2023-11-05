@@ -6,9 +6,12 @@
 
 #include <Common.h>
 
-class ZHitman5Module : public ZSimpleModuleBase, public ZConfiguration
+class HitmanAbsolutionSDK_API ZHitman5Module : public ZSimpleModuleBase, public ZConfiguration
 {
 public:
+	ZEntitySceneContext* GetSceneContext();
+
+private:
 	PAD(0x44);
 	ZEntitySceneContext* m_pSceneContext;
 };

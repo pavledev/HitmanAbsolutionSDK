@@ -42,6 +42,24 @@ ZString::ZString(const ZString& other)
 	}
 }
 
+ZString& ZString::operator=(const ZString& other)
+{
+	if (this != &other)
+	{
+		if (other.IsAllocated())
+		{
+			Allocate(other.ToCString(), other.Length());
+		}
+		else
+		{
+			m_length = other.m_length;
+			m_chars = other.m_chars;
+		}
+	}
+
+	return *this;
+}
+
 ZString::~ZString()
 {
 	/*if (IsAllocated())

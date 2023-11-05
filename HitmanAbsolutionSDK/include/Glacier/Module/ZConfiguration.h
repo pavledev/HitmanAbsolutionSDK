@@ -1,5 +1,7 @@
 #pragma once
 
-class ZConfiguration
+#include <Common.h>
+
+class HitmanAbsolutionSDK_API ZConfiguration
 {
 };

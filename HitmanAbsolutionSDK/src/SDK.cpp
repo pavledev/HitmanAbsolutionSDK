@@ -13,6 +13,8 @@
 #include "Hooks.h"
 #include "ModInterface.h"
 #include "Registry/ResourceIDRegistry.h"
+#include "Registry/EnumRegistry.h"
+#include "Registry/PropertyRegistry.h"
 
 uintptr_t BaseAddress;
 ZRenderManager* RenderManager;
@@ -36,10 +38,12 @@ ZActorManager* ActorManager;
 LocalResourceIDsResolver** LocalResourceIDsResolverSingleton;
 ZCheckPointManager* CheckPointManager;
 ZHM5ActionManager* HM5ActionManager;
+ZEntityManager* EntityManager;
 bool IsEngineInitialized;
 void* ZTemplateEntityFactoryVFTbl;
 void* ZTemplateEntityBlueprintFactoryVFTbl;
 void* ZAspectEntityFactoryVFTbl;
+void* ZAspectEntityBlueprintFactoryVFTbl;
 
 SDK::SDK()
 {
@@ -59,9 +63,15 @@ SDK::SDK()
     modSelector = std::make_shared<ModSelector>();
 
     ResourceIDRegistry& resourceIDRegistry = ResourceIDRegistry::GetInstance();
+    EnumRegistry& enumRegistry = EnumRegistry::GetInstance();
+    PropertyRegistry& propertyRegistry = PropertyRegistry::GetInstance();
     std::thread thread = std::thread(&ResourceIDRegistry::Load, &resourceIDRegistry);
+    std::thread thread2 = std::thread(&EnumRegistry::Load, &enumRegistry);
+    std::thread thread3 = std::thread(&PropertyRegistry::Load, &propertyRegistry);
 
     thread.detach();
+    thread2.detach();
+    thread3.detach();
 
     Hooks::ZRenderDevice_PresentHook.CreateHook("ZRenderDevice::Present", 0x5A7F30, ZRenderDevice_PresentHook);
     Hooks::ZRenderSwapChain_ResizeHook.CreateHook("ZRenderSwapChain::Resize", 0x2FA520, ZRenderSwapChain_ResizeHook);
@@ -164,9 +174,11 @@ void SDK::InitializeSingletons()
     LocalResourceIDsResolverSingleton = reinterpret_cast<LocalResourceIDsResolver**>(BaseAddress + 0xE25CCC);
     CheckPointManager = reinterpret_cast<ZCheckPointManager*>(BaseAddress + 0xE21580);
     HM5ActionManager = reinterpret_cast<ZHM5ActionManager*>(BaseAddress + 0xD64C30);
+    EntityManager = reinterpret_cast<ZEntityManager*>(BaseAddress + 0xE251A0);
     ZTemplateEntityFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADC8EC);
     ZTemplateEntityBlueprintFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADC714);
     ZAspectEntityFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADB874);
+    ZAspectEntityBlueprintFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADB7EC);
 
     ZApplicationEngineWin32::SetInstance(reinterpret_cast<ZApplicationEngineWin32**>(BaseAddress + 0xCC6B90));
 }

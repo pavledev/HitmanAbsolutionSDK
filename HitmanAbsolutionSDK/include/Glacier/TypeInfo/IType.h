@@ -6,7 +6,7 @@
 struct STypeID;
 class ZVariantRef;
 
-class IType
+class HitmanAbsolutionSDK_API IType
 {
 public:
 	unsigned int GetTypeSize() const;
@@ -19,6 +19,13 @@ public:
 	void Assign(void* pObject, ZVariantRef rhs) const;
 	void* Construct() const;
 	void DestructAndFree(void* pObject) const;
+    const bool IsTEntityRef() const;
+    const bool IsTResourcePtr() const;
+	const bool IsClass() const;
+	const bool IsEnum() const;
+	const bool IsContainer() const;
+	const bool IsArray() const;
+	const bool IsFixedArray() const;
 
 private:
 	const STypeFunctions* m_pTypeFunctions;

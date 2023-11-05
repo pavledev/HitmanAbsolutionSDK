@@ -5,7 +5,7 @@
 #include <IO/BinaryReader.h>
 #include <IO/BinaryWriter.h>
 
-class ZBinaryDeserializer
+class HitmanAbsolutionSDK_API ZBinaryDeserializer
 {
 public:
 	ZBinaryDeserializer();

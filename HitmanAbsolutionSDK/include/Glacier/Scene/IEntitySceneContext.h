@@ -13,7 +13,7 @@ template <typename A, typename B, typename C, typename D, typename E> class ZEve
 template <typename T> class ZDelegate;
 template <typename T> class TArrayRef;
 
-class IEntitySceneContext : public IComponentInterface
+class HitmanAbsolutionSDK_API IEntitySceneContext : public IComponentInterface
 {
 public:
 	virtual ~IEntitySceneContext() = default;

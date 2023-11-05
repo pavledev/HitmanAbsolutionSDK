@@ -70,7 +70,7 @@ void* ZBinaryDeserializer::Deserialize(BinaryReader& binaryReader)
 				break;
 			case 0x578FBCEE:
 				ParseRuntimeResourceIDReindexingSection(binaryReader, dataSectionBinaryReader, dataSectionBinaryWriter, references);
-				break;*/
+				break;
 			default:
 			{
 				std::stringstream stream;
@@ -80,7 +80,7 @@ void* ZBinaryDeserializer::Deserialize(BinaryReader& binaryReader)
 				Logger::GetInstance().Log(Logger::Level::Error, "Unknown section type: 0x{}!", stream.str());
 
 				return nullptr;
-			}
+			}*/
 		}
 	}
 

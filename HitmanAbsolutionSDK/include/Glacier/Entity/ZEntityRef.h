@@ -67,6 +67,7 @@ public:
 		return false;
 	}
 
+	TArray<SPropertyData>* GetProperties();
 	ZVariant GetProperty(const ZString& propertyName);
 	ZVariant GetProperty(const unsigned int propertyID);
 	bool SetProperty(const unsigned int propertyID, const ZVariantRef& value, bool invokeChangeHandlers = true);
@@ -111,6 +112,9 @@ public:
 	{
 		return SetProperty(Hash::Crc32(propertyName.ToCString(), propertyName.Length()), value, invokeChangeHandlers);
 	}
+
+	TArray<SPinData>* GetInputPins();
+	TArray<SPinData>* GetOutputPins();
 
 private:
 	ZEntityType** m_pEntityTypePtrPtr;

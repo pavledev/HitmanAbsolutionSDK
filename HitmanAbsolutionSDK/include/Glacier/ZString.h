@@ -14,6 +14,7 @@ public:
 	ZString(const char* str);
 	ZString(const char* str, size_t size);
 	ZString(const ZString& other);
+	ZString& operator=(const ZString& other);
 	~ZString();
 	unsigned int Length() const;
 	const char* ToCString() const;

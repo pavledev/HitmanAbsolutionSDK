@@ -16,6 +16,7 @@ public:
 	void* GetResourceData() const;
 	unsigned int GetResourceTag() const;
 	void Release();
+	ZResourcePtr GetInstallDependency(unsigned int nIndex) const;
 
 private:
 	struct SResourceReference

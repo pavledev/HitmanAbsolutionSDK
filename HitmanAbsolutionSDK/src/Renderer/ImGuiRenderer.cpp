@@ -92,7 +92,7 @@ bool ImGuiRenderer::Setup()
 
 void ImGuiRenderer::Render()
 {
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
 
     // Start the Dear ImGui frame
     ImGui_ImplDX11_NewFrame();

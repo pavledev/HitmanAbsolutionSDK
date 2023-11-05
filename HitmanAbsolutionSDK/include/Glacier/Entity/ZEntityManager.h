@@ -4,10 +4,11 @@
 #include "../Scene/IEntitySceneContext.h"
 #include "../Entity/ZEntityType.h"
 
-class ZEntityManager : public IComponentInterface
+class HitmanAbsolutionSDK_API ZEntityManager : public IComponentInterface
 {
 public:
 	const IEntityBlueprintFactory* GetBlueprintFromCreatedEntity(ZEntityType** pEntity) const;
+	IEntityBlueprintFactory* GetBlueprintFromCreatedEntity(ZEntityType** pEntity);
 
 private:
 	IEntitySceneContext* m_pSceneContext;

@@ -40,14 +40,29 @@ struct SMatrix
 	{
 	}
 
-	explicit operator DirectX::XMMATRIX() const
+	DirectX::XMMATRIX& DX()
 	{
-		return DirectX::XMMATRIX(XAxis.m, YAxis.m, ZAxis.m, Trans.m);
+		return *reinterpret_cast<DirectX::XMMATRIX*>(this);
+	}
+
+	const DirectX::XMMATRIX& DX() const
+	{
+		return *reinterpret_cast<const DirectX::XMMATRIX*>(this);
+	}
+
+	float4 operator*(const float4& other) const
+	{
+		return DirectX::XMVector4Transform(other.m, DX());
+	}
+
+	SMatrix operator*(const SMatrix& other) const
+	{
+		return DirectX::XMMatrixMultiply(DX(), other.DX());
 	}
 
 	SMatrix Inverse() const
 	{
-		return DirectX::XMMatrixInverse(nullptr, DirectX::XMMATRIX(*this));
+		return DirectX::XMMatrixInverse(nullptr, DX());
 	}
 
 	union

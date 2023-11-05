@@ -43,6 +43,7 @@ public:
 	void DrawOBB3D(const SVector3& min, const SVector3& max, const SMatrix& transform, const SVector4& color);
 
 	static void CreateDDSTextureFromMemory(const void* data, const unsigned int resourceDataSize, ID3D11Resource** texture, ID3D11ShaderResourceView** textureView, float& width, float& height);
+	static void LoadTextureFromFile(const char* textureFilePath, ID3D11Texture2D** texture, ID3D11ShaderResourceView** texureView, unsigned int& width, unsigned int& height);
 
 private:
 	bool isRendererSetup;
