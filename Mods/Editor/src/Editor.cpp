@@ -68,7 +68,6 @@ Editor::Editor() : snapValue{ 1.0f, 1.0f, 1.0f }
 {
     isOpen = false;
     rootNode = std::make_shared<EntityTreeNode>();
-    selectedentityTreeNode = std::make_shared<EntityTreeNode>();
 
     rootNode->entityName = "Scene";
     scrollToEntity = false;
@@ -268,7 +267,7 @@ void Editor::RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode)
     ImGui::PushID(entityTreeNode.get());
 
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_SpanFullWidth;
-    const bool isNodeSelected = entityTreeNode->entityRef == selectedentityTreeNode->entityRef;
+    const bool isNodeSelected = selectedentityTreeNode && entityTreeNode->entityRef == selectedentityTreeNode->entityRef;
 
     if (isNodeSelected)
     {
@@ -365,6 +364,7 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 {
     if (!hasFocus ||
         !isOpen ||
+        !selectedentityTreeNode ||
         !selectedentityTreeNode->entityRef.GetEntityTypePtrPtr() ||
         !selectedentityTreeNode->entityRef.GetProperties())
     {
@@ -590,6 +590,7 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
 {
     if (!hasFocus ||
         !isOpen ||
+        !selectedentityTreeNode ||
         !selectedentityTreeNode->entityRef.GetEntityTypePtrPtr() ||
         !selectedentityTreeNode->entityRef.GetInputPins() ||
         !selectedentityTreeNode->entityRef.GetOutputPins())
@@ -1139,8 +1140,16 @@ std::shared_ptr<Editor::EntityTreeNode> Editor::FindNode(const ZEntityRef& entit
 
 void Editor::OnSelectEntity(ZEntityRef entityRef)
 {
-    selectedentityTreeNode->entityRef = entityRef;
-    scrollToEntity = entityRef.GetEntityTypePtrPtr() != nullptr;
+    if (entityRef.GetEntityTypePtrPtr())
+    {
+        selectedentityTreeNode = FindNode(entityRef, rootNode);
+        scrollToEntity = true;
+    }
+    else
+    {
+        selectedentityTreeNode.reset();
+        scrollToEntity = false;
+    }
 }
 
 void Editor::OnLeftMouseButtonDown(const SVector2& mousePosition, const bool isFirstClick)
@@ -1170,7 +1179,6 @@ void Editor::OnLeftMouseButtonDown(const SVector2& mousePosition, const bool isF
     if (isFirstClick && rayQueryOutput.GetBlockingEntity().GetEntityTypePtrPtr())
     {
         const ZEntityRef selectedEntity = rayQueryOutput.GetBlockingEntity();
-        selectedentityTreeNode = FindNode(selectedEntity, rootNode);
 
         OnSelectEntity(selectedEntity);
 
