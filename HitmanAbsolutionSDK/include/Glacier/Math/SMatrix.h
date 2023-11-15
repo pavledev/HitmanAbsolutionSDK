@@ -2,6 +2,8 @@
 
 #include <DirectXMath.h>
 
+#include <directxtk/SimpleMath.h>
+
 #include "float4.h"
 #include "SMatrix43.h"
 #include "SMatrix44.h"
@@ -40,6 +42,37 @@ struct SMatrix
 	{
 	}
 
+	SMatrix(const DirectX::SimpleMath::Matrix& other) :
+		XAxis(other._11, other._12, other._13, other._14),
+		YAxis(other._21, other._22, other._23, other._24),
+		ZAxis(other._31, other._32, other._33, other._34),
+		Trans(other._41, other._42, other._43, other._44)
+	{
+	}
+
+	SMatrix(float m11, float m12, float m13, float m14,
+		float m21, float m22, float m23, float m24,
+		float m31, float m32, float m33, float m34,
+		float m41, float m42, float m43, float m44)
+	{
+		this->m11 = m11;
+		this->m12 = m12;
+		this->m13 = m13;
+		this->m14 = m14;
+		this->m21 = m21;
+		this->m22 = m22;
+		this->m23 = m23;
+		this->m24 = m24;
+		this->m31 = m31;
+		this->m32 = m32;
+		this->m33 = m33;
+		this->m34 = m34;
+		this->m41 = m41;
+		this->m42 = m42;
+		this->m43 = m43;
+		this->m44 = m44;
+	}
+
 	DirectX::XMMATRIX& DX()
 	{
 		return *reinterpret_cast<DirectX::XMMATRIX*>(this);
@@ -76,6 +109,26 @@ struct SMatrix
 			float4 YAxis;
 			float4 ZAxis;
 			float4 Trans;
+		};
+
+		struct
+		{
+			float m11;
+			float m12;
+			float m13;
+			float m14;
+			float m21;
+			float m22;
+			float m23;
+			float m24;
+			float m31;
+			float m32;
+			float m33;
+			float m34;
+			float m41;
+			float m42;
+			float m43;
+			float m44;
 		};
 	};
 };
