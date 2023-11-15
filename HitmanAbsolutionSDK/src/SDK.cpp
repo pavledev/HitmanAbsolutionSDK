@@ -61,6 +61,7 @@ SDK::SDK()
 
     mainMenu = std::make_shared<MainMenu>();
     modSelector = std::make_shared<ModSelector>();
+    settings = std::make_shared<Settings>();
 
     ResourceIDRegistry& resourceIDRegistry = ResourceIDRegistry::GetInstance();
     EnumRegistry& enumRegistry = EnumRegistry::GetInstance();
@@ -210,6 +211,7 @@ void SDK::OnDrawUI(const bool hasFocus)
 {
     mainMenu->Draw(hasFocus);
     modSelector->Draw(hasFocus);
+    settings->Draw(hasFocus);
 
     modManager->LockRead();
 

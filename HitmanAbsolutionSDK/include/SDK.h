@@ -5,6 +5,7 @@
 #include "ModManager.h"
 #include "UI/MainMenu.h"
 #include "UI/ModSelector.h"
+#include "UI/Settings.h"
 
 class ZMemoryManager;
 class ZHitman5Module;
@@ -72,4 +73,5 @@ private:
 
 	std::shared_ptr<MainMenu> mainMenu;
 	std::shared_ptr<ModSelector> modSelector;
+	std::shared_ptr<Settings> settings;
 };
