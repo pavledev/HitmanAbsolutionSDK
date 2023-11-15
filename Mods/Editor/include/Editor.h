@@ -20,8 +20,11 @@
 class ZTemplateEntityBlueprintFactory;
 struct STemplateEntityBlueprint;
 class ZResourcePending;
+class ZEntitySceneContext;
 
 void __fastcall ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactoryHook(ZTemplateEntityBlueprintFactory* pThis, int edx, STemplateEntityBlueprint* pTemplateEntityBlueprint, ZResourcePending& ResourcePending);
+void __fastcall ZEntitySceneContext_CreateSceneHook(ZEntitySceneContext* pThis, int edx, const ZString& sStreamingState);
+void __fastcall ZEntitySceneContext_ClearSceneHook(ZEntitySceneContext* pThis, int edx, bool bFullyUnloadScene);
 
 class Editor : public ModInterface
 {
@@ -35,6 +38,8 @@ public:
     void OnDraw3D() override;
 
     void OnTemplateEntityBlueprintFactoryCreate(STemplateEntityBlueprint* templateEntityBlueprint, ZResourcePending& resourcePending);
+    void OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState);
+    void OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnloadScene);
 
 private:
     struct PinConnection

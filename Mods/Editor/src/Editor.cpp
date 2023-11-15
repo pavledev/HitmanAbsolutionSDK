@@ -12,6 +12,8 @@
 #include <Glacier/Resource/ZResourceReader.h>
 #include <Glacier/ZCurve.h>
 #include <Glacier/Entity/ZAspectEntityBlueprintFactory.h>
+#include <Glacier/Engine/ZApplicationEngineWin32.h>
+#include <Glacier/Render/ZRenderManager.h>
 
 #include <Editor.h>
 #include <Utility/ResourceUtility.h>
@@ -21,6 +23,9 @@
 #include <Registry/PropertyRegistry.h>
 #include <Utility/Builders.h>
 #include <Utility/Widgets.h>
+
+#undef min
+#undef max
 
 Editor::EntityTreeNode::EntityTreeNode()
 {
@@ -67,9 +72,7 @@ const bool Editor::EntityTreeNode::IsParent(std::shared_ptr<EntityTreeNode> enti
 Editor::Editor() : snapValue{ 1.0f, 1.0f, 1.0f }
 {
     isOpen = false;
-    rootNode = std::make_shared<EntityTreeNode>();
 
-    rootNode->entityName = "Scene";
     scrollToEntity = false;
 
     gizmoMode = ImGuizmo::OPERATION::TRANSLATE;
@@ -91,6 +94,12 @@ Editor::~Editor()
 {
     Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.DisableHook();
     Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.RemoveHook();
+
+    Hooks::ZEntitySceneContext_CreateScene.DisableHook();
+    Hooks::ZEntitySceneContext_CreateScene.RemoveHook();
+
+    Hooks::ZEntitySceneContext_ClearScene.DisableHook();
+    Hooks::ZEntitySceneContext_ClearScene.RemoveHook();
 
     if (headerBackgroundTexture)
     {
@@ -119,7 +128,12 @@ void Editor::Initialize()
     ModInterface::Initialize();
 
     Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.CreateHook("ZTemplateEntityBlueprintFactory::ZTemplateEntityBlueprintFactory", 0xFFBF0, ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactoryHook);
+    Hooks::ZEntitySceneContext_CreateScene.CreateHook("ZEntitySceneContext::CreateScene", 0x4479E0, ZEntitySceneContext_CreateSceneHook);
+    Hooks::ZEntitySceneContext_ClearScene.CreateHook("ZEntitySceneContext::ClearScene", 0x265A80, ZEntitySceneContext_ClearSceneHook);
+
     Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.EnableHook();
+    Hooks::ZEntitySceneContext_CreateScene.EnableHook();
+    Hooks::ZEntitySceneContext_ClearScene.EnableHook();
 }
 
 void Editor::OnEngineInitialized()
@@ -217,6 +231,28 @@ void Editor::OnTemplateEntityBlueprintFactoryCreate(STemplateEntityBlueprint* te
         templateEntityBlueprint2.outputPinForwardings[i].toID = templateEntityBlueprint->outputPinForwardings[i].toID;
         templateEntityBlueprint2.outputPinForwardings[i].fromPinName = fromPinName;
         templateEntityBlueprint2.outputPinForwardings[i].toPinName = toPinName;
+    }
+}
+
+void Editor::OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState)
+{
+    rootNode = std::make_shared<EntityTreeNode>();
+
+    rootNode->entityName = "Scene";
+}
+
+void Editor::OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnloadScene)
+{
+    rootNode.reset();
+
+    for (auto it = templateEntityBlueprints.begin(); it != templateEntityBlueprints.end(); ++it)
+    {
+        const ZRuntimeResourceID runtimeResourceID = it->first;
+
+        if (runtimeResourceID.IsLibraryResource())
+        {
+            templateEntityBlueprints.erase(it->first);
+        }
     }
 }
 
@@ -333,33 +369,6 @@ void Editor::RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode)
     ImGui::PopID();
 }
 
-ZVariant GetProperty(ZEntityRef entityRef, const unsigned int propertyID)
-{
-    ZVariant variant{};
-    ZEntityType* entityType = (*entityRef.GetEntityTypePtrPtr());
-    SPropertyData* propertyData = entityType->GetPropertyData(propertyID);
-
-    if (propertyData)
-    {
-        variant.Allocate(propertyData->m_pInfo->m_Type);
-
-        const unsigned int propertyAddress = reinterpret_cast<uintptr_t>(entityRef.GetEntityTypePtrPtr()) + propertyData->m_nPropertyOffset;
-        void* propertyData2 = reinterpret_cast<void*>(propertyAddress);
-        ZCurve* curve = (ZCurve*)(*(unsigned int*)propertyData2 + 4);
-
-        if ((propertyData->m_pInfo->m_Flags & E_HAS_GETTER_SETTER) != 0)
-        {
-            propertyData->m_pInfo->m_PropetyGetter(reinterpret_cast<void*>(propertyAddress), variant.GetData(), propertyData->m_pInfo->m_nExtraData);
-        }
-        else
-        {
-            propertyData->m_pInfo->m_Type->pTypeInfo->PlacementConstruct(variant.GetData(), reinterpret_cast<void*>(propertyAddress));
-        }
-    }
-
-    return variant;
-}
-
 void Editor::RenderEntityProperties(const bool hasFocus)
 {
     if (!hasFocus ||
@@ -388,6 +397,44 @@ void Editor::RenderEntityProperties(const bool hasFocus)
     }
 
     ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+
+    if (ImGui::Button("Teleport Free Camera To Entity"))
+    {
+        ZCameraEntity* activeCamera = ZApplicationEngineWin32::GetInstance()->GetActiveCamera();
+        const float aspectRatio = activeCamera->GetAspectWByH();
+        const float verticalFov = activeCamera->GetFov();
+        const float horizontalFOV = 2 * std::atan(std::tan(verticalFov / 2.0f) * aspectRatio);
+
+        ZSpatialEntity* spatialEntity = selectedentityTreeNode->entityRef.QueryInterfacePtr<ZSpatialEntity>();
+        float4 min, max;
+
+        spatialEntity->CalculateBounds(min, max, 1, 0);
+
+        DirectX::BoundingBox boundingBox;
+        DirectX::BoundingSphere boundingSphere;
+
+        DirectX::BoundingBox::CreateFromPoints(boundingBox, min.m, max.m);
+        DirectX::BoundingSphere::CreateFromBoundingBox(boundingSphere, boundingBox);
+
+        const float xzExtent = boundingSphere.Radius / tan(horizontalFOV / 2.0f);
+        const float yExtent = boundingSphere.Radius / tan(verticalFov / 2.0f);
+        const float distance = std::max(xzExtent, yExtent);
+
+        const float4 cameraPosition = activeCamera->GetWorldPosition();
+        const float4 targetPosition = spatialEntity->GetWorldPosition();
+
+        const DirectX::SimpleMath::Vector3 cameraPosition2 = DirectX::SimpleMath::Vector3(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+        const DirectX::SimpleMath::Vector3 targetPosition2 = DirectX::SimpleMath::Vector3(targetPosition.x, targetPosition.y, targetPosition.z) + boundingSphere.Center;
+        DirectX::SimpleMath::Vector3 targetDirection = targetPosition2 - cameraPosition2;
+
+        targetDirection.Normalize();
+
+        const DirectX::SimpleMath::Vector3 targetPosition3 = targetPosition2 - targetDirection * distance;
+        const DirectX::SimpleMath::Vector3 up = DirectX::SimpleMath::Vector3(0.f, 0.f, 1.f);
+        const SMatrix worldMatrix = DirectX::SimpleMath::Matrix::CreateWorld(targetPosition3, targetPosition2 - targetPosition3, up);
+
+        activeCamera->SetObjectToWorldMatrix(worldMatrix);
+    }
 
     TArray<SPropertyData>* properties = selectedentityTreeNode->entityRef.GetProperties();
 
@@ -552,12 +599,10 @@ void Editor::RenderGizmo(const bool hasFocus)
 
         if (spatialEntity)
         {
-            ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-            ZHM5MainCamera* mainCamera = hitman->GetMainCamera();
-
+            ZCameraEntity* activeCamera = ZApplicationEngineWin32::GetInstance()->GetActiveCamera();
             SMatrix modelMatrix = spatialEntity->GetObjectToWorldMatrix();
-            SMatrix viewMatrix = mainCamera->GetViewMatrix();
-            const SMatrix projectionMatrix = mainCamera->GetProjectionMatrix();
+            SMatrix viewMatrix = activeCamera->GetViewMatrix();
+            const SMatrix projectionMatrix = activeCamera->GetProjectionMatrix();
 
             ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 
@@ -1830,6 +1875,20 @@ void __fastcall ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactoryH
     GetModInstance()->OnTemplateEntityBlueprintFactoryCreate(pTemplateEntityBlueprint, ResourcePending);
 
     Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.CallOriginalFunction(pThis, pTemplateEntityBlueprint, ResourcePending);
+}
+
+void __fastcall ZEntitySceneContext_CreateSceneHook(ZEntitySceneContext* pThis, int edx, const ZString& sStreamingState)
+{
+    GetModInstance()->OnCreateScene(pThis, sStreamingState);
+
+    Hooks::ZEntitySceneContext_CreateScene.CallOriginalFunction(pThis, sStreamingState);
+}
+
+void __fastcall ZEntitySceneContext_ClearSceneHook(ZEntitySceneContext* pThis, int edx, bool bFullyUnloadScene)
+{
+    GetModInstance()->OnClearScene(pThis, bFullyUnloadScene);
+
+    Hooks::ZEntitySceneContext_ClearScene.CallOriginalFunction(pThis, bFullyUnloadScene);
 }
 
 DEFINE_MOD(Editor);
