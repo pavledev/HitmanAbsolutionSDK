@@ -245,13 +245,17 @@ void Editor::OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnl
 {
     rootNode.reset();
 
-    for (auto it = templateEntityBlueprints.begin(); it != templateEntityBlueprints.end(); ++it)
+    for (auto it = templateEntityBlueprints.begin(); it != templateEntityBlueprints.end();)
     {
         const ZRuntimeResourceID runtimeResourceID = it->first;
 
         if (runtimeResourceID.IsLibraryResource())
         {
-            templateEntityBlueprints.erase(it->first);
+            templateEntityBlueprints.erase(it++);
+        }
+        else
+        {
+            ++it;
         }
     }
 }
