@@ -37,7 +37,7 @@ void ModSelector::Draw(const bool hasFocus)
 
         for (Mod& mod : availableMods)
         {
-            ImGui::Checkbox(mod.Name.c_str(), &mod.Enabled);
+            ImGui::Checkbox(mod.name.c_str(), &mod.isEnabled);
         }
 
         ReleaseSRWLockShared(&srwLock);
@@ -72,11 +72,11 @@ void ModSelector::EnableSelectedMods()
 {
     std::set<std::string> mods;
 
-    for (auto& s_Mod : availableMods)
+    for (auto& mod : availableMods)
     {
-        if (s_Mod.Enabled)
+        if (mod.isEnabled)
         {
-            mods.insert(s_Mod.Name);
+            mods.insert(mod.name);
         }
     }
 
