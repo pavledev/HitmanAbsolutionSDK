@@ -23,6 +23,11 @@ void MainMenu::Draw(const bool hasFocus)
         SDK::GetInstance().GetModSelector()->Show();
     }
 
+    if (ImGui::Button(ICON_MD_SETTINGS " Settings"))
+    {
+        SDK::GetInstance().GetSettings()->Show();
+    }
+
     SDK::GetInstance().OnDrawMenu();
 
     ImGui::EndMainMenuBar();
