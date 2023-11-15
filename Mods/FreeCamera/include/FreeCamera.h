@@ -52,7 +52,6 @@ private:
 
     volatile bool isFreeCameraActive;
     volatile bool freezeCamera;
-    ZEntityRef originalCamera;
     ZInputAction toggleFreeCameraAction;
     ZInputAction freezeFreeCameraAction;
     ZInputAction speedModifierAction[2];

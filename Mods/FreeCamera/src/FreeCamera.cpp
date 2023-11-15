@@ -75,7 +75,7 @@ FreeCamera::~FreeCamera()
         ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
         TEntityRef<IRenderDestinationEntity> renderDestinationEntity = RenderManager->GetGameRenderDestinationEntity();
 
-        renderDestinationEntity.GetRawPointer()->SetSource(originalCamera);
+        renderDestinationEntity.GetRawPointer()->SetSource(engineAppCommon.GetMainCamera().GetEntityRef());
 
         TEntityRef<ZHitman5> hitman = LevelManager->GetHitman();
 
@@ -313,10 +313,9 @@ void FreeCamera::EnableFreeCamera()
     }
 
     TEntityRef<IRenderDestinationEntity> renderDestinationEntity = RenderManager->GetGameRenderDestinationEntity();
+    TEntityRef<ZCameraEntity> playerCamera = renderDestinationEntity.GetRawPointer()->GetSource();
 
-    originalCamera = renderDestinationEntity.GetRawPointer()->GetSource();
-    const ZHM5MainCamera* mainCamera = LevelManager->GetHitman().GetRawPointer()->GetMainCamera();
-
+    engineAppCommon.SetMainCamera(playerCamera);
     engineAppCommon.CopyMainCameraSettingsToFreeCamera();
     renderDestinationEntity.GetRawPointer()->SetSource(freeCamera.GetEntityRef());
 
@@ -338,8 +337,10 @@ void FreeCamera::DisableFreeCamera()
     ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
     ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
     TEntityRef<IRenderDestinationEntity> renderDestinationEntity = RenderManager->GetGameRenderDestinationEntity();
+    TEntityRef<ZCameraEntity> mainCamera;
 
-    renderDestinationEntity.GetRawPointer()->SetSource(originalCamera);
+    renderDestinationEntity.GetRawPointer()->SetSource(engineAppCommon.GetMainCamera().GetEntityRef());
+    engineAppCommon.SetMainCamera(mainCamera);
 
     ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
 
@@ -560,6 +561,7 @@ void FreeCamera::OnUpdateMovementFromInput()
                 freeCameraControlEntity->SetDeltaRoll(moveX);
             }
         }
+
         if (fovModifierAction[controllerID].Digital())
         {
             if (resetFovAction[controllerID].Digital())
@@ -571,6 +573,7 @@ void FreeCamera::OnUpdateMovementFromInput()
                 freeCameraControlEntity->SetDeltaFov(moveY);
             }
         }
+
         if (speedModifierAction[controllerID].Digital())
         {
             if (resetSpeedAction[controllerID].Digital())
