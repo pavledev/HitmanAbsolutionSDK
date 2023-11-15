@@ -1124,6 +1124,35 @@ void Editor::AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntity
                 childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory2->GetRootEntityIndex();
 
                 AddChildren(childNode, childNode->entityRef, templateEntityBlueprintFactory2, childNode->entityIndexInReferencedTEMP);
+
+                if (childNode->children.size() == 0)
+                {
+                    ZEntityRef entityRef2 = templateEntityBlueprintFactory2->GetSubEntity(childNode->entityRef.GetEntityTypePtrPtr(), childNode->entityIndexInReferencedTEMP);
+                    IEntityBlueprintFactory* entityBlueprintFactory3 = templateEntityBlueprintFactory2->GetBlueprintResource(childNode->entityIndexInReferencedTEMP);
+
+                    if (*reinterpret_cast<void**>(entityBlueprintFactory3) == ZTemplateEntityBlueprintFactoryVFTbl)
+                    {
+                        ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory3 = static_cast<ZTemplateEntityBlueprintFactory*>(entityBlueprintFactory3);
+
+                        childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory3->GetRootEntityIndex();
+
+                        AddChildren(childNode, entityRef2, templateEntityBlueprintFactory3, childNode->entityIndexInReferencedTEMP);
+                    }
+                    else if (*reinterpret_cast<void**>(entityBlueprintFactory3) == ZAspectEntityBlueprintFactoryVFTbl)
+                    {
+                        ZAspectEntityBlueprintFactory* aspectEntityBlueprintFactory = static_cast<ZAspectEntityBlueprintFactory*>(entityBlueprintFactory3);
+                        IEntityBlueprintFactory* aspectFactory = aspectEntityBlueprintFactory->GetAspectFactory(0);
+
+                        if (*reinterpret_cast<void**>(aspectFactory) == ZTemplateEntityBlueprintFactoryVFTbl)
+                        {
+                            ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory3 = static_cast<ZTemplateEntityBlueprintFactory*>(aspectFactory);
+
+                            childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory3->GetRootEntityIndex();
+
+                            AddChildren(childNode, childNode->entityRef, templateEntityBlueprintFactory3, childNode->entityIndexInReferencedTEMP);
+                        }
+                    }
+                }
             }
             else if (*reinterpret_cast<void**>(entityBlueprintFactory2) == ZAspectEntityBlueprintFactoryVFTbl)
             {
