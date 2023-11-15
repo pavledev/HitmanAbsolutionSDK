@@ -11,8 +11,8 @@ class ModSelector
 private:
     struct Mod
     {
-        std::string Name;
-        bool Enabled;
+        std::string name;
+        bool isEnabled;
     };
 
 public:
