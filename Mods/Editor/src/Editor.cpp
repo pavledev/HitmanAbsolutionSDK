@@ -1556,9 +1556,7 @@ void Editor::ResourceProperty(const std::string& id, const ZEntityRef entityRef,
     {
         const ZResourceID resourceID = ZRuntimeResourceID::QueryResourceID(resourcePtr->GetResourceStub()->GetRuntimeResourceID());
 
-        memcpy(stringBuffer, resourceID.GetURI().ToCString(), resourceID.GetURI().Length());
-
-        stringBuffer[resourceID.GetURI().Length() + 1] = '\0';
+        memcpy(stringBuffer, resourceID.GetURI().ToCString(), resourceID.GetURI().Length() + 1);
     }
     else
     {
