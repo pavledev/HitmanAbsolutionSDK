@@ -13,6 +13,8 @@ public:
 	ZEngineAppCommon& GetEngineAppCommon();
 	HWND GetHWND();
 
+	static ZCameraEntity* GetActiveCamera();
+
 private:
 	PAD(0x10);
 	ZEngineAppCommon m_common; //0x70

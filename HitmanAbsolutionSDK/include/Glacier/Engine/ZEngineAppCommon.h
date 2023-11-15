@@ -16,6 +16,7 @@ public:
 	void CopyMainCameraSettingsToFreeCamera();
 	const bool GetIsGameInputActive() const;
 	void SetIsGameInputActive(bool isGameInputActive);
+	void SetMainCamera(TEntityRef<ZCameraEntity>& mainCamera);
 
 private:
 	PAD(0x2C);

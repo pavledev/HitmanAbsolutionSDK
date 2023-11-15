@@ -3,6 +3,11 @@
 #include <Function.h>
 #include <Global.h>
 
+bool ZFreeCameraControlEntity::IsActive()
+{
+	return m_bActive;
+}
+
 void ZFreeCameraControlEntity::SetActive(bool bActive)
 {
 	Function::CallMethod<ZFreeCameraControlEntity*, bool>(BaseAddress + 0x12A9E0, this, bActive);

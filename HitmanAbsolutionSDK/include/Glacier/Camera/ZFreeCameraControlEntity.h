@@ -11,6 +11,7 @@ class ZCameraEntity;
 class HitmanAbsolutionSDK_API ZFreeCameraControlEntity : public ZEntityImpl
 {
 public:
+	bool IsActive();
 	void SetActive(bool bActive);
 	bool IsGameControlActive();
 	void SetIsGameControlActive(bool isGameControlActive);
