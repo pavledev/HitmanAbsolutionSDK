@@ -63,6 +63,11 @@ SDK::SDK()
     modSelector = std::make_shared<ModSelector>();
     settings = std::make_shared<Settings>();
 
+    if (settings->PatchResources())
+    {
+        //resourcePatcher = std::make_shared<ResourcePatcher>();
+    }
+
     ResourceIDRegistry& resourceIDRegistry = ResourceIDRegistry::GetInstance();
     EnumRegistry& enumRegistry = EnumRegistry::GetInstance();
     PropertyRegistry& propertyRegistry = PropertyRegistry::GetInstance();
@@ -322,6 +327,16 @@ std::shared_ptr<ModManager> SDK::GetModManager() const
 std::shared_ptr<ModSelector> SDK::GetModSelector() const
 {
     return modSelector;
+}
+
+std::shared_ptr<Settings> SDK::GetSettings() const
+{
+    return settings;
+}
+
+std::shared_ptr<ResourcePatcher> SDK::GetResourcePatcher() const
+{
+    return resourcePatcher;
 }
 
 void __fastcall ZRenderDevice_PresentHook(ZRenderDevice* pThis, int edx)

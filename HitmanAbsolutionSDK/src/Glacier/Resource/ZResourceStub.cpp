@@ -21,6 +21,12 @@ unsigned int ZResourceStub::GetResourceTag() const
 	return m_nResourceTag;
 }
 
+void ZResourceStub::AddRef()
+{
+	_InterlockedExchangeAdd(&m_nHeaderRef, 1);
+	_InterlockedExchangeAdd(&m_nRef, 1);
+}
+
 void ZResourceStub::Release()
 {
 	long referenceCount = _InterlockedDecrement(&m_nRef);
@@ -36,4 +42,9 @@ void ZResourceStub::Release()
 ZResourcePtr ZResourceStub::GetInstallDependency(unsigned int nIndex) const
 {
 	return m_resourceReferences[nIndex].m_pResource;
+}
+
+IResourceInstaller* ZResourceStub::GetResourceInstaller() const
+{
+	return ResourceManager->GetResourceInstaller(m_nResourceTag);
 }

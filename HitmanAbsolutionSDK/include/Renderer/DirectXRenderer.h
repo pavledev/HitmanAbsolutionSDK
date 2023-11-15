@@ -36,6 +36,7 @@ public:
 	void Render();
 
 	void DrawLine3D(const SVector3& from, const SVector3& to, const SVector4& fromColor, const SVector4& toColor);
+	void DrawQuad3D(const SVector3& vector1, const SVector4& color1, const SVector3& vector2, const SVector4& color2, const SVector3& vector3, const SVector4& color3, const SVector3& vector4, const SVector4& color4);
 	void DrawText2D(const ZString& text, const SVector2& pos, const SVector4& color, float rotation = 0.f, float scale = 1.f, TextAlignment alignment = TextAlignment::Center);
 	bool WorldToScreen(const SVector3& worldPos, SVector2& out);
 	bool ScreenToWorld(const SVector2& screenPos, SVector3& worldPosOut, SVector3& directionOut);
@@ -64,4 +65,7 @@ private:
 
 	std::unique_ptr<DirectX::SpriteFont> font;
 	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;
+
+	ID3D11Texture2D* sceneTexture;
+	ID3D11RenderTargetView* sceneView;
 };

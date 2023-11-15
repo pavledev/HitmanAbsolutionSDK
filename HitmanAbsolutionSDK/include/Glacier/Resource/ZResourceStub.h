@@ -6,6 +6,8 @@
 #include "../Templates/TArray.h"
 #include "EResourceStatus.h"
 
+class IResourceInstaller;
+
 class HitmanAbsolutionSDK_API ZResourceStub
 {
 public:
@@ -15,8 +17,10 @@ public:
 	const ZRuntimeResourceID& GetRuntimeResourceID() const;
 	void* GetResourceData() const;
 	unsigned int GetResourceTag() const;
+	void AddRef();
 	void Release();
 	ZResourcePtr GetInstallDependency(unsigned int nIndex) const;
+	IResourceInstaller* GetResourceInstaller() const;
 
 private:
 	struct SResourceReference

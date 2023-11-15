@@ -3,11 +3,19 @@
 #include "../Templates/TArray.h"
 #include "ZResourceID.h"
 #include "SResourceLibraryEntry.h"
+#include "../Templates/TSharedPointer.h"
+#include "ZResourceDataBuffer.h"
 
-class ZResourceLibraryInfo
+class HitmanAbsolutionSDK_API ZResourceLibraryInfo
 {
 public:
 	ZRuntimeResourceID GetSourceRuntimeResourceID() const;
+	ZResourceID GetResourceID() const;
+	const SResourceLibraryEntry& GetEntry(const unsigned int index) const;
+	SResourceLibraryEntry& GetEntry(const unsigned int index);
+	unsigned int GetEntryCount() const;
+	bool IsValid(unsigned int nIndex) const;
+	bool InstallResource(unsigned int nIndex, TSharedPointer<ZResourceDataBuffer> pResourceData);
 
 private:
 	enum

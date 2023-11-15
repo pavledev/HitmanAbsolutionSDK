@@ -24,6 +24,15 @@ class IEntityFactory;
 class ZTemplateEntityBlueprintFactory;
 struct STemplateEntityBlueprint;
 class ZResourcePending;
+template <typename T> class TSharedPointer;
+class ZResourceDataBuffer;
+class ZHeaderLibraryInstaller;
+class ZResourceLibraryInfo;
+class ZResourceLibraryLoader;
+class ZBufferBlock;
+struct SResourceLibraryEntry;
+class IResourceInstaller;
+class ZRuntimeResourceID;
 
 namespace Hooks
 {
@@ -45,4 +54,11 @@ namespace Hooks
 	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_DefaultMainLoopSequence;
 	inline ThisCallHook<ZEntityType**, ZEntityManager, const ZString&, IEntityFactory*, unsigned char*> ZEntityManager_ConstructUninitializedEntity;
 	inline ThisCallHook<void, ZTemplateEntityBlueprintFactory, STemplateEntityBlueprint*, ZResourcePending&> ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory;
+	inline ThisCallHook<bool, ZHeaderLibraryInstaller, ZResourcePending&> ZHeaderLibraryInstaller_Install;
+	inline ThisCallHook<bool, ZResourceLibraryInfo, unsigned int, TSharedPointer<ZResourceDataBuffer>> ZResourceLibraryInfo_InstallResource;
+	inline ThisCallHook<bool, ZResourceLibraryLoader, ZBufferBlock*> ZResourceLibraryLoader_ProcessBlock;
+	inline ThisCallHook<SResourceLibraryEntry*, ZResourceLibraryInfo, SResourceLibraryEntry*, unsigned int> ZResourceLibraryInfo_GetEntry;
+	inline ThisCallHook<void, ZResourceLibraryLoader, IResourceInstaller*, unsigned int, ZRuntimeResourceID> ZResourceLibraryLoader_AllocateEntry;
+	inline ThisCallHook<void, ZResourceLibraryLoader, ZResourcePending&, ZResourceLibraryInfo*> ZResourceLibraryLoader_ZResourceLibraryLoader;
+	inline ThisCallHook<void, ZResourceLibraryLoader> ZResourceLibraryLoader_StartLoading;
 }

@@ -22,3 +22,8 @@ void ZResourceManager::ReleaseStub(ZResourceStub* stub)
 {
 	Function::CallMethod<ZResourceManager*, ZResourceStub*>(BaseAddress + 0x34EFE0, this, stub);
 }
+
+IResourceInstaller* ZResourceManager::GetResourceInstaller(unsigned int nResourceType) const
+{
+	return Function::CallMethodAndReturn<IResourceInstaller*, const ZResourceManager*, unsigned int>(BaseAddress + 0x6E5C0, this, nResourceType);
+}

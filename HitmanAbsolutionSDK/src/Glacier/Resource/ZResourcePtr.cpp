@@ -4,6 +4,16 @@
 #include <Global.h>
 #include <Function.h>
 
+ZResourcePtr::ZResourcePtr(const ZResourcePtr& rhs)
+{
+    m_pResourceStub = rhs.m_pResourceStub;
+
+    if (m_pResourceStub)
+    {
+        m_pResourceStub->AddRef();
+    }
+}
+
 ZResourcePtr::~ZResourcePtr()
 {
     if (m_pResourceStub)

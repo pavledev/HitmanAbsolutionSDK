@@ -2,14 +2,20 @@
 
 #include "ZResourcePtr.h"
 #include "../Templates/TSharedPointer.h"
-
-class ZResourceReader;
+#include "ZResourceReader.h"
 
 class HitmanAbsolutionSDK_API ZResourcePending
 {
 public:
 	const ZResourcePtr& GetResource() const;
-	TSharedPointer<ZResourceReader> GetResourceReader() const;
+	const TSharedPointer<ZResourceReader>& GetResourceReader() const;
+	TSharedPointer<ZResourceReader>& GetResourceReader();
+	const int GetPriority() const;
+	const int GetResourceHandle() const;
+	const int GetDataStartPosition() const;
+	void SetPriority(const int priority);
+	void SetResourceHandle(const int resourceHandle);
+	void SetDataStartPosition(const int dataStartPosition);
 
 private:
 	ZResourcePtr m_pResource;

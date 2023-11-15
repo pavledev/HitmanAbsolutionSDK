@@ -10,6 +10,8 @@ class ZRuntimeResourceID;
 class HitmanAbsolutionSDK_API ZResourcePtr
 {
 public:
+	ZResourcePtr() = default;
+	ZResourcePtr(const ZResourcePtr& rhs);
 	~ZResourcePtr();
 	ZResourceStub* GetResourceStub() const;
 	void* GetRawPointer() const;

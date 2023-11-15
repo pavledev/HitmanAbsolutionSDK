@@ -6,6 +6,7 @@
 #include "Glacier/Render/ZRenderManager.h"
 #include "Glacier/ZLevelManager.h"
 #include "Glacier/ZGraphicsSettingsManager.h"
+#include "Glacier/Engine/ZApplicationEngineWin32.h"
 
 #include "Renderer/DirectXRenderer.h"
 #include "Renderer/ImGuiRenderer.h"
@@ -83,6 +84,13 @@ bool DirectXRenderer::Setup()
 	lineEffect->SetView(view);
 	lineEffect->SetProjection(projection);
 
+	CD3D11_TEXTURE2D_DESC sceneDesc(
+		DXGI_FORMAT_R8G8B8A8_UNORM, windowWidth, windowHeight,
+		1, 1, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+
+	device->CreateTexture2D(&sceneDesc, nullptr, &sceneTexture);
+	device->CreateRenderTargetView(sceneTexture, nullptr, &sceneView);
+
 	Logger::GetInstance().Log(Logger::Level::Info, "DirectX renderer successfully set up.");
 
 	isRendererSetup = true;
@@ -106,10 +114,9 @@ void DirectXRenderer::OnPresent(ZRenderDevice* renderDevice)
 
 	if (player)
 	{
-		ZHM5MainCamera* mainCamera = player->GetMainCamera();
-
-		const SMatrix viewMatrix = mainCamera->GetViewMatrix();
-		const SMatrix projectionMatrix = mainCamera->GetProjectionMatrix();
+		ZCameraEntity* activeCamera = ZApplicationEngineWin32::GetInstance()->GetActiveCamera();
+		const SMatrix viewMatrix = activeCamera->GetViewMatrix();
+		const SMatrix projectionMatrix = activeCamera->GetProjectionMatrix();
 
 		view = *reinterpret_cast<DirectX::FXMMATRIX*>(&viewMatrix);
 		projection = *reinterpret_cast<DirectX::FXMMATRIX*>(&projectionMatrix);
@@ -122,12 +129,14 @@ void DirectXRenderer::OnPresent(ZRenderDevice* renderDevice)
 
 		std::unique_ptr<DirectX::CommonStates> states = std::make_unique<DirectX::CommonStates>(device);
 
-		immediateContext->OMSetBlendState(states->Opaque(), nullptr, 0xFFFFFFFF);
-		immediateContext->OMSetDepthStencilState(states->DepthDefault(), 0);
+		immediateContext->OMSetBlendState(states->AlphaBlend(), nullptr, 0xFFFFFFFF);
+		immediateContext->OMSetDepthStencilState(states->DepthReadReverseZ(), 0);
 		immediateContext->RSSetState(states->CullNone());
 
 		lineEffect->Apply(immediateContext);
 		immediateContext->IASetInputLayout(inputLayout);
+
+		//immediateContext->OMSetRenderTargets(1, &sceneView, nullptr);
 
 		Render();
 	}
@@ -179,6 +188,16 @@ void DirectXRenderer::DrawLine3D(const SVector3& from, const SVector3& to, const
 	);
 
 	lineBatch->DrawLine(from2, to2);
+}
+
+void DirectXRenderer::DrawQuad3D(const SVector3& vector1, const SVector4& color1, const SVector3& vector2, const SVector4& color2, const SVector3& vector3, const SVector4& color3, const SVector3& vector4, const SVector4& color4)
+{
+	lineBatch->DrawQuad(
+		DirectX::VertexPositionColor(DirectX::SimpleMath::Vector3(vector1.x, vector1.y, vector1.z), DirectX::SimpleMath::Vector4(color1.x, color1.y, color1.z, color1.w)),
+		DirectX::VertexPositionColor(DirectX::SimpleMath::Vector3(vector2.x, vector2.y, vector2.z), DirectX::SimpleMath::Vector4(color2.x, color2.y, color2.z, color2.w)),
+		DirectX::VertexPositionColor(DirectX::SimpleMath::Vector3(vector3.x, vector3.y, vector3.z), DirectX::SimpleMath::Vector4(color3.x, color3.y, color3.z, color3.w)),
+		DirectX::VertexPositionColor(DirectX::SimpleMath::Vector3(vector4.x, vector4.y, vector4.z), DirectX::SimpleMath::Vector4(color4.x, color4.y, color4.z, color4.w))
+	);
 }
 
 void DirectXRenderer::DrawText2D(const ZString& text, const SVector2& pos, const SVector4& color, float rotation, float scale, TextAlignment alignment)
@@ -236,8 +255,8 @@ bool DirectXRenderer::ScreenToWorld(const SVector2& screenPos, SVector3& worldPo
 		return false;
 	}
 
-	ZHM5MainCamera* mainCamera = player->GetMainCamera();
-	SMatrix cameraTrans = mainCamera->GetObjectToWorldMatrix();
+	ZCameraEntity* activeCamera = ZApplicationEngineWin32::GetInstance()->GetActiveCamera();
+	SMatrix cameraTrans = activeCamera->GetObjectToWorldMatrix();
 
 	auto screenPos2 = DirectX::SimpleMath::Vector3((2.0f * screenPos.x) / windowWidth - 1.0f, 1.0f - (2.0f * screenPos.y) / windowHeight, 1.f);
 	auto rayClip = DirectX::SimpleMath::Vector4(screenPos2.x, screenPos2.y, 0.f, 1.f);

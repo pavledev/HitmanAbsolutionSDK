@@ -6,6 +6,7 @@
 #include "UI/MainMenu.h"
 #include "UI/ModSelector.h"
 #include "UI/Settings.h"
+#include "ResourcePatcher.h"
 
 class ZMemoryManager;
 class ZHitman5Module;
@@ -60,6 +61,9 @@ public:
 	std::shared_ptr<ModManager> GetModManager() const;
 
 	std::shared_ptr<ModSelector> GetModSelector() const;
+	std::shared_ptr<Settings> GetSettings() const;
+
+	std::shared_ptr<ResourcePatcher> GetResourcePatcher() const;
 
 private:
 	SDK();
@@ -74,4 +78,6 @@ private:
 	std::shared_ptr<MainMenu> mainMenu;
 	std::shared_ptr<ModSelector> modSelector;
 	std::shared_ptr<Settings> settings;
+
+	std::shared_ptr<ResourcePatcher> resourcePatcher;
 };

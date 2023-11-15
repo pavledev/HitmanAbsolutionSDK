@@ -9,6 +9,9 @@ public:
 	virtual ~ZResourceDataBuffer() = 0;
 
 	unsigned char* GetData() const;
+	void Insert(unsigned char* pData, unsigned int size);
+	static TSharedPointer<ZResourceDataBuffer> Create(void* data, unsigned int capacity);
+	void Clear();
 
 private:
 	unsigned char* m_pData;
