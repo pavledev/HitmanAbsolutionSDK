@@ -99,7 +99,7 @@ void ImGuiRenderer::Render()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    RenderContent();
+    SDK::GetInstance().OnDrawUI(imguiHasFocus);
 
     // Rendering
     ImGui::Render();
@@ -111,11 +111,6 @@ void ImGuiRenderer::Render()
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
     }
-}
-
-void ImGuiRenderer::RenderContent()
-{
-    SDK::GetInstance().OnDrawUI(imguiHasFocus);
 }
 
 void ImGuiRenderer::Cleanup()

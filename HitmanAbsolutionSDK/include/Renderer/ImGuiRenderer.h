@@ -21,7 +21,6 @@ public:
 	~ImGuiRenderer();
 	bool Setup();
 	void Render();
-	void RenderContent();
 	void Cleanup();
 
 	void AddFonts();
