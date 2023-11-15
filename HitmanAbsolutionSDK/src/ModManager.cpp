@@ -228,8 +228,9 @@ void ModManager::SetEnabledMods(const std::set<std::string>& mods)
 
 	if (std::filesystem::exists(iniFilePath))
 	{
-		mINI::INIStructure s_OldIni;
-		iniFile.read(s_OldIni);
+		mINI::INIStructure oldIni;
+
+		iniFile.read(oldIni);
 	}
 
 	for (auto& mod : mods)
