@@ -127,3 +127,23 @@ TArray<SPinData>* ZEntityRef::GetOutputPins()
 {
 	return m_pEntityTypePtrPtr[0]->GetOutputPins();
 }
+
+void ZEntityRef::SignalInputPin(const ZString& pinName, const ZVariantRef& data) const
+{
+	SignalInputPin(Hash::Crc32(pinName.ToCString(), pinName.Length()), data);
+}
+
+void ZEntityRef::SignalInputPin(unsigned int pinID, const ZVariantRef& data) const
+{
+	::SignalInputPin(m_pEntityTypePtrPtr, pinID, data);
+}
+
+void ZEntityRef::SignalOutputPin(const ZString& pinName, const ZVariantRef& data) const
+{
+	SignalOutputPin(Hash::Crc32(pinName.ToCString(), pinName.Length()), data);
+}
+
+void ZEntityRef::SignalOutputPin(unsigned int pinID, const ZVariantRef& data) const
+{
+	::SignalOutputPin(m_pEntityTypePtrPtr, pinID, data);
+}

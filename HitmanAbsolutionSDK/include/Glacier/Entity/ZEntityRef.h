@@ -114,6 +114,11 @@ public:
 		return SetProperty(Hash::Crc32(propertyName.ToCString(), propertyName.Length()), value, invokeChangeHandlers);
 	}
 
+	void SignalInputPin(const ZString& pinName, const ZVariantRef& data = ZVariantRef()) const;
+	void SignalInputPin(unsigned int pinID, const ZVariantRef& data = ZVariantRef()) const;
+	void SignalOutputPin(const ZString& pinName, const ZVariantRef& data = ZVariantRef()) const;
+	void SignalOutputPin(unsigned int pinID, const ZVariantRef& data = ZVariantRef()) const;
+
 	TArray<SPinData>* GetInputPins();
 	TArray<SPinData>* GetOutputPins();
 

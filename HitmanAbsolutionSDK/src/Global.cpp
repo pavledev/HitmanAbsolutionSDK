@@ -5,3 +5,13 @@ bool SetPropertyValue(ZEntityType** pEntity, unsigned int nPropertyID, const ZVa
 {
 	return Function::CallAndReturn<bool, ZEntityType**, unsigned int, const ZVariantRef&, bool>(BaseAddress + 0x82A20, pEntity, nPropertyID, value, bInvokeChangeHandlers);
 }
+
+void SignalInputPin(ZEntityType** pEntity, unsigned int nPinID, const ZVariantRef& data)
+{
+	return Function::Call<ZEntityType**, unsigned int, const ZVariantRef&>(BaseAddress + 0x576C0, pEntity, nPinID, data);
+}
+
+void SignalOutputPin(ZEntityType** pEntity, unsigned int nPinID, const ZVariantRef& data)
+{
+	return Function::Call<ZEntityType**, unsigned int, const ZVariantRef&>(BaseAddress + 0x19BBA0, pEntity, nPinID, data);
+}

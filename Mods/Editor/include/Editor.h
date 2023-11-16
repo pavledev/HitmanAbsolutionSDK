@@ -137,6 +137,7 @@ private:
     void OnLeftMouseButtonDown(const SVector2& mousePosition, const bool isFirstClick);
     void OnEntityTransformChange(ZEntityRef entityRef, const SMatrix& transform, bool relative);
     void OnSetPropertyValue(ZEntityRef entityRef, const unsigned int propertyID, const ZVariant& value);
+    void OnSignalEntityPin(ZEntityRef entityRef, const std::string& pinName, const bool isInputPin);
 
     void BoolProperty(const std::string& id, const ZEntityRef entityRef, const unsigned int propertyID, void* data);
     void Uint8Property(const std::string& id, const ZEntityRef entityRef, const unsigned int propertyID, void* data);

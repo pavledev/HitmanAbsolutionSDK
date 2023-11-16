@@ -494,6 +494,45 @@ void Editor::RenderEntityProperties(const bool hasFocus)
         activeCamera->SetObjectToWorldMatrix(worldMatrix);
     }
 
+    ImGui::Separator();
+
+    static char inputPinName[1024] = {};
+
+    if (ImGui::Button(ICON_MD_BOLT "##FireInputPin"))
+    {
+        OnSignalEntityPin(selectedentityTreeNode->entityRef, inputPinName, true);
+
+        inputPinName[0] = '\0';
+    }
+
+    ImGui::SameLine(0, 5);
+
+    if (ImGui::InputText("Input Pin", inputPinName, IM_ARRAYSIZE(inputPinName), ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+        OnSignalEntityPin(selectedentityTreeNode->entityRef, inputPinName, true);
+        inputPinName[0] = '\0';
+    }
+
+    static char outputPinName[1024] = {};
+
+    if (ImGui::Button(ICON_MD_BOLT "##FireOutputPin"))
+    {
+        OnSignalEntityPin(selectedentityTreeNode->entityRef, outputPinName, false);
+
+        outputPinName[0] = '\0';
+    }
+
+    ImGui::SameLine(0, 5);
+
+    if (ImGui::InputText("Output Pin", outputPinName, IM_ARRAYSIZE(outputPinName), ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+        OnSignalEntityPin(selectedentityTreeNode->entityRef, outputPinName, false);
+
+        outputPinName[0] = '\0';
+    }
+
+    ImGui::Separator();
+
     TArray<SPropertyData>* properties = selectedentityTreeNode->entityRef.GetProperties();
 
     for (size_t i = 0; i < properties->Size(); ++i)
@@ -1439,6 +1478,18 @@ void Editor::OnEntityTransformChange(ZEntityRef entityRef, const SMatrix& transf
 void Editor::OnSetPropertyValue(ZEntityRef entityRef, const unsigned int propertyID, const ZVariant& value)
 {
     entityRef.SetProperty(propertyID, value);
+}
+
+void Editor::OnSignalEntityPin(ZEntityRef entityRef, const std::string& pinName, const bool isInputPin)
+{
+    if (isInputPin)
+    {
+        entityRef.SignalInputPin(pinName.c_str());
+    }
+    else
+    {
+        entityRef.SignalOutputPin(pinName.c_str());
+    }
 }
 
 void Editor::BoolProperty(const std::string& id, const ZEntityRef entityRef, const unsigned int propertyID, void* data)

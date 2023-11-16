@@ -64,3 +64,5 @@ extern HitmanAbsolutionSDK_API void* ZAspectEntityFactoryVFTbl;
 extern HitmanAbsolutionSDK_API void* ZAspectEntityBlueprintFactoryVFTbl;
 
 HitmanAbsolutionSDK_API bool SetPropertyValue(ZEntityType** pEntity, unsigned int nPropertyID, const ZVariantRef& value, bool bInvokeChangeHandlers = true);
+HitmanAbsolutionSDK_API void SignalInputPin(ZEntityType** pEntity, unsigned int nPinID, const ZVariantRef& data);
+HitmanAbsolutionSDK_API void SignalOutputPin(ZEntityType** pEntity, unsigned int nPinID, const ZVariantRef& data);
