@@ -345,6 +345,11 @@ long ImGuiRenderer::OnMainWindowProc(ZApplicationEngineWin32* applicationEngineW
 
     InputActionManager->SetEnabled(!imguiHasFocus);
 
+    if (!imguiHasFocus)
+    {
+        return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
+    }
+
     if (uMsgId == WM_QUIT || uMsgId == WM_DESTROY || uMsgId == WM_NCDESTROY || uMsgId == WM_CLOSE)
     {
         imguiHasFocus = false;
@@ -352,18 +357,14 @@ long ImGuiRenderer::OnMainWindowProc(ZApplicationEngineWin32* applicationEngineW
         return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
     }
 
-    if (imguiHasFocus)
+    if (uMsgId == WM_SIZE)
     {
-        ImGui_ImplWin32_WndProcHandler(hWnd, uMsgId, wParam, lParam);
-
-        //Block mouse and keyboard input in main menu and pause menu
-        if (ScaleformManager->IsInMainMenu() || HUDManager->IsPauseMenuActive()) 
-        {
-            return DefWindowProcW(hWnd, uMsgId, wParam, lParam);
-        }
+        return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
     }
 
-    return Hooks::ZApplicationEngineWin32_MainWindowProc.CallOriginalFunction(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
+    ImGui_ImplWin32_WndProcHandler(hWnd, uMsgId, wParam, lParam);
+
+    return DefWindowProcW(hWnd, uMsgId, wParam, lParam);
 }
 
 void ImGuiRenderer::OnMouseWindowsUpdate(ZMouseWindows* mouseWindows, bool bIgnoreOldEvents)
