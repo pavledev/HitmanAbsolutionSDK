@@ -1278,11 +1278,13 @@ void Editor::SearchEntityNameInTree(std::shared_ptr<EntityTreeNode> node, const 
         return;
     }
 
-    std::string entityName2 = node->entityName;
+    std::string entityName2 = entityName;
+    std::string entityName3 = node->entityName;
 
     std::transform(entityName2.begin(), entityName2.end(), entityName2.begin(), tolower);
+    std::transform(entityName3.begin(), entityName3.end(), entityName3.begin(), tolower);
 
-    if (entityName2.contains(entityName))
+    if (entityName3.contains(entityName2))
     {
         parentMap[node] = node->parentNode;
     }
