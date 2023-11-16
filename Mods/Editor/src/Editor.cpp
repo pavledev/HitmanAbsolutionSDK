@@ -1125,6 +1125,7 @@ void Editor::AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntity
 
                 AddChildren(childNode, childNode->entityRef, templateEntityBlueprintFactory2, childNode->entityIndexInReferencedTEMP);
 
+                //Case when referenced TBLU only has root entity
                 if (childNode->children.size() == 0)
                 {
                     ZEntityRef entityRef2 = templateEntityBlueprintFactory2->GetSubEntity(childNode->entityRef.GetEntityTypePtrPtr(), childNode->entityIndexInReferencedTEMP);
