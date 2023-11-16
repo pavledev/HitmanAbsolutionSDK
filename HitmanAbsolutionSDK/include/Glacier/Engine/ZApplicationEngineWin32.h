@@ -12,6 +12,8 @@ public:
 	static void SetInstance(ZApplicationEngineWin32** instance);
 	ZEngineAppCommon& GetEngineAppCommon();
 	HWND GetHWND();
+	HICON GetDefaultCursor();
+	void SetShowingCursor(const bool showingCursor);
 
 	static ZCameraEntity* GetActiveCamera();
 
@@ -20,7 +22,17 @@ private:
 	ZEngineAppCommon m_common; //0x70
 	PAD(0x64);
 	HWND m_hWnd; //0x154
-	PAD(0x20);
+	bool m_bTerminateApplication; //0x158
+	bool m_bShowingCursor; //0x159
+	bool m_bTempWindowed; //0x15A
+	bool m_bPauseGameLoop; //0x15B
+	bool m_bGameLoopPaused; //0x15C
+	int m_PreviousMasterVolume; //0x160
+	bool m_bChangeMasterVolume; //0x164
+	int m_TargetMasterVolume; //0x168
+	bool m_bActive; //0x16C
+	HICON m_hDefaultCursor; //0x170
+	PAD(0x4);
 
 	inline static ZApplicationEngineWin32** m_pInstance = nullptr;
 };

@@ -3,6 +3,7 @@
 #include <Glacier/Render/ZRenderManager.h>
 
 #include "Global.h"
+#include "Function.h"
 
 ZApplicationEngineWin32* ZApplicationEngineWin32::GetInstance()
 {
@@ -22,6 +23,16 @@ ZEngineAppCommon& ZApplicationEngineWin32::GetEngineAppCommon()
 HWND ZApplicationEngineWin32::GetHWND()
 {
 	return m_hWnd;
+}
+
+HICON ZApplicationEngineWin32::GetDefaultCursor()
+{
+    return m_hDefaultCursor;
+}
+
+void ZApplicationEngineWin32::SetShowingCursor(const bool showingCursor)
+{
+    m_bShowingCursor = showingCursor;
 }
 
 ZCameraEntity* ZApplicationEngineWin32::GetActiveCamera()

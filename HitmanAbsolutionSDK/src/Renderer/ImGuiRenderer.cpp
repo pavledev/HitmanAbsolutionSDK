@@ -12,6 +12,7 @@
 #include "Glacier/UI/ZGameWideUI.h"
 #include "Glacier/UI/ZScaleformManager.h"
 #include "Glacier/UI/ZHUDManager.h"
+#include "Glacier/Engine/ZApplicationEngineWin32.h"
 
 #include "Renderer/ImGuiRenderer.h"
 #include "Global.h"
@@ -324,16 +325,17 @@ long ImGuiRenderer::OnMainWindowProc(ZApplicationEngineWin32* applicationEngineW
     if (scanCode == 0x29 && (uMsgId == WM_KEYDOWN || uMsgId == WM_SYSKEYDOWN))
     {
         imguiHasFocus = !imguiHasFocus;
+
+        if (imguiHasFocus)
+        {
+            applicationEngineWin32->SetShowingCursor(true);
+
+            SetCursor(applicationEngineWin32->GetDefaultCursor());
+            ShowCursor(true);
+        }
     }
 
     InputActionManager->SetEnabled(!imguiHasFocus);
-
-    ZGameWideUIScaleformHandler* gameWideUIScaleformHandler = GameWideUI->GetGameWideUIScaleformHandler();
-
-    if (gameWideUIScaleformHandler && !ScaleformManager->IsInMainMenu() && !HUDManager->IsPauseMenuActive())
-    {
-        gameWideUIScaleformHandler->ShowUICursor(imguiHasFocus);
-    }
 
     if (uMsgId == WM_QUIT || uMsgId == WM_DESTROY || uMsgId == WM_NCDESTROY || uMsgId == WM_CLOSE)
     {
