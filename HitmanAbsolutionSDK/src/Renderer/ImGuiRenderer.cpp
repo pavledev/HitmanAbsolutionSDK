@@ -326,12 +326,20 @@ long ImGuiRenderer::OnMainWindowProc(ZApplicationEngineWin32* applicationEngineW
     {
         imguiHasFocus = !imguiHasFocus;
 
-        if (imguiHasFocus)
+        if (!ScaleformManager->IsInMainMenu() && !HUDManager->IsPauseMenuActive())
         {
-            applicationEngineWin32->SetShowingCursor(true);
+            if (imguiHasFocus)
+            {
+                SetCursor(applicationEngineWin32->GetDefaultCursor());
+            }
+            else
+            {
+                SetCursor(nullptr);
+            }
 
-            SetCursor(applicationEngineWin32->GetDefaultCursor());
-            ShowCursor(true);
+            ShowCursor(imguiHasFocus);
+
+            applicationEngineWin32->SetShowingCursor(imguiHasFocus);
         }
     }
 
