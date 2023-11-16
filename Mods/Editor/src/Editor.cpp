@@ -1495,9 +1495,7 @@ void Editor::StringProperty(const std::string& id, const ZEntityRef entityRef, c
     ZString* string = static_cast<ZString*>(data);
     static char stringBuffer[2048] = {};
 
-    memcpy(stringBuffer, string->ToCString(), string->Length());
-
-    stringBuffer[string->Length() + 1] = '\0';
+    memcpy(stringBuffer, string->ToCString(), string->Length() + 1);
 
     if (ImGui::InputText(id.c_str(), stringBuffer, sizeof(stringBuffer)))
     {
