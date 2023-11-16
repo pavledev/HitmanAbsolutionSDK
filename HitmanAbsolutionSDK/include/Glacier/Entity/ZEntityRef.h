@@ -67,6 +67,8 @@ public:
 		return false;
 	}
 
+	const bool HasInterface(const std::string& typeName) const;
+
 	TArray<SPropertyData>* GetProperties();
 	ZVariant GetProperty(const ZString& propertyName);
 	ZVariant GetProperty(const unsigned int propertyID);

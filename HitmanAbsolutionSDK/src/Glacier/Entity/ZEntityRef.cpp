@@ -49,6 +49,28 @@ void* ZEntityRef::QueryInterfacePtr(const STypeID* interfaceID) const
 	return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(m_pEntityTypePtrPtr) + interfaceData->m_nInterfaceOffset);
 }
 
+const bool ZEntityRef::HasInterface(const std::string& typeName) const
+{
+	if (!*TypeRegistry)
+	{
+		return false;
+	}
+
+	const STypeID* typeID = (*TypeRegistry)->GetType(typeName.c_str());
+
+	if (typeID)
+	{
+		void* interfacePtr = QueryInterfacePtr(typeID);
+
+		if (interfacePtr)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 TArray<SPropertyData>* ZEntityRef::GetProperties()
 {
 	return m_pEntityTypePtrPtr[0]->GetProperties();
