@@ -24,7 +24,6 @@ public:
 	ZEntityImpl* GetEntityImpl() const;
 	ZEntityType** GetEntityTypePtrPtr() const;
 	void* QueryInterfacePtr(const STypeID* interfaceID) const;
-	//ZEntityRef GetLogicalParent() const;
 
 	template <typename T>
 	T* QueryInterfacePtr() const
