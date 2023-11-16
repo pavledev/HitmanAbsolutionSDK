@@ -121,7 +121,7 @@ private:
     };
 
     void RenderEntityTree(const bool hasFocus);
-    void RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode);
+    void RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode, const bool isTreeFiltered);
     void RenderEntityProperties(const bool hasFocus);
     void RenderGizmo(const bool hasFocus);
     void RenderEntityAABB();
@@ -129,6 +129,9 @@ private:
 
     void AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntityRef rootEntity, ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory, const int parentIndex = -1, STemplateEntityBlueprint* templateEntityBlueprint = nullptr, bool deleteTemplateEntityBlueprint = true);
     std::shared_ptr<EntityTreeNode> FindNode(const ZEntityRef& entityRef, std::shared_ptr<EntityTreeNode> entityTreeNode) const;
+    void SearchEntityNameInTree(std::shared_ptr<EntityTreeNode> node, const std::string& entityName, std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap);
+    void SearchTypeNameInTree(std::shared_ptr<EntityTreeNode> node, const std::string& typeName, std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap);
+    std::shared_ptr<EntityTreeNode> GeneratedFilteredEntityTree(const std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap);
 
     void OnSelectEntity(ZEntityRef entityRef);
     void OnLeftMouseButtonDown(const SVector2& mousePosition, const bool isFirstClick);
@@ -178,6 +181,7 @@ private:
     bool isOpen;
     std::shared_ptr<EntityTreeNode> rootNode;
     std::shared_ptr<EntityTreeNode> selectedentityTreeNode;
+    std::shared_ptr<EntityTreeNode> filteredTreeRootNode;
     bool scrollToEntity;
 
     ImGuizmo::OPERATION gizmoMode;

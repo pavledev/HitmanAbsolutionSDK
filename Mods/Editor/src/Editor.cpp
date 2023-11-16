@@ -295,14 +295,64 @@ void Editor::RenderEntityTree(const bool hasFocus)
         rootNode->entityRef = entitySceneContext->GetLoadedScene();
     }
 
-    RenderEntityTree(rootNode);
+    static char name[256]{ "" };
+    std::string hint = std::format("{} Name...", ICON_MD_SEARCH);
+
+    ImGui::PushItemWidth(-1);
+    ImGui::InputTextWithHint("##Name", hint.c_str(), name, IM_ARRAYSIZE(name));
+    ImGui::PopItemWidth();
+
+    ImGui::Spacing();
+
+    if (ImGui::Button("Search Entity Name"))
+    {
+        if (strlen(name) == 0)
+        {
+            filteredTreeRootNode.reset();
+        }
+        else
+        {
+            std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>> parentMap;
+
+            SearchEntityNameInTree(rootNode, name, parentMap);
+
+            filteredTreeRootNode = GeneratedFilteredEntityTree(parentMap);
+        }
+    }
+
+    if (ImGui::Button("Search Type Name"))
+    {
+        if (strlen(name) == 0)
+        {
+            filteredTreeRootNode.reset();
+        }
+        else
+        {
+            std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>> parentMap;
+
+            SearchTypeNameInTree(rootNode, name, parentMap);
+
+            filteredTreeRootNode = GeneratedFilteredEntityTree(parentMap);
+        }
+    }
+
+    ImGui::Spacing();
+
+    if (filteredTreeRootNode)
+    {
+        RenderEntityTree(filteredTreeRootNode, true);
+    }
+    else
+    {
+        RenderEntityTree(rootNode, false);
+    }
 
     ImGui::PopFont();
     ImGui::End();
     ImGui::PopFont();
 }
 
-void Editor::RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode)
+void Editor::RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode, const bool isTreeFiltered)
 {
     ImGui::PushID(entityTreeNode.get());
 
@@ -326,6 +376,10 @@ void Editor::RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode)
         {
             ImGui::SetNextItemOpen(true);
         }
+    }
+    else if (isTreeFiltered)
+    {
+        ImGui::SetNextItemOpen(true);
     }
 
     if (entityTreeNode->hasChildren)
@@ -352,7 +406,7 @@ void Editor::RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode)
 
             for (std::shared_ptr<EntityTreeNode> entityTreeNode : entityTreeNode->children)
             {
-                RenderEntityTree(entityTreeNode);
+                RenderEntityTree(entityTreeNode, isTreeFiltered);
             }
 
             ImGui::TreePop();
@@ -1215,6 +1269,88 @@ std::shared_ptr<Editor::EntityTreeNode> Editor::FindNode(const ZEntityRef& entit
     }
 
     return nullptr;
+}
+
+void Editor::SearchEntityNameInTree(std::shared_ptr<EntityTreeNode> node, const std::string& entityName, std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap)
+{
+    if (!node)
+    {
+        return;
+    }
+
+    std::string entityName2 = node->entityName;
+
+    std::transform(entityName2.begin(), entityName2.end(), entityName2.begin(), tolower);
+
+    if (entityName2.contains(entityName))
+    {
+        parentMap[node] = node->parentNode;
+    }
+
+    for (auto& child : node->children)
+    {
+        SearchEntityNameInTree(child, entityName, parentMap);
+    }
+}
+
+void Editor::SearchTypeNameInTree(std::shared_ptr<EntityTreeNode> node, const std::string& typeName, std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap)
+{
+    if (!node)
+    {
+        return;
+    }
+
+    if (node->entityRef.HasInterface(typeName))
+    {
+        parentMap[node] = node->parentNode;
+    }
+
+    for (auto& child : node->children)
+    {
+        SearchTypeNameInTree(child, typeName, parentMap);
+    }
+}
+
+std::shared_ptr<Editor::EntityTreeNode> Editor::GeneratedFilteredEntityTree(const std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap)
+{
+    std::shared_ptr<EntityTreeNode> searchRoot = std::make_shared<EntityTreeNode>();
+
+    searchRoot->entityName = "Scene";
+
+    std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>> searchTreeMap;
+
+    for (const auto& pair : parentMap)
+    {
+        std::shared_ptr<EntityTreeNode> currentNode = pair.first;
+        std::shared_ptr<EntityTreeNode> parentInOriginalTree = pair.second;
+        std::shared_ptr<EntityTreeNode> parentNodeInSearchTree;
+
+        if (parentInOriginalTree)
+        {
+            if (searchTreeMap.find(parentInOriginalTree) == searchTreeMap.end())
+            {
+                parentNodeInSearchTree = std::make_shared<EntityTreeNode>(parentInOriginalTree->entityIndex, parentInOriginalTree->entityName.c_str(), parentInOriginalTree->entityRef, parentInOriginalTree->tbluRuntimeResourceID, parentInOriginalTree->entityTypeResourceIndex);
+
+                searchTreeMap[parentInOriginalTree] = parentNodeInSearchTree;
+                searchRoot->children.push_back(parentNodeInSearchTree);
+            }
+            else
+            {
+                parentNodeInSearchTree = searchTreeMap[parentInOriginalTree];
+            }
+        }
+        else
+        {
+            parentNodeInSearchTree = searchRoot;
+        }
+
+        std::shared_ptr<EntityTreeNode> newNode = std::make_shared<EntityTreeNode>(currentNode->entityIndex, currentNode->entityName.c_str(), currentNode->entityRef, currentNode->tbluRuntimeResourceID, currentNode->entityTypeResourceIndex);
+
+        parentNodeInSearchTree->children.push_back(newNode);
+        searchTreeMap[currentNode] = newNode;
+    }
+
+    return searchRoot;
 }
 
 void Editor::OnSelectEntity(ZEntityRef entityRef)
