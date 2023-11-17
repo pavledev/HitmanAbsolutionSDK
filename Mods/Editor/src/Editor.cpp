@@ -1399,8 +1399,11 @@ void Editor::OnSelectEntity(ZEntityRef entityRef)
 {
     if (entityRef.GetEntityTypePtrPtr())
     {
-        selectedentityTreeNode = FindNode(entityRef, rootNode);
-        scrollToEntity = true;
+        if (rootNode->children.size() > 0)
+        {
+            selectedentityTreeNode = FindNode(entityRef, rootNode);
+            scrollToEntity = true;
+        }
     }
     else
     {
