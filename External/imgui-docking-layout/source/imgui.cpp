@@ -1470,6 +1470,12 @@ void ImGuiIO::ClearInputCharacters()
 static ImGuiInputEvent* FindLatestInputEvent(ImGuiContext* ctx, ImGuiInputEventType type, int arg = -1)
 {
     ImGuiContext& g = *ctx;
+
+    if (g.InputEventsQueue.Size == 0)
+    {
+        return NULL;
+    }
+
     for (int n = g.InputEventsQueue.Size - 1; n >= 0; n--)
     {
         ImGuiInputEvent* e = &g.InputEventsQueue[n];
