@@ -295,56 +295,70 @@ void Editor::RenderEntityTree(const bool hasFocus)
         rootNode->entityRef = entitySceneContext->GetLoadedScene();
     }
 
-    static char name[256]{ "" };
-    std::string hint = std::format("{} Name...", ICON_MD_SEARCH);
-
-    ImGui::PushItemWidth(-1);
-    ImGui::InputTextWithHint("##Name", hint.c_str(), name, IM_ARRAYSIZE(name));
-    ImGui::PopItemWidth();
-
-    ImGui::Spacing();
-
-    if (ImGui::Button("Search Entity Name"))
+    if (rootNode->children.size() == 0)
     {
-        if (strlen(name) == 0)
+        if (ImGui::Button("Generate Entity Tree"))
         {
-            filteredTreeRootNode.reset();
+            ZEntitySceneContext* entitySceneContext = Hitman5Module->GetSceneContext();
+            TResourcePtr<IEntityBlueprintFactory>& sceneBlueprintResource = entitySceneContext->GetSceneBlueprintResource();
+            ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory = static_cast<ZTemplateEntityBlueprintFactory*>(sceneBlueprintResource.GetRawPointer());
+
+            AddChildren(rootNode, rootNode->entityRef.GetEntityTypePtrPtr(), templateEntityBlueprintFactory, templateEntityBlueprintFactory->GetRootEntityIndex());
         }
-        else
-        {
-            std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>> parentMap;
-
-            SearchEntityNameInTree(rootNode, name, parentMap);
-
-            filteredTreeRootNode = GeneratedFilteredEntityTree(parentMap);
-        }
-    }
-
-    if (ImGui::Button("Search Type Name"))
-    {
-        if (strlen(name) == 0)
-        {
-            filteredTreeRootNode.reset();
-        }
-        else
-        {
-            std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>> parentMap;
-
-            SearchTypeNameInTree(rootNode, name, parentMap);
-
-            filteredTreeRootNode = GeneratedFilteredEntityTree(parentMap);
-        }
-    }
-
-    ImGui::Spacing();
-
-    if (filteredTreeRootNode)
-    {
-        RenderEntityTree(filteredTreeRootNode, true);
     }
     else
     {
-        RenderEntityTree(rootNode, false);
+        static char name[256]{ "" };
+        std::string hint = std::format("{} Name...", ICON_MD_SEARCH);
+
+        ImGui::PushItemWidth(-1);
+        ImGui::InputTextWithHint("##Name", hint.c_str(), name, IM_ARRAYSIZE(name));
+        ImGui::PopItemWidth();
+
+        ImGui::Spacing();
+
+        if (ImGui::Button("Search Entity Name"))
+        {
+            if (strlen(name) == 0)
+            {
+                filteredTreeRootNode.reset();
+            }
+            else
+            {
+                std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>> parentMap;
+
+                SearchEntityNameInTree(rootNode, name, parentMap);
+
+                filteredTreeRootNode = GeneratedFilteredEntityTree(parentMap);
+            }
+        }
+
+        if (ImGui::Button("Search Type Name"))
+        {
+            if (strlen(name) == 0)
+            {
+                filteredTreeRootNode.reset();
+            }
+            else
+            {
+                std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>> parentMap;
+
+                SearchTypeNameInTree(rootNode, name, parentMap);
+
+                filteredTreeRootNode = GeneratedFilteredEntityTree(parentMap);
+            }
+        }
+
+        ImGui::Spacing();
+
+        if (filteredTreeRootNode)
+        {
+            RenderEntityTree(filteredTreeRootNode, true);
+        }
+        else
+        {
+            RenderEntityTree(rootNode, false);
+        }
     }
 
     ImGui::PopFont();
@@ -395,15 +409,6 @@ void Editor::RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode, co
 
         if (isNodeOpen)
         {
-            if (rootNode.get() == entityTreeNode.get() && entityTreeNode->children.size() == 0)
-            {
-                ZEntitySceneContext* entitySceneContext = Hitman5Module->GetSceneContext();
-                TResourcePtr<IEntityBlueprintFactory>& sceneBlueprintResource = entitySceneContext->GetSceneBlueprintResource();
-                ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory = static_cast<ZTemplateEntityBlueprintFactory*>(sceneBlueprintResource.GetRawPointer());
-
-                AddChildren(entityTreeNode, rootNode->entityRef.GetEntityTypePtrPtr(), templateEntityBlueprintFactory, templateEntityBlueprintFactory->GetRootEntityIndex());
-            }
-
             for (std::shared_ptr<EntityTreeNode> entityTreeNode : entityTreeNode->children)
             {
                 RenderEntityTree(entityTreeNode, isTreeFiltered);
