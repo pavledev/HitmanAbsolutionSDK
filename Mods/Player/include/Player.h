@@ -13,9 +13,12 @@ class ZEntityType;
 class ZEntityManager;
 class IEntityFactory;
 class ZEntityRef;
+class ZHM5WeaponControl;
+class ZHM5ReloadController;
 
 void __fastcall ZEngineAppCommon_DefaultMainLoopSequenceHook(ZEngineAppCommon* pThis, int edx);
 ZEntityType** __fastcall ZEntityManager_ConstructUninitializedEntityHook(ZEntityManager* pThis, int edx, const ZString& sDebugName, IEntityFactory* pEntityFactory, unsigned char* pMemBlock);
+void __fastcall ZHM5ReloadController_EndReloadWeaponHook(ZHM5ReloadController* pThis, int edx);
 
 class Player : public ModInterface
 {
@@ -29,6 +32,8 @@ public:
 
     void OnDefaultMainLoopSequence();
     void OnConstructUninitializedEntity(IEntityFactory* pEntityFactory, ZEntityType** entityType);
+
+    void SetInfiniteAmmo();
 
 private:
     struct OutfitKitEntity
@@ -112,7 +117,6 @@ private:
 
     inline static int* godMode;
     inline static int* invisible;
-    inline static int* infAmmo;
 
     std::vector<OutfitKitEntity> outfitKitEntities;
     std::vector<FireArmKitEntity> fireArmKitEntities;

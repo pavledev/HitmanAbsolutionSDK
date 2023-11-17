@@ -18,6 +18,7 @@
 #include <Glacier/CheckPoint/ZCheckPointManager.h>
 #include <Glacier/Entity/ZTemplateEntityFactory.h>
 #include <Glacier/Entity/ZAspectEntityFactory.h>
+#include <Glacier/Templates/TFixedArray.h>
 
 #include <Player.h>
 #include <Global.h>
@@ -129,13 +130,14 @@ void Player::Initialize()
 
     Hooks::ZEngineAppCommon_DefaultMainLoopSequence.CreateHook("ZEngineAppCommon::DefaultMainLoopSequence", 0x4C7580, ZEngineAppCommon_DefaultMainLoopSequenceHook);
     Hooks::ZEntityManager_ConstructUninitializedEntity.CreateHook("ZEntityManager::ConstructUninitializedEntity", 0x565200, ZEntityManager_ConstructUninitializedEntityHook);
+    Hooks::ZHM5ReloadController_EndReloadWeapon.CreateHook("ZHM5ReloadController_EndReloadWeapon", 0x56BDB0, ZHM5ReloadController_EndReloadWeaponHook);
 
     Hooks::ZEngineAppCommon_DefaultMainLoopSequence.EnableHook();
     Hooks::ZEntityManager_ConstructUninitializedEntity.EnableHook();
+    Hooks::ZHM5ReloadController_EndReloadWeapon.EnableHook();
 
     godMode = reinterpret_cast<int*>(BaseAddress + 0xD4F5E0);
     invisible = reinterpret_cast<int*>(BaseAddress + 0xD54328);
-    infAmmo = reinterpret_cast<int*>(BaseAddress + 0xD4DBB4);
 }
 
 void Player::OnEngineInitialized()
@@ -360,6 +362,23 @@ void Player::OnConstructUninitializedEntity(IEntityFactory* pEntityFactory, ZEnt
     }
 }
 
+void Player::SetInfiniteAmmo()
+{
+    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+
+    if (hitman)
+    {
+        TFixedArray<unsigned int, 8> ammoInPocket;
+
+        for (unsigned int i = 0; i < 8; ++i)
+        {
+            ammoInPocket[i] = 999;
+        }
+
+        hitman->GetBaseInventory()->SetAmmoInPocket(ammoInPocket);
+    }
+}
+
 void Player::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
 {
     if (getOutfitAction.Digital())
@@ -434,7 +453,10 @@ void Player::RenderCheatsTabItem()
 
         if (ImGui::Checkbox("Infinite Ammo", &isInfAmmoEnabled))
         {
-            *infAmmo = static_cast<int>(isInfAmmoEnabled);
+            if (isInfAmmoEnabled)
+            {
+                SetInfiniteAmmo();
+            }
         }
 
         if (ImGui::Button("Refill Focus"))
@@ -1478,6 +1500,13 @@ ZEntityType** __fastcall ZEntityManager_ConstructUninitializedEntityHook(ZEntity
     GetModInstance()->OnConstructUninitializedEntity(pEntityFactory, entityType);
 
     return entityType;
+}
+
+void __fastcall ZHM5ReloadController_EndReloadWeaponHook(ZHM5ReloadController* pThis, int edx)
+{
+    Hooks::ZHM5ReloadController_EndReloadWeapon.CallOriginalFunction(pThis);
+
+    GetModInstance()->SetInfiniteAmmo();
 }
 
 DEFINE_MOD(Player);

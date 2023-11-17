@@ -33,6 +33,7 @@ class ZBufferBlock;
 struct SResourceLibraryEntry;
 class IResourceInstaller;
 class ZRuntimeResourceID;
+class ZHM5ReloadController;
 
 namespace Hooks
 {
@@ -62,4 +63,5 @@ namespace Hooks
 	inline ThisCallHook<void, ZResourceLibraryLoader, ZResourcePending&, ZResourceLibraryInfo*> ZResourceLibraryLoader_ZResourceLibraryLoader;
 	inline ThisCallHook<void, ZResourceLibraryLoader> ZResourceLibraryLoader_StartLoading;
 	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_ResetSceneCallback;
+	inline ThisCallHook<void, ZHM5ReloadController> ZHM5ReloadController_EndReloadWeapon;
 }
