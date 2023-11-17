@@ -61,4 +61,5 @@ namespace Hooks
 	inline ThisCallHook<void, ZResourceLibraryLoader, IResourceInstaller*, unsigned int, ZRuntimeResourceID> ZResourceLibraryLoader_AllocateEntry;
 	inline ThisCallHook<void, ZResourceLibraryLoader, ZResourcePending&, ZResourceLibraryInfo*> ZResourceLibraryLoader_ZResourceLibraryLoader;
 	inline ThisCallHook<void, ZResourceLibraryLoader> ZResourceLibraryLoader_StartLoading;
+	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_ResetSceneCallback;
 }

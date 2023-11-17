@@ -47,6 +47,11 @@ void ZEngineAppCommon::SetIsGameInputActive(bool isGameInputActive)
 	m_bIsGameInputActive = isGameInputActive;
 }
 
+void ZEngineAppCommon::SetFreeCamera(TEntityRef<ZCameraEntity>& freeCamera)
+{
+	m_pFreeCamera = freeCamera;
+}
+
 void ZEngineAppCommon::SetMainCamera(TEntityRef<ZCameraEntity>& mainCamera)
 {
 	m_pMainCamera = mainCamera;
