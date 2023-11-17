@@ -84,7 +84,7 @@ Player::Player()
 
     isGodModeEnabled = false;
     isInvisibilityEnabled = false;
-    isInfAmmoEnabled = false;
+    isInfiniteAmmoEnabled = false;
 
     selectedOutfitIndex = -1;
     selectedWeaponIndex = -1;
@@ -362,6 +362,11 @@ void Player::OnConstructUninitializedEntity(IEntityFactory* pEntityFactory, ZEnt
     }
 }
 
+const bool Player::IsInfiniteAmmoEnabled() const
+{
+    return isInfiniteAmmoEnabled;
+}
+
 void Player::SetInfiniteAmmo()
 {
     ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
@@ -451,9 +456,9 @@ void Player::RenderCheatsTabItem()
             *invisible = static_cast<int>(isInvisibilityEnabled);
         }
 
-        if (ImGui::Checkbox("Infinite Ammo", &isInfAmmoEnabled))
+        if (ImGui::Checkbox("Infinite Ammo", &isInfiniteAmmoEnabled))
         {
-            if (isInfAmmoEnabled)
+            if (isInfiniteAmmoEnabled)
             {
                 SetInfiniteAmmo();
             }
@@ -1506,7 +1511,10 @@ void __fastcall ZHM5ReloadController_EndReloadWeaponHook(ZHM5ReloadController* p
 {
     Hooks::ZHM5ReloadController_EndReloadWeapon.CallOriginalFunction(pThis);
 
-    GetModInstance()->SetInfiniteAmmo();
+    if (GetModInstance()->IsInfiniteAmmoEnabled())
+    {
+        GetModInstance()->SetInfiniteAmmo();
+    }
 }
 
 DEFINE_MOD(Player);

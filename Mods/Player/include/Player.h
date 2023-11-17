@@ -33,6 +33,7 @@ public:
     void OnDefaultMainLoopSequence();
     void OnConstructUninitializedEntity(IEntityFactory* pEntityFactory, ZEntityType** entityType);
 
+    const bool IsInfiniteAmmoEnabled() const;
     void SetInfiniteAmmo();
 
 private:
@@ -113,7 +114,7 @@ private:
 
     bool isGodModeEnabled;
     bool isInvisibilityEnabled;
-    bool isInfAmmoEnabled;
+    bool isInfiniteAmmoEnabled;
 
     inline static int* godMode;
     inline static int* invisible;
