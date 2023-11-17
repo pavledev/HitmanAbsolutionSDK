@@ -20,6 +20,7 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+#include <imgui_internal.h>
 #include <windows.h>
 #include <windowsx.h> // GET_X_LPARAM(), GET_Y_LPARAM()
 #include <tchar.h>
@@ -249,10 +250,193 @@ static bool IsVkDown(int vk)
     return (::GetKeyState(vk) & 0x8000) != 0;
 }
 
+void AddMouseSourceEvent(ImGuiMouseSource source)
+{
+    ImGuiContext& g = *GImGui;
+
+    g.InputEventsNextMouseSource = source;
+}
+
+void AddMousePosEvent(float x, float y)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiIO& io = g.IO;
+
+    // Apply same flooring as UpdateMouseInputs()
+    ImVec2 pos((x > -FLT_MAX) ? ImFloorSigned(x) : x, (y > -FLT_MAX) ? ImFloorSigned(y) : y);
+
+    if (io.MousePos.x == pos.x && io.MousePos.y == pos.y)
+    {
+        return;
+    }
+
+    io.MousePos = pos;
+    io.MouseSource = g.InputEventsNextMouseSource;
+}
+
+void AddMouseButtonEvent(int mouse_button, bool down)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiIO& io = g.IO;
+
+    IM_ASSERT(mouse_button >= 0 && mouse_button < ImGuiMouseButton_COUNT);
+
+    if (io.MouseDown[mouse_button] == down)
+        return;
+
+    io.MouseDown[mouse_button] = down;
+    io.MouseSource = g.InputEventsNextMouseSource;
+}
+
+void AddMouseWheelEvent(float wheel_x, float wheel_y)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiIO& io = g.IO;
+
+    if (wheel_x == 0.0f && wheel_y == 0.0f)
+        return;
+
+    io.MouseWheelH += wheel_x;
+    io.MouseWheel += wheel_y;
+    io.MouseSource = g.InputEventsNextMouseSource;
+}
+
+void AddFocusEvent(bool focused)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiIO& io = g.IO;
+
+    if (!io.AppFocusLost == focused || (io.ConfigDebugIgnoreFocusLoss && !focused))
+        return;
+
+    io.AppFocusLost = !focused;
+}
+
+void AddInputCharacter(unsigned int c)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiIO& io = g.IO;
+
+    if (c == 0)
+        return;
+
+    io.InputQueueCharacters.push_back(c <= IM_UNICODE_CODEPOINT_MAX ? (ImWchar)c : IM_UNICODE_CODEPOINT_INVALID);
+}
+
+void AddInputCharacterUTF16(ImWchar16 c)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiIO& io = g.IO;
+
+    if ((c == 0 && io.InputQueueSurrogate == 0))
+        return;
+
+    if ((c & 0xFC00) == 0xD800) // High surrogate, must save
+    {
+        if (io.InputQueueSurrogate != 0)
+            AddInputCharacter(IM_UNICODE_CODEPOINT_INVALID);
+        io.InputQueueSurrogate = c;
+        return;
+    }
+
+    ImWchar cp = c;
+    if (io.InputQueueSurrogate != 0)
+    {
+        if ((c & 0xFC00) != 0xDC00) // Invalid low surrogate
+        {
+            AddInputCharacter(IM_UNICODE_CODEPOINT_INVALID);
+        }
+        else
+        {
+#if IM_UNICODE_CODEPOINT_MAX == 0xFFFF
+            cp = IM_UNICODE_CODEPOINT_INVALID; // Codepoint will not fit in ImWchar
+#else
+            cp = (ImWchar)(((InputQueueSurrogate - 0xD800) << 10) + (c - 0xDC00) + 0x10000);
+#endif
+        }
+
+        io.InputQueueSurrogate = 0;
+    }
+    AddInputCharacter((unsigned)cp);
+}
+
+void AddKeyAnalogEvent(ImGuiKey key, bool down, float analog_value)
+{
+    //if (e->Down) { IMGUI_DEBUG_LOG_IO("AddKeyEvent() Key='%s' %d, NativeKeycode = %d, NativeScancode = %d\n", ImGui::GetKeyName(e->Key), e->Down, e->NativeKeycode, e->NativeScancode); }
+    ImGuiContext& g = *GImGui;
+    ImGuiIO& io = g.IO;
+
+    if (key == ImGuiKey_None)
+        return;
+
+    IM_ASSERT(ImGui::IsNamedKeyOrModKey(key)); // Backend needs to pass a valid ImGuiKey_ constant. 0..511 values are legacy native key codes which are not accepted by this API.
+    IM_ASSERT(ImGui::IsAliasKey(key) == false); // Backend cannot submit ImGuiKey_MouseXXX values they are automatically inferred from AddMouseXXX() events.
+    IM_ASSERT(key != ImGuiMod_Shortcut); // We could easily support the translation here but it seems saner to not accept it (TestEngine perform a translation itself)
+
+    // Verify that backend isn't mixing up using new io.AddKeyEvent() api and old io.KeysDown[] + io.KeyMap[] data.
+#ifndef IMGUI_DISABLE_OBSOLETE_KEYIO
+    IM_ASSERT((io.BackendUsingLegacyKeyArrays == -1 || io.BackendUsingLegacyKeyArrays == 0) && "Backend needs to either only use io.AddKeyEvent(), either only fill legacy io.KeysDown[] + io.KeyMap[]. Not both!");
+    if (io.BackendUsingLegacyKeyArrays == -1)
+        for (int n = ImGuiKey_NamedKey_BEGIN; n < ImGuiKey_NamedKey_END; n++)
+            IM_ASSERT(io.KeyMap[n] == -1 && "Backend needs to either only use io.AddKeyEvent(), either only fill legacy io.KeysDown[] + io.KeyMap[]. Not both!");
+    io.BackendUsingLegacyKeyArrays = 0;
+#endif
+    if (ImGui::IsGamepadKey(key))
+        io.BackendUsingLegacyNavInputArray = false;
+
+    // Filter duplicate (in particular: key mods and gamepad analog values are commonly spammed)
+    const ImGuiKeyData* key_data = ImGui::GetKeyData(&g, key);
+    if (key_data->Down == down && key_data->AnalogValue == analog_value)
+        return;
+
+    // Add event
+    ImGuiInputEvent e;
+    e.Type = ImGuiInputEventType_Key;
+    e.Source = ImGui::IsGamepadKey(key) ? ImGuiInputSource_Gamepad : ImGuiInputSource_Keyboard;
+    e.EventId = g.InputEventsNextEventId++;
+    e.Key.Key = key;
+    e.Key.Down = down;
+    e.Key.AnalogValue = analog_value;
+    g.InputEventsQueue.push_back(e);
+
+    IM_ASSERT(key != ImGuiKey_None);
+    ImGuiKeyData* key_data2 = ImGui::GetKeyData(key);
+    const int key_data_index = (int)(key_data - g.IO.KeysData);
+
+    key_data2->Down = down;
+    key_data2->AnalogValue = analog_value;
+
+    // Allow legacy code using io.KeysDown[GetKeyIndex()] with new backends
+#ifndef IMGUI_DISABLE_OBSOLETE_KEYIO
+    io.KeysDown[key_data_index] = key_data2->Down;
+    if (io.KeyMap[key_data_index] != -1)
+        io.KeysDown[io.KeyMap[key_data_index]] = key_data2->Down;
+#endif
+}
+
+void AddKeyEvent(ImGuiKey key, bool down)
+{
+    AddKeyAnalogEvent(key, down, down ? 1.0f : 0.0f);
+}
+
+void AddMouseViewportEvent(ImGuiID viewport_id)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiIO& io = g.IO;
+
+    //IM_ASSERT(g.IO.BackendFlags & ImGuiBackendFlags_HasMouseHoveredViewport);
+
+    // Filter duplicate
+    if (io.MouseHoveredViewport == viewport_id)
+        return;
+
+    io.MouseHoveredViewport = viewport_id;
+}
+
 static void ImGui_ImplWin32_AddKeyEvent(ImGuiKey key, bool down, int native_keycode, int native_scancode = -1)
 {
     ImGuiIO& io = ImGui::GetIO();
-    io.AddKeyEvent(key, down);
+    AddKeyEvent(key, down);
     io.SetKeyEventNativeData(key, native_keycode, native_scancode); // To support legacy indexing (<1.87 user code)
     IM_UNUSED(native_scancode);
 }
@@ -275,10 +459,10 @@ static void ImGui_ImplWin32_ProcessKeyEventsWorkarounds()
 static void ImGui_ImplWin32_UpdateKeyModifiers()
 {
     ImGuiIO& io = ImGui::GetIO();
-    io.AddKeyEvent(ImGuiMod_Ctrl, IsVkDown(VK_CONTROL));
-    io.AddKeyEvent(ImGuiMod_Shift, IsVkDown(VK_SHIFT));
-    io.AddKeyEvent(ImGuiMod_Alt, IsVkDown(VK_MENU));
-    io.AddKeyEvent(ImGuiMod_Super, IsVkDown(VK_APPS));
+    AddKeyEvent(ImGuiMod_Ctrl, IsVkDown(VK_CONTROL));
+    AddKeyEvent(ImGuiMod_Shift, IsVkDown(VK_SHIFT));
+    AddKeyEvent(ImGuiMod_Alt, IsVkDown(VK_MENU));
+    AddKeyEvent(ImGuiMod_Super, IsVkDown(VK_APPS));
 }
 
 // This code supports multi-viewports (multiple OS Windows mapped into different Dear ImGui viewports)
@@ -333,7 +517,7 @@ static void ImGui_ImplWin32_UpdateMouseData()
         if (HWND hovered_hwnd = ::WindowFromPoint(mouse_screen_pos))
             if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle((void*)hovered_hwnd))
                 mouse_viewport_id = viewport->ID;
-    io.AddMouseViewportEvent(mouse_viewport_id);
+    AddMouseViewportEvent(mouse_viewport_id);
 }
 
 // Gamepad navigation mapping
@@ -362,7 +546,7 @@ static void ImGui_ImplWin32_UpdateGamepads()
     io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
 
     #define IM_SATURATE(V)                      (V < 0.0f ? 0.0f : V > 1.0f ? 1.0f : V)
-    #define MAP_BUTTON(KEY_NO, BUTTON_ENUM)     { io.AddKeyEvent(KEY_NO, (gamepad.wButtons & BUTTON_ENUM) != 0); }
+    #define MAP_BUTTON(KEY_NO, BUTTON_ENUM)     { AddKeyEvent(KEY_NO, (gamepad.wButtons & BUTTON_ENUM) != 0); }
     #define MAP_ANALOG(KEY_NO, VALUE, V0, V1)   { float vn = (float)(VALUE - V0) / (float)(V1 - V0); io.AddKeyAnalogEvent(KEY_NO, vn > 0.10f, IM_SATURATE(vn)); }
     MAP_BUTTON(ImGuiKey_GamepadStart,           XINPUT_GAMEPAD_START);
     MAP_BUTTON(ImGuiKey_GamepadBack,            XINPUT_GAMEPAD_BACK);
@@ -640,8 +824,8 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
             ::ClientToScreen(hwnd, &mouse_pos);
         if (msg == WM_NCMOUSEMOVE && !want_absolute_pos) // WM_NCMOUSEMOVE are absolute coordinates.
             ::ScreenToClient(hwnd, &mouse_pos);
-        io.AddMouseSourceEvent(mouse_source);
-        io.AddMousePosEvent((float)mouse_pos.x, (float)mouse_pos.y);
+        AddMouseSourceEvent(mouse_source);
+        AddMousePosEvent((float)mouse_pos.x, (float)mouse_pos.y);
         break;
     }
     case WM_MOUSELEAVE:
@@ -653,7 +837,7 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
             if (bd->MouseHwnd == hwnd)
                 bd->MouseHwnd = nullptr;
             bd->MouseTrackedArea = 0;
-            io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+            AddMousePosEvent(-FLT_MAX, -FLT_MAX);
         }
         break;
     }
@@ -671,8 +855,8 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
         if (bd->MouseButtonsDown == 0 && ::GetCapture() == nullptr)
             ::SetCapture(hwnd);
         bd->MouseButtonsDown |= 1 << button;
-        io.AddMouseSourceEvent(mouse_source);
-        io.AddMouseButtonEvent(button, true);
+        AddMouseSourceEvent(mouse_source);
+        AddMouseButtonEvent(button, true);
         return 0;
     }
     case WM_LBUTTONUP:
@@ -689,15 +873,15 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
         bd->MouseButtonsDown &= ~(1 << button);
         if (bd->MouseButtonsDown == 0 && ::GetCapture() == hwnd)
             ::ReleaseCapture();
-        io.AddMouseSourceEvent(mouse_source);
-        io.AddMouseButtonEvent(button, false);
+        AddMouseSourceEvent(mouse_source);
+        AddMouseButtonEvent(button, false);
         return 0;
     }
     case WM_MOUSEWHEEL:
-        io.AddMouseWheelEvent(0.0f, (float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA);
+        AddMouseWheelEvent(0.0f, (float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA);
         return 0;
     case WM_MOUSEHWHEEL:
-        io.AddMouseWheelEvent(-(float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA, 0.0f);
+        AddMouseWheelEvent(-(float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA, 0.0f);
         return 0;
     case WM_KEYDOWN:
     case WM_KEYUP:
@@ -744,20 +928,20 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
     }
     case WM_SETFOCUS:
     case WM_KILLFOCUS:
-        io.AddFocusEvent(msg == WM_SETFOCUS);
+        AddFocusEvent(msg == WM_SETFOCUS);
         return 0;
     case WM_CHAR:
         if (::IsWindowUnicode(hwnd))
         {
             // You can also use ToAscii()+GetKeyboardState() to retrieve characters.
             if (wParam > 0 && wParam < 0x10000)
-                io.AddInputCharacterUTF16((unsigned short)wParam);
+                AddInputCharacterUTF16((unsigned short)wParam);
         }
         else
         {
             wchar_t wch = 0;
             ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, (char*)&wParam, 1, &wch, 1);
-            io.AddInputCharacter(wch);
+            AddInputCharacter(wch);
         }
         return 0;
     case WM_SETCURSOR:
