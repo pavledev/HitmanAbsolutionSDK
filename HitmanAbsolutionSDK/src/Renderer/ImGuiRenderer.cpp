@@ -4,6 +4,8 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
+#include <imgui_internal.h>
+
 #include <IconsMaterialDesign.h>
 
 #include "Glacier/Render/ZRenderManager.h"
@@ -20,9 +22,6 @@
 #include "Hooks.h"
 #include "Mutex.h"
 #include "SDK.h"
-
-#include <imgui_internal.h>
-#include <unordered_set>
 
 ImGuiRenderer::ImGuiRenderer()
 {
@@ -47,7 +46,7 @@ ImGuiRenderer::ImGuiRenderer()
     //io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;     // FIXME-DPI: Experimental. THIS CURRENTLY DOESN'T WORK AS EXPECTED. DON'T USE IN USER APP!
     //io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports; // FIXME-DPI: Experimental.
 
-    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsDark();
 
     // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
     ImGuiStyle& style = ImGui::GetStyle();
