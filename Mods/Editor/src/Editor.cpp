@@ -509,6 +509,14 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 
     ImGui::Separator();
 
+    if (ImGui::Button("Teleport Hitman To Entity"))
+    {
+        ZSpatialEntity* hitmanSpatialEntity = LevelManager->GetHitman().GetRawPointer()->GetSpatialEntity().GetRawPointer();
+        ZSpatialEntity* spatialEntity = selectedentityTreeNode->entityRef.QueryInterfacePtr<ZSpatialEntity>();
+
+        hitmanSpatialEntity->SetWorldPosition(spatialEntity->GetWorldPosition());
+    }
+
     if (ImGui::Button("Teleport Free Camera To Entity"))
     {
         ZCameraEntity* activeCamera = ZApplicationEngineWin32::GetInstance()->GetActiveCamera();
