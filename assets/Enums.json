@@ -40,6 +40,71 @@
             ]
         },
         {
+            "name": "ZHM5BodySoundEventConsumer.EAnimSoundBody",
+            "items": [
+                {
+                    "name": "eHM5AnimSoundBody_Buttocks",
+                    "value": 0
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Back",
+                    "value": 1
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Head",
+                    "value": 2
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Knee_L",
+                    "value": 3
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Knee_R",
+                    "value": 4
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Elbow_L",
+                    "value": 5
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Elbow_R",
+                    "value": 6
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Hand_L",
+                    "value": 7
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Hand_R",
+                    "value": 8
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Foot_L",
+                    "value": 9
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Foot_R",
+                    "value": 10
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Shoulder_L",
+                    "value": 11
+                },
+                {
+                    "name": "eHM5AnimSoundBody_Shoulder_R",
+                    "value": 12
+                },
+                {
+                    "name": "eHM5AnimSoundBody_RollFwd",
+                    "value": 13
+                },
+                {
+                    "name": "eHM5AnimSoundBody_RollSide",
+                    "value": 14
+                }
+            ]
+        },
+        {
             "name": "SActorSoundDefs.EDefinition",
             "items": [
                 {
@@ -1927,6 +1992,44 @@
             ]
         },
         {
+            "name": "ESubGoalTimerType",
+            "items": [
+                {
+                    "name": "SG_NoTimer",
+                    "value": 0
+                },
+                {
+                    "name": "SG_LinearTimer",
+                    "value": 1
+                },
+                {
+                    "name": "SG_Exp2Timer",
+                    "value": 2
+                },
+                {
+                    "name": "SG_Exp3Timer",
+                    "value": 3
+                },
+                {
+                    "name": "SG_TIMER_TYPE_ENDS",
+                    "value": 4
+                }
+            ]
+        },
+        {
+            "name": "ZRagdollAttacherEntity.EResetMode",
+            "items": [
+                {
+                    "name": "eAtBoneOrigin",
+                    "value": 0
+                },
+                {
+                    "name": "eKeepOffset",
+                    "value": 1
+                }
+            ]
+        },
+        {
             "name": "ESoundMaterialType",
             "items": [
                 {
@@ -2258,6 +2361,19 @@
             ]
         },
         {
+            "name": "ZActorInstanceEntity.EFFXMode",
+            "items": [
+                {
+                    "name": "eFFX_MODE_DISABLE",
+                    "value": 0
+                },
+                {
+                    "name": "eFFX_MODE_OVERWRITE",
+                    "value": 1
+                }
+            ]
+        },
+        {
             "name": "IScatterContainerEntity.ECanvasSize",
             "items": [
                 {
@@ -2283,6 +2399,19 @@
                 {
                     "name": "SIZE_4096",
                     "value": 5
+                }
+            ]
+        },
+        {
+            "name": "ZRenderGlobalEntity.EToneMappingType",
+            "items": [
+                {
+                    "name": "eReinhard",
+                    "value": 0
+                },
+                {
+                    "name": "eFilmic",
+                    "value": 1
                 }
             ]
         },
@@ -9509,6 +9638,51 @@
             ]
         },
         {
+            "name": "ZHM5FaceFXReactionEventConsumer.EEvent",
+            "items": [
+                {
+                    "name": "eHitByBullet",
+                    "value": 0
+                },
+                {
+                    "name": "eFireRegularWeapon",
+                    "value": 1
+                },
+                {
+                    "name": "eReloadRegularWeapon",
+                    "value": 2
+                },
+                {
+                    "name": "eFireHeavyWeapon",
+                    "value": 3
+                },
+                {
+                    "name": "eReloadHeavyWeapon",
+                    "value": 4
+                },
+                {
+                    "name": "eCCAttacking",
+                    "value": 5
+                },
+                {
+                    "name": "eCCGettingHit",
+                    "value": 6
+                },
+                {
+                    "name": "eCoverDodgebulletLeft",
+                    "value": 7
+                },
+                {
+                    "name": "eCoverDodgebulletRight",
+                    "value": 8
+                },
+                {
+                    "name": "eReactToExplosion",
+                    "value": 9
+                }
+            ]
+        },
+        {
             "name": "ZConditionListEntity.EEvaluationType",
             "items": [
                 {
@@ -11675,6 +11849,19 @@
             ]
         },
         {
+            "name": "ESmoothingMode",
+            "items": [
+                {
+                    "name": "ESM_LINEAR",
+                    "value": 0
+                },
+                {
+                    "name": "ESM_EXPONENTIAL",
+                    "value": 1
+                }
+            ]
+        },
+        {
             "name": "ECameraState",
             "items": [
                 {
@@ -12386,6 +12573,43 @@
             ]
         },
         {
+            "name": "ZHM5CrowdGenericEventConsumer.EEvent",
+            "items": [
+                {
+                    "name": "eFootstep",
+                    "value": 0
+                },
+                {
+                    "name": "eClothRustle",
+                    "value": 1
+                },
+                {
+                    "name": "ePushReaction",
+                    "value": 2
+                },
+                {
+                    "name": "ePanic",
+                    "value": 3
+                },
+                {
+                    "name": "eGeneric00",
+                    "value": 4
+                },
+                {
+                    "name": "eGeneric01",
+                    "value": 5
+                },
+                {
+                    "name": "eGeneric02",
+                    "value": 6
+                },
+                {
+                    "name": "eGeneric03",
+                    "value": 7
+                }
+            ]
+        },
+        {
             "name": "ECOMUsage",
             "items": [
                 {
@@ -12763,6 +12987,47 @@
                 {
                     "name": "CHALLENGESUBTYPE_COUNT",
                     "value": 13
+                }
+            ]
+        },
+        {
+            "name": "EAlignment",
+            "items": [
+                {
+                    "name": "TopLeft",
+                    "value": 0
+                },
+                {
+                    "name": "TopCenter",
+                    "value": 1
+                },
+                {
+                    "name": "TopRight",
+                    "value": 2
+                },
+                {
+                    "name": "MiddleLeft",
+                    "value": 3
+                },
+                {
+                    "name": "Center",
+                    "value": 4
+                },
+                {
+                    "name": "MiddleRight",
+                    "value": 5
+                },
+                {
+                    "name": "BottomLeft",
+                    "value": 6
+                },
+                {
+                    "name": "BottomCenter",
+                    "value": 7
+                },
+                {
+                    "name": "BottomRight",
+                    "value": 8
                 }
             ]
         },
@@ -13257,6 +13522,43 @@
             ]
         },
         {
+            "name": "ZHM5FaceFXSpecificEventConsumer.EEvent",
+            "items": [
+                {
+                    "name": "eNone",
+                    "value": 0
+                },
+                {
+                    "name": "eGetInCombatCoverExhalation",
+                    "value": 1
+                },
+                {
+                    "name": "eLeaveCombatCoverExhalation",
+                    "value": 2
+                },
+                {
+                    "name": "eAgilityStrainedInhaleExhale",
+                    "value": 3
+                },
+                {
+                    "name": "eAgilityGroan",
+                    "value": 4
+                },
+                {
+                    "name": "eCloseCombatAttackSnarl",
+                    "value": 5
+                },
+                {
+                    "name": "eCloseCombatStainedGroan",
+                    "value": 6
+                },
+                {
+                    "name": "eCloseCombatSilentKillShush",
+                    "value": 7
+                }
+            ]
+        },
+        {
             "name": "eParticleEmitterMeshEntity_SpawnModes",
             "items": [
                 {
@@ -13355,6 +13657,40 @@
                 {
                     "name": "RA_EXACT",
                     "value": 2
+                }
+            ]
+        },
+        {
+            "name": "EBystanderPointType",
+            "items": [
+                {
+                    "name": "BPT_Scared",
+                    "value": 0
+                },
+                {
+                    "name": "BPT_Alerted",
+                    "value": 1
+                }
+            ]
+        },
+        {
+            "name": "ZHM5SpecialSoundEventConsumer.EAnimSoundSpecial",
+            "items": [
+                {
+                    "name": "eHM5AnimSoundSpecial_Ladder1_L",
+                    "value": 0
+                },
+                {
+                    "name": "eHM5AnimSoundSpecial_Ladder1_R",
+                    "value": 1
+                },
+                {
+                    "name": "eHM5AnimSoundSpecial_Ladder2_L",
+                    "value": 2
+                },
+                {
+                    "name": "eHM5AnimSoundSpecial_Ladder2_R",
+                    "value": 3
                 }
             ]
         },
@@ -14189,6 +14525,48 @@
             ]
         },
         {
+            "name": "ZHM5WeaponEventConsumer.EAnimWeapon",
+            "items": [
+                {
+                    "name": "eHM5Weapon_HideClip",
+                    "value": 0
+                },
+                {
+                    "name": "eHM5Weapon_ShowClip",
+                    "value": 1
+                },
+                {
+                    "name": "eHM5Weapon_SpawnPhysicsClip",
+                    "value": 2
+                },
+                {
+                    "name": "eHM5Weapon_EjectCartridge",
+                    "value": 3
+                }
+            ]
+        },
+        {
+            "name": "EChallengeReward",
+            "items": [
+                {
+                    "name": "CHALLENGE_REWARD_0",
+                    "value": 0
+                },
+                {
+                    "name": "CHALLENGE_REWARD_1",
+                    "value": 1
+                },
+                {
+                    "name": "CHALLENGE_REWARD_2",
+                    "value": 2
+                },
+                {
+                    "name": "CHALLENGE_REWARD_3",
+                    "value": 3
+                }
+            ]
+        },
+        {
             "name": "ECCEmitterEffect",
             "items": [
                 {
@@ -14267,6 +14645,19 @@
                 {
                     "name": "eGait_Max",
                     "value": 5
+                }
+            ]
+        },
+        {
+            "name": "ZHM5BodyContainer.eBCCloseMode",
+            "items": [
+                {
+                    "name": "BC_AUTOCLOSE",
+                    "value": 0
+                },
+                {
+                    "name": "BC_MANUALCLOSE",
+                    "value": 1
                 }
             ]
         },
@@ -14683,6 +15074,19 @@
             ]
         },
         {
+            "name": "ZHM5HandSoundEventConsumer.EAnimSoundHand",
+            "items": [
+                {
+                    "name": "eHM5AnimSoundHand_L",
+                    "value": 0
+                },
+                {
+                    "name": "eHM5AnimSoundHand_R",
+                    "value": 1
+                }
+            ]
+        },
+        {
             "name": "TeleportActionType",
             "items": [
                 {
@@ -14845,6 +15249,43 @@
                 {
                     "name": "eUnknownAmmoType",
                     "value": 8
+                }
+            ]
+        },
+        {
+            "name": "ZHM5GenericEventConsumer.EEvent",
+            "items": [
+                {
+                    "name": "eGeneric00",
+                    "value": 0
+                },
+                {
+                    "name": "eGeneric01",
+                    "value": 1
+                },
+                {
+                    "name": "eGeneric02",
+                    "value": 2
+                },
+                {
+                    "name": "eGeneric03",
+                    "value": 3
+                },
+                {
+                    "name": "eGeneric04",
+                    "value": 4
+                },
+                {
+                    "name": "eGeneric05",
+                    "value": 5
+                },
+                {
+                    "name": "eGeneric06",
+                    "value": 6
+                },
+                {
+                    "name": "eGeneric07",
+                    "value": 7
                 }
             ]
         },
