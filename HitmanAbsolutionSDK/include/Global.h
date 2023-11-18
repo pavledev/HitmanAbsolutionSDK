@@ -33,6 +33,7 @@ class ZEntityType;
 class ZVariantRef;
 class ZHM5ActionManager;
 class ZEntityManager;
+class ZString;
 
 extern HitmanAbsolutionSDK_API uintptr_t BaseAddress;
 extern HitmanAbsolutionSDK_API ZRenderManager* RenderManager;
@@ -66,3 +67,4 @@ extern HitmanAbsolutionSDK_API void* ZAspectEntityBlueprintFactoryVFTbl;
 HitmanAbsolutionSDK_API bool SetPropertyValue(ZEntityType** pEntity, unsigned int nPropertyID, const ZVariantRef& value, bool bInvokeChangeHandlers = true);
 HitmanAbsolutionSDK_API void SignalInputPin(ZEntityType** pEntity, unsigned int nPinID, const ZVariantRef& data);
 HitmanAbsolutionSDK_API void SignalOutputPin(ZEntityType** pEntity, unsigned int nPinID, const ZVariantRef& data);
+HitmanAbsolutionSDK_API bool GetApplicationOptionBool(const ZString& sName, bool bDefault);

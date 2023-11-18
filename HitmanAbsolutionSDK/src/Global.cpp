@@ -15,3 +15,8 @@ void SignalOutputPin(ZEntityType** pEntity, unsigned int nPinID, const ZVariantR
 {
 	return Function::Call<ZEntityType**, unsigned int, const ZVariantRef&>(BaseAddress + 0x19BBA0, pEntity, nPinID, data);
 }
+
+bool GetApplicationOptionBool(const ZString& sName, bool bDefault)
+{
+	return Function::CallAndReturn<bool, const ZString&, bool>(BaseAddress + 0x212930, sName, bDefault);
+}
