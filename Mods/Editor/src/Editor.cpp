@@ -14,6 +14,7 @@
 #include <Glacier/Entity/ZAspectEntityBlueprintFactory.h>
 #include <Glacier/Engine/ZApplicationEngineWin32.h>
 #include <Glacier/Render/ZRenderManager.h>
+#include <Glacier/UI/ZScaleformManager.h>
 
 #include <Editor.h>
 #include <Utility/ResourceUtility.h>
@@ -647,6 +648,11 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 
 void Editor::RenderGizmo(const bool hasFocus)
 {
+    if (ScaleformManager->IsInMainMenu())
+    {
+        return;
+    }
+
     ImGuizmo::BeginFrame();
 
     ImGuiIO& io = ImGui::GetIO();
