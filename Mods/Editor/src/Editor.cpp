@@ -247,6 +247,7 @@ void Editor::OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnl
     rootNode.reset();
     selectedentityTreeNode.reset();
     filteredTreeRootNode.reset();
+    filteredProperties.clear();
 
     for (auto it = templateEntityBlueprints.begin(); it != templateEntityBlueprints.end();)
     {
@@ -312,7 +313,7 @@ void Editor::RenderEntityTree(const bool hasFocus)
     else
     {
         static char name[256]{ "" };
-        std::string hint = std::format("{} Name...", ICON_MD_SEARCH);
+        static std::string hint = std::format("{} Name...", ICON_MD_SEARCH);
 
         ImGui::PushItemWidth(-1);
         ImGui::InputTextWithHint("##Name", hint.c_str(), name, IM_ARRAYSIZE(name));
@@ -464,6 +465,50 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 
     ImGui::PushFont(SDK::GetInstance().GetRegularFont());
 
+    static char propertyName[256]{ "" };
+    static std::string hint = std::format("{} Property Name...", ICON_MD_SEARCH);
+    std::string propertyName2;
+
+    ImGui::PushItemWidth(-1);
+    ImGui::InputTextWithHint("##PropertyName", hint.c_str(), propertyName, IM_ARRAYSIZE(propertyName));
+    ImGui::PopItemWidth();
+
+    ImGui::Spacing();
+
+    if (ImGui::Button("Search Property Name"))
+    {
+        if (strlen(propertyName) == 0)
+        {
+            propertyName2 = "";
+
+            filteredProperties.clear();
+        }
+        else
+        {
+            propertyName2 = propertyName;
+
+            std::transform(propertyName2.begin(), propertyName2.end(), propertyName2.begin(), tolower);
+
+            TArray<SPropertyData>* properties = selectedentityTreeNode->entityRef.GetProperties();
+
+            for (size_t i = 0; i < properties->Size(); ++i)
+            {
+                SPropertyData* propertyData = &(*properties)[i];
+                const std::string& propertyName3 = PropertyRegistry::GetInstance().GetPropertyName(propertyData->m_nPropertyID);
+                std::string propertyName4 = propertyName3;
+
+                std::transform(propertyName4.begin(), propertyName4.end(), propertyName4.begin(), tolower);
+
+                if (propertyName4.contains(propertyName2))
+                {
+                    filteredProperties.insert(i);
+                }
+            }
+        }
+    }
+
+    ImGui::Separator();
+
     if (ImGui::Button("Teleport Free Camera To Entity"))
     {
         ZCameraEntity* activeCamera = ZApplicationEngineWin32::GetInstance()->GetActiveCamera();
@@ -546,15 +591,21 @@ void Editor::RenderEntityProperties(const bool hasFocus)
     for (size_t i = 0; i < properties->Size(); ++i)
     {
         SPropertyData* propertyData = &(*properties)[i];
+        const std::string& propertyName3 = PropertyRegistry::GetInstance().GetPropertyName(propertyData->m_nPropertyID);
+
+        if (!filteredProperties.empty() && !filteredProperties.contains(i))
+        {
+            continue;
+        }
+
         ZVariant variant = selectedentityTreeNode->entityRef.GetProperty(propertyData->m_nPropertyID);
         const IType* typeInfo = propertyData->m_pInfo->m_Type->pTypeInfo;
 
         const std::string typeName = typeInfo->GetTypeName();
         const std::string inputID = std::format("##Property{}", i);
-        const std::string& propertyName = PropertyRegistry::GetInstance().GetPropertyName(propertyData->m_nPropertyID);
 
         ImGui::AlignTextToFramePadding();
-        ImGui::Text(propertyName.c_str());
+        ImGui::Text(propertyName3.c_str());
         ImGui::SameLine();
 
         ImGui::PushItemWidth(-1);

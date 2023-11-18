@@ -184,6 +184,7 @@ private:
     std::shared_ptr<EntityTreeNode> selectedentityTreeNode;
     std::shared_ptr<EntityTreeNode> filteredTreeRootNode;
     bool scrollToEntity;
+    std::set<unsigned int> filteredProperties;
 
     ImGuizmo::OPERATION gizmoMode;
     ImGuizmo::MODE gizmoSpace;
