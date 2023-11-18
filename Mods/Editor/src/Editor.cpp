@@ -244,6 +244,8 @@ void Editor::OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZStrin
 void Editor::OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnloadScene)
 {
     rootNode.reset();
+    selectedentityTreeNode.reset();
+    filteredTreeRootNode.reset();
 
     for (auto it = templateEntityBlueprints.begin(); it != templateEntityBlueprints.end();)
     {
