@@ -360,38 +360,41 @@ long __stdcall ZApplicationEngineWin32_MainWindowProcHook(ZApplicationEngineWin3
 
 bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx)
 {
-    std::filesystem::path iniFilePath = std::filesystem::current_path() / "HMA.ini";
+    std::shared_ptr<Settings> settings = SDK::GetInstance().GetSettings();
 
-    if (std::filesystem::exists(iniFilePath))
+    if (settings->ReadEngineIni())
     {
-        std::string iniFilePath2 = iniFilePath.string();
+        const std::filesystem::path iniFilePath = std::filesystem::current_path() / "HMA.ini";
 
-        std::replace(iniFilePath2.begin(), iniFilePath2.end(), '\\', '/');
-
-        ZFilePath filePath3 = ZFilePath(iniFilePath2.c_str());
-        ZIniFile* iniFile = static_cast<ZIniFile*>(ZApplicationEngineWin32::GetInstance()->GetIniFile());
-        TArray<unsigned char> buffer;
-
-        ZIniFile::LoadIniFileContent(filePath3, buffer, true);
-
-        if (buffer.Size() > 0)
+        if (std::filesystem::exists(iniFilePath))
         {
-            ZString fileContent = ZString(reinterpret_cast<char*>(buffer.GetStart()));
+            std::string iniFilePath2 = iniFilePath.string();
 
-            iniFile->LoadFromStringInternal(fileContent, filePath3);
+            std::replace(iniFilePath2.begin(), iniFilePath2.end(), '\\', '/');
 
-            int argc = 0;
+            const ZFilePath filePath3 = ZFilePath(iniFilePath2.c_str());
+            ZIniFile* iniFile = static_cast<ZIniFile*>(ZApplicationEngineWin32::GetInstance()->GetIniFile());
+            TArray<unsigned char> buffer;
 
-            ZApplicationEngineWin32::GetInstance()->AddApplicationSpecificOptions(iniFile);
-            ZApplicationEngineWin32::GetInstance()->ApplyOptionOverrides(argc, nullptr);
+            ZIniFile::LoadIniFileContent(filePath3, buffer, true);
+
+            if (buffer.Size() > 0)
+            {
+                const ZString fileContent = ZString(reinterpret_cast<char*>(buffer.GetStart()));
+
+                iniFile->LoadFromStringInternal(fileContent, filePath3);
+
+                int argc = 0;
+
+                ZApplicationEngineWin32::GetInstance()->AddApplicationSpecificOptions(iniFile);
+                ZApplicationEngineWin32::GetInstance()->ApplyOptionOverrides(argc, nullptr);
+            }
         }
     }
 
     bool result = Hooks::ZHitman5Module_Initialize.CallOriginalFunction(pThis);
 
     //SDK::GetInstance().OnEngineInitialized();
-
-    std::shared_ptr<Settings> settings = SDK::GetInstance().GetSettings();
 
     if (!settings->IniFileHasKey("Settings", "PauseOnFocusLoss"))
     {
