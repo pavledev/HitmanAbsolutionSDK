@@ -9,6 +9,7 @@
 class HitmanAbsolutionSDK_API ZResourceLibraryInfo
 {
 public:
+	ZResourceStub* GetLibraryStub() const;
 	ZRuntimeResourceID GetSourceRuntimeResourceID() const;
 	ZResourceID GetResourceID() const;
 	const SResourceLibraryEntry& GetEntry(const unsigned int index) const;

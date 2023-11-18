@@ -2,6 +2,11 @@
 
 #include <Function.h>
 
+ZResourceStub* ZResourceLibraryInfo::GetLibraryStub() const
+{
+	return m_pLibraryStub;
+}
+
 ZRuntimeResourceID ZResourceLibraryInfo::GetSourceRuntimeResourceID() const
 {
 	return m_SourceResourceID;
