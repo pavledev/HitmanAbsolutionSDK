@@ -64,4 +64,5 @@ namespace Hooks
 	inline ThisCallHook<void, ZResourceLibraryLoader> ZResourceLibraryLoader_StartLoading;
 	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_ResetSceneCallback;
 	inline ThisCallHook<void, ZHM5ReloadController> ZHM5ReloadController_EndReloadWeapon;
+	inline CdeclHook<bool, const ZString&, bool> GetApplicationOptionBool;
 }
