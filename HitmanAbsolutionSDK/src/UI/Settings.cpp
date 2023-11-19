@@ -171,9 +171,7 @@ void Settings::UpdateIniFile(const std::string& key, const bool value)
 
     if (std::filesystem::exists(iniFilePath))
     {
-        mINI::INIStructure oldIni;
-
-        iniFile.read(oldIni);
+        iniFile.read(iniStructure);
     }
 
     iniStructure["Settings"][key] = value ? "true" : "false";
