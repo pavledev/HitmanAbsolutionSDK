@@ -65,7 +65,7 @@ SDK::SDK()
 
     if (settings->PatchResources())
     {
-        //resourcePatcher = std::make_shared<ResourcePatcher>();
+        resourcePatcher = std::make_shared<ResourcePatcher>();
     }
 
     ResourceIDRegistry& resourceIDRegistry = ResourceIDRegistry::GetInstance();
