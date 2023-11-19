@@ -14,6 +14,7 @@
 
 #include <Glacier/Entity/ZEntityRef.h>
 #include <Glacier/Resource/ZRuntimeResourceID.h>
+#include <Glacier/Physics/ZStaticPhysicsAspect.h>
 
 #include <ModInterface.h>
 
@@ -133,9 +134,11 @@ private:
     void SearchTypeNameInTree(std::shared_ptr<EntityTreeNode> node, const std::string& typeName, std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap);
     std::shared_ptr<EntityTreeNode> GeneratedFilteredEntityTree(const std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap);
 
+    ZStaticPhysicsAspect* FindStaticPhysicsAspect(std::shared_ptr<EntityTreeNode> entityTreeNode);
+
     void OnSelectEntity(ZEntityRef entityRef);
     void OnLeftMouseButtonDown(const SVector2& mousePosition, const bool isFirstClick);
-    void OnEntityTransformChange(ZEntityRef entityRef, const SMatrix& transform, bool relative);
+    void OnEntityTransformChange(std::shared_ptr<EntityTreeNode> entityTreeNode, const SMatrix& transform, bool relative);
     void OnSetPropertyValue(ZEntityRef entityRef, const unsigned int propertyID, const ZVariant& value);
     void OnSignalEntityPin(ZEntityRef entityRef, const std::string& pinName, const bool isInputPin);
 

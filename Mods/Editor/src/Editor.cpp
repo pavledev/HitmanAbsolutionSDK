@@ -266,7 +266,7 @@ void Editor::OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnl
 
 void Editor::RenderEntityTree(const bool hasFocus)
 {
-    if (!hasFocus || !isOpen)
+    if (!hasFocus || !isOpen || !rootNode)
     {
         return;
     }
@@ -777,7 +777,7 @@ void Editor::RenderGizmo(const bool hasFocus)
 
             if (ImGuizmo::Manipulate(&viewMatrix.XAxis.x, &projectionMatrix.XAxis.x, gizmoMode, gizmoSpace, &modelMatrix.XAxis.x, NULL, useSnap ? &snapValue[0] : NULL))
             {
-                OnEntityTransformChange(selectedentityTreeNode->entityRef, modelMatrix, false);
+                OnEntityTransformChange(selectedentityTreeNode, modelMatrix, false);
             }
         }
     }
@@ -1462,6 +1462,21 @@ std::shared_ptr<Editor::EntityTreeNode> Editor::GeneratedFilteredEntityTree(cons
     return searchRoot;
 }
 
+ZStaticPhysicsAspect* Editor::FindStaticPhysicsAspect(std::shared_ptr<EntityTreeNode> entityTreeNode)
+{
+    for (auto& child : entityTreeNode->children)
+    {
+        ZStaticPhysicsAspect* staticPhysicsAspect = child->entityRef.QueryInterfacePtr<ZStaticPhysicsAspect>();
+
+        if (staticPhysicsAspect)
+        {
+            return staticPhysicsAspect;
+        }
+    }
+
+    return nullptr;
+}
+
 void Editor::OnSelectEntity(ZEntityRef entityRef)
 {
     if (entityRef.GetEntityTypePtrPtr())
@@ -1514,9 +1529,9 @@ void Editor::OnLeftMouseButtonDown(const SVector2& mousePosition, const bool isF
     }
 }
 
-void Editor::OnEntityTransformChange(ZEntityRef entityRef, const SMatrix& transform, bool relative)
+void Editor::OnEntityTransformChange(std::shared_ptr<EntityTreeNode> entityTreeNode, const SMatrix& transform, bool relative)
 {
-    ZSpatialEntity* spatialEntity = selectedentityTreeNode->entityRef.QueryInterfacePtr<ZSpatialEntity>();
+    ZSpatialEntity* spatialEntity = entityTreeNode->entityRef.QueryInterfacePtr<ZSpatialEntity>();
 
     if (!spatialEntity)
     {
@@ -1543,6 +1558,18 @@ void Editor::OnEntityTransformChange(ZEntityRef entityRef, const SMatrix& transf
         worldTransform.Trans.w = 1.f;
 
         spatialEntity->SetObjectToWorldMatrix(worldTransform);
+    }
+
+    ZStaticPhysicsAspect* staticPhysicsAspect = entityTreeNode->entityRef.QueryInterfacePtr<ZStaticPhysicsAspect>();
+
+    if (!staticPhysicsAspect)
+    {
+        staticPhysicsAspect = FindStaticPhysicsAspect(entityTreeNode);
+    }
+
+    if (staticPhysicsAspect && staticPhysicsAspect->GetPhysicsObject())
+    {
+        staticPhysicsAspect->GetPhysicsObject()->SetTransform(spatialEntity->GetObjectToWorldMatrix());
     }
 }
 
