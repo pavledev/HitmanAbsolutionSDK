@@ -1,7 +1,6 @@
-#include "ResourcePatcher.h"
-#include "ResourcePatcher.h"
 #include <map>
 #include <format>
+#include <unordered_set>
 
 #include <Glacier/Templates/TSharedPointer.h>
 #include <Glacier/Resource/ZResourceLibraryInfo.h>
@@ -56,6 +55,8 @@ void ResourcePatcher::LoadPatchedResources()
         patchFiles.insert(std::make_pair(patchNumber, entry.path()));
     }
 
+    std::unordered_set<unsigned long long> addedResources;
+
     for (auto it = patchFiles.begin(); it != patchFiles.end(); ++it)
     {
         BinaryReader binaryReader = BinaryReader(it->second.string());
@@ -68,13 +69,42 @@ void ResourcePatcher::LoadPatchedResources()
             PatchedResource patchedResource;
 
             patchedResource.runtimeResourceID = binaryReader.Read<unsigned long long>();
+
+            if (addedResources.contains(patchedResource.runtimeResourceID))
+            {
+                binaryReader.Seek(8, SeekOrigin::Current);
+
+                continue;
+            }
+
             patchedResource.resourceDataOffset = binaryReader.Read<unsigned int>();
             patchedResource.resourceDataSize = binaryReader.Read<unsigned int>();
             patchedResource.patchFileName = it->second.filename().string();
 
             iterator->second.push_back(patchedResource);
+            addedResources.insert(patchedResource.runtimeResourceID);
         }
     }
+}
+
+const ResourcePatcher::PatchedResource* ResourcePatcher::GetPatchedResource(const ZRuntimeResourceID& runtimeResourceID) const
+{
+    auto patchedResourcesIterator = patchedResources.find(currentHeaderLibraryRuntimeResourceID.GetID());
+
+    if (patchedResourcesIterator != patchedResources.end())
+    {
+        const std::vector<PatchedResource>& patchedResources2 = patchedResourcesIterator->second;
+
+        for (size_t i = 0; i < patchedResources2.size(); ++i)
+        {
+            if (patchedResources2[i].runtimeResourceID == runtimeResourceID.GetID())
+            {
+                return &patchedResources2[i];
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 void ResourcePatcher::GetPatchedResource(const ZRuntimeResourceID& runtimeResourceID, void*& resourceData, unsigned int& resourceDataSize)
@@ -140,7 +170,15 @@ bool ResourcePatcher::OnProcessBlock(ZResourceLibraryLoader* resourceLibraryLoad
     {
         if (nReadSize)
         {
-            resourceLibraryLoader->GetCurrentData()->Insert(pData, nReadSize);
+            const unsigned int entryIndex = resourceLibraryLoader->GetEntryIndex();
+            const ZResourceLibraryInfo* libraryEntries = resourceLibraryLoader->GetLibraryEntries();
+            const SResourceLibraryEntry& entry = libraryEntries->GetEntry(entryIndex);
+
+            if (!IsResourcePatched(entry.pStub->GetRuntimeResourceID()))
+            {
+                resourceLibraryLoader->GetCurrentData()->Insert(pData, nReadSize);
+            }
+
             resourceLibraryLoader->SetEntryBytesLeft(resourceLibraryLoader->GetEntryBytesLeft() - nReadSize);
         }
 
@@ -149,13 +187,21 @@ bool ResourcePatcher::OnProcessBlock(ZResourceLibraryLoader* resourceLibraryLoad
 
     while (true)
     {
-        unsigned int entryBytesLeft = resourceLibraryLoader->GetEntryBytesLeft();
+        const unsigned int entryBytesLeft = resourceLibraryLoader->GetEntryBytesLeft();
         unsigned int entryIndex = resourceLibraryLoader->GetEntryIndex();
         ZResourceLibraryInfo* libraryEntries = resourceLibraryLoader->GetLibraryEntries();
         const SResourceLibraryEntry& entry = libraryEntries->GetEntry(entryIndex);
 
         if (IsResourcePatched(entry.pStub->GetRuntimeResourceID()))
         {
+            void* resourceData = nullptr;
+            unsigned int resourceDataSize = 0;
+
+            GetPatchedResource(entry.pStub->GetRuntimeResourceID(), resourceData, resourceDataSize);
+
+            resourceLibraryLoader->GetCurrentData()->Insert(static_cast<unsigned char*>(resourceData), resourceDataSize);
+
+            operator delete(resourceData);
         }
         else
         {
@@ -167,11 +213,6 @@ bool ResourcePatcher::OnProcessBlock(ZResourceLibraryLoader* resourceLibraryLoad
 
         if (libraryEntries->IsValid(entryIndex))
         {
-            if (resourceLibraryLoader->GetCurrentData().GetTarget())
-            {
-                resourceLibraryLoader->GetCurrentData()->AddReference();
-            }
-
             libraryEntries->InstallResource(entryIndex, resourceLibraryLoader->GetCurrentData());
 
             if (resourceLibraryLoader->GetCurrentData().GetTarget())
@@ -228,8 +269,20 @@ void ResourcePatcher::OnAllocateEntry(ZResourceLibraryLoader* resourceLibraryLoa
 {
     if (resourceInstaller->SupportsAllocate())
     {
-        void* data = resourceInstaller->Allocate(size);
-        TSharedPointer<ZResourceDataBuffer> resourceDataBuffer = ZResourceDataBuffer::Create(data, size);
+        unsigned int dataSize = 0;
+        const PatchedResource* patchedResource = GetPatchedResource(runtimeResourceID);
+
+        if (patchedResource)
+        {
+            dataSize = patchedResource->resourceDataSize;
+        }
+        else
+        {
+            dataSize = size;
+        }
+
+        void* data = resourceInstaller->Allocate(dataSize);
+        TSharedPointer<ZResourceDataBuffer> resourceDataBuffer = ZResourceDataBuffer::Create(data, dataSize);
 
         if (resourceDataBuffer.GetTarget() != resourceLibraryLoader->GetCurrentData().GetTarget())
         {
@@ -266,66 +319,93 @@ void ResourcePatcher::OnAllocateEntry(ZResourceLibraryLoader* resourceLibraryLoa
         resourceLibraryLoader->GetCurrentData()->Clear();
     }
 
+    //Data size of original resource should passed here to avoid problem with reading of resource library
     resourceLibraryLoader->SetEntryBytesLeft(size);
 }
 
 void ResourcePatcher::OnStartLoading(ZResourceLibraryLoader* resourceLibraryLoader)
 {
+    LoadPatchedResources();
+
     ZResourceLibraryInfo* libraryEntries = resourceLibraryLoader->GetLibraryEntries();
     unsigned int entryIndex = 0;
     unsigned int maxDataSize = 0;
     auto patchedResourcesIterator = patchedResources.find(currentHeaderLibraryRuntimeResourceID.GetID());
+    bool reallocateBuffer = false;
 
     if (patchedResourcesIterator != patchedResources.end())
     {
+        unsigned int maxDataSize2 = 0;
+
+        if (libraryEntries->GetEntryCount() > 0)
+        {
+            do
+            {
+                const SResourceLibraryEntry& entry = libraryEntries->GetEntry(entryIndex);
+
+                if (entry.nDataSize > maxDataSize2)
+                {
+                    IResourceInstaller* resourceInstaller = entry.pStub->GetResourceInstaller();
+
+                    if (!resourceInstaller->SupportsAllocate())
+                    {
+                        maxDataSize2 = entry.nDataSize;
+                    }
+                }
+
+                ++entryIndex;
+            }
+            while (entryIndex < libraryEntries->GetEntryCount());
+        }
+
+        maxDataSize = maxDataSize2;
+
+        const ZRuntimeResourceID& libraryRuntimeResourceID = resourceLibraryLoader->GetLibraryEntries()->GetLibraryStub()->GetRuntimeResourceID();
         const std::vector<PatchedResource>& patchedResources = patchedResourcesIterator->second;
 
         for (size_t i = 0; i < patchedResources.size(); ++i)
         {
-            if (patchedResources[i].resourceDataSize > maxDataSize)
+            if (ZRuntimeResourceID(patchedResources[i].runtimeResourceID).GetIDLow() != libraryRuntimeResourceID.GetIDLow())
             {
-                maxDataSize = patchedResources[i].resourceDataSize;
-            }
-        }
-    }
-
-    if (libraryEntries->GetEntryCount() > 0)
-    {
-        do
-        {
-            const SResourceLibraryEntry& entry = libraryEntries->GetEntry(entryIndex);
-
-            if (entry.nDataSize > maxDataSize)
-            {
-                IResourceInstaller* resourceInstaller = entry.pStub->GetResourceInstaller();
-
-                if (!resourceInstaller->SupportsAllocate())
-                {
-                    maxDataSize = entry.nDataSize;
-                }
+                continue;
             }
 
-            ++entryIndex;
+            if (patchedResources[i].resourceDataSize > maxDataSize2)
+            {
+                maxDataSize2 = patchedResources[i].resourceDataSize;
+            }
         }
-        while (entryIndex < libraryEntries->GetEntryCount());
+
+        if (maxDataSize != maxDataSize2)
+        {
+            reallocateBuffer = true;
+        }
+
+        maxDataSize = maxDataSize2;
     }
 
-    IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
-    void* data = normalAllocator->Allocate(maxDataSize, 0);
-    TSharedPointer<ZResourceDataBuffer> resourceDataBuffer = ZResourceDataBuffer::Create(data, maxDataSize);
-
-    if (resourceLibraryLoader->GetFixedBuffer().GetTarget() != resourceDataBuffer.GetTarget())
+    if (reallocateBuffer)
     {
-        if (resourceLibraryLoader->GetFixedBuffer().GetTarget())
-        {
-            resourceLibraryLoader->GetFixedBuffer()->RemoveReference();
-        }
+        IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
 
-        resourceLibraryLoader->GetFixedBuffer().SetTarget(resourceDataBuffer.GetTarget());
+        normalAllocator->Free(resourceLibraryLoader->GetFixedBuffer()->GetData());
 
-        if (resourceLibraryLoader->GetFixedBuffer().GetTarget())
+        void* data = normalAllocator->Allocate(maxDataSize, 0);
+        TSharedPointer<ZResourceDataBuffer> resourceDataBuffer = ZResourceDataBuffer::Create(data, maxDataSize);
+
+        if (resourceLibraryLoader->GetFixedBuffer().GetTarget() != resourceDataBuffer.GetTarget())
         {
-            resourceLibraryLoader->GetFixedBuffer()->AddReference();
+            if (resourceLibraryLoader->GetFixedBuffer().GetTarget())
+            {
+                resourceLibraryLoader->GetFixedBuffer()->RemoveReference();
+            }
+
+            resourceLibraryLoader->GetFixedBuffer().SetTarget(resourceDataBuffer.GetTarget());
+
+            if (resourceLibraryLoader->GetFixedBuffer().GetTarget())
+            {
+                resourceLibraryLoader->GetFixedBuffer()->AddReference();
+            }
         }
     }
 }

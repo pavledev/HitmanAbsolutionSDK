@@ -33,6 +33,7 @@ public:
 
 	ResourcePatcher();
 	void LoadPatchedResources();
+	const PatchedResource* GetPatchedResource(const ZRuntimeResourceID& runtimeResourceID) const;
 	void GetPatchedResource(const ZRuntimeResourceID& runtimeResourceID, void*& resourceData, unsigned int& resourceDataSize);
 	void SetCurrentHeaderLibraryRuntimeResourceID(const ZRuntimeResourceID& currentHeaderLibraryRuntimeResourceID);
 	const bool IsResourcePatched(const ZRuntimeResourceID& runtimeResourceID) const;
@@ -44,6 +45,5 @@ public:
 
 private:
 	std::unordered_map<unsigned long long, std::vector<PatchedResource>> patchedResources;
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>> installedResources;
 	ZRuntimeResourceID currentHeaderLibraryRuntimeResourceID;
 };
