@@ -173,6 +173,11 @@ void Editor::OnTemplateEntityBlueprintFactoryCreate(STemplateEntityBlueprint* te
     const unsigned int resourceDataSize = resourcePending.GetResourceReader().GetTarget()->GetResourceDataSize();
     const ZRuntimeResourceID& tbluRuntimeResourceID = resourcePending.GetResource().GetResourceStub()->GetRuntimeResourceID();
 
+    if (templateEntityBlueprints.contains(tbluRuntimeResourceID))
+    {
+        return;
+    }
+
     templateEntityBlueprints.insert(std::make_pair(tbluRuntimeResourceID, STemplateEntityBlueprint()));
 
     STemplateEntityBlueprint& templateEntityBlueprint2 = templateEntityBlueprints[tbluRuntimeResourceID];
@@ -242,24 +247,27 @@ void Editor::OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZStrin
     rootNode->entityName = "Scene";
 }
 
-void Editor::OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnloadScene)
+void Editor::OnClearScene(ZEntitySceneContext* entitySceneContext, const bool fullyUnloadScene)
 {
     rootNode.reset();
     selectedentityTreeNode.reset();
     filteredTreeRootNode.reset();
     filteredProperties.clear();
 
-    for (auto it = templateEntityBlueprints.begin(); it != templateEntityBlueprints.end();)
+    if (fullyUnloadScene)
     {
-        const ZRuntimeResourceID runtimeResourceID = it->first;
+        for (auto it = templateEntityBlueprints.begin(); it != templateEntityBlueprints.end();)
+        {
+            const ZRuntimeResourceID runtimeResourceID = it->first;
 
-        if (runtimeResourceID.IsLibraryResource())
-        {
-            templateEntityBlueprints.erase(it++);
-        }
-        else
-        {
-            ++it;
+            if (runtimeResourceID.IsLibraryResource())
+            {
+                templateEntityBlueprints.erase(it++);
+            }
+            else
+            {
+                ++it;
+            }
         }
     }
 }
@@ -1245,30 +1253,13 @@ void Editor::AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntity
     ZEntitySceneContext* entitySceneContext = Hitman5Module->GetSceneContext();
     const ZRuntimeResourceID& tbluRuntimeResourceID = templateEntityBlueprintFactory->GetRuntimeResourceID();
     const ZRuntimeResourceID& headerLibraryRuntimeResourceID = entitySceneContext->GetSceneHeaderLibrary().GetResourceStub()->GetRuntimeResourceID();
-    void* tbluResourceData = nullptr;
-    unsigned char tbluResourceAlignment = 0;
 
     if (!templateEntityBlueprints.contains(tbluRuntimeResourceID))
     {
-        unsigned int tbluResourceDataSize = 0;
-
-        if (tbluRuntimeResourceID.IsLibraryResource())
-        {
-            ResourceUtility::LoadResource(tbluRuntimeResourceID, headerLibraryRuntimeResourceID, tbluResourceData, tbluResourceDataSize);
-        }
-        else
-        {
-            ResourceUtility::LoadResource(tbluRuntimeResourceID, 0x00A6B9335EB4770D, tbluResourceData, tbluResourceDataSize);
-        }
-
-        ZBinaryDeserializer binaryDeserializer;
-        templateEntityBlueprint = static_cast<STemplateEntityBlueprint*>(binaryDeserializer.Deserialize(tbluResourceData, tbluResourceDataSize));
-        tbluResourceAlignment = binaryDeserializer.GetAlignment();
+        return;
     }
-    else
-    {
-        templateEntityBlueprint = &templateEntityBlueprints[tbluRuntimeResourceID];
-    }
+
+    templateEntityBlueprint = &templateEntityBlueprints[tbluRuntimeResourceID];
 
     for (size_t i = 0; i < templateEntityBlueprint->entityTemplates.Size(); ++i)
     {

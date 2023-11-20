@@ -40,7 +40,7 @@ public:
 
     void OnTemplateEntityBlueprintFactoryCreate(STemplateEntityBlueprint* templateEntityBlueprint, ZResourcePending& resourcePending);
     void OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState);
-    void OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnloadScene);
+    void OnClearScene(ZEntitySceneContext* entitySceneContext, const bool fullyUnloadScene);
 
 private:
     struct PinConnection
