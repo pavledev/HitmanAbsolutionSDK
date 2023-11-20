@@ -396,14 +396,26 @@ bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx)
 
     //SDK::GetInstance().OnEngineInitialized();
 
-    if (!settings->IniFileHasKey("Settings", "PauseOnFocusLoss"))
+    if (settings->IniFileHasKey("Settings", "PauseOnFocusLoss"))
+    {
+        const char* value = settings->PauseOnFocusLoss() ? "true" : "false";
+
+        ZApplicationEngineWin32::GetInstance()->SetOption("PauseOnFocusLoss", value);
+    }
+    else
     {
         const bool pauseOnFocusLoss = GetApplicationOptionBool("PauseOnFocusLoss", false);
 
         settings->SetPauseOnFocusLoss(pauseOnFocusLoss);
     }
 
-    if (!settings->IniFileHasKey("Settings", "MinimizeOnFocusLoss"))
+    if (settings->IniFileHasKey("Settings", "MinimizeOnFocusLoss"))
+    {
+        const char* value = settings->MinimizeOnFocusLoss() ? "true" : "false";
+
+        ZApplicationEngineWin32::GetInstance()->SetOption("NO_MINIMIZE_FOCUSLOSS", value);
+    }
+    else
     {
         const bool minimizeOnFocusLoss = GetApplicationOptionBool("NO_MINIMIZE_FOCUSLOSS", false);
 
