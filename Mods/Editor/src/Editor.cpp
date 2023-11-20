@@ -1464,9 +1464,16 @@ std::shared_ptr<Editor::EntityTreeNode> Editor::GeneratedFilteredEntityTree(cons
 
 ZStaticPhysicsAspect* Editor::FindStaticPhysicsAspect(std::shared_ptr<EntityTreeNode> entityTreeNode)
 {
-    for (auto& child : entityTreeNode->children)
+    ZStaticPhysicsAspect* staticPhysicsAspect = entityTreeNode->entityRef.QueryInterfacePtr<ZStaticPhysicsAspect>();
+
+    if (staticPhysicsAspect)
     {
-        ZStaticPhysicsAspect* staticPhysicsAspect = child->entityRef.QueryInterfacePtr<ZStaticPhysicsAspect>();
+        return staticPhysicsAspect;
+    }
+
+    for (size_t i = 0; i < entityTreeNode->children.size(); ++i)
+    {
+        staticPhysicsAspect = FindStaticPhysicsAspect(entityTreeNode->children[i]);
 
         if (staticPhysicsAspect)
         {
@@ -1560,12 +1567,7 @@ void Editor::OnEntityTransformChange(std::shared_ptr<EntityTreeNode> entityTreeN
         spatialEntity->SetObjectToWorldMatrix(worldTransform);
     }
 
-    ZStaticPhysicsAspect* staticPhysicsAspect = entityTreeNode->entityRef.QueryInterfacePtr<ZStaticPhysicsAspect>();
-
-    if (!staticPhysicsAspect)
-    {
-        staticPhysicsAspect = FindStaticPhysicsAspect(entityTreeNode);
-    }
+    ZStaticPhysicsAspect* staticPhysicsAspect = staticPhysicsAspect = FindStaticPhysicsAspect(entityTreeNode);
 
     if (staticPhysicsAspect && staticPhysicsAspect->GetPhysicsObject())
     {
