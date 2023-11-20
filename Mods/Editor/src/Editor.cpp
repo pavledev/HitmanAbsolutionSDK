@@ -1840,27 +1840,28 @@ void Editor::SMatrix43Property(const std::string& id, const ZEntityRef entityRef
 {
     ImGui::NewLine();
 
-    SMatrix43 matrix = *static_cast<SMatrix43*>(data);
     ZVariant variant;
 
-    variant.Set<SMatrix43>(matrix);
+    variant.Set<SMatrix43>(*static_cast<SMatrix43*>(data));
 
-    if (ImGui::InputFloat3((id + "x").c_str(), &matrix.XAxis.x))
+    SMatrix43* matrix = &variant.Get<SMatrix43>();
+
+    if (ImGui::InputFloat3((id + "x").c_str(), &matrix->XAxis.x))
     {
         OnSetPropertyValue(entityRef, propertyID, variant);
     }
 
-    if (ImGui::InputFloat3((id + "y").c_str(), &matrix.YAxis.x))
+    if (ImGui::InputFloat3((id + "y").c_str(), &matrix->YAxis.x))
     {
         OnSetPropertyValue(entityRef, propertyID, variant);
     }
 
-    if (ImGui::InputFloat3((id + "z").c_str(), &matrix.ZAxis.x))
+    if (ImGui::InputFloat3((id + "z").c_str(), &matrix->ZAxis.x))
     {
         OnSetPropertyValue(entityRef, propertyID, variant);
     }
 
-    if (ImGui::InputFloat3((id + "t").c_str(), &matrix.Trans.x))
+    if (ImGui::InputFloat3((id + "t").c_str(), &matrix->Trans.x))
     {
         OnSetPropertyValue(entityRef, propertyID, variant);
     }
