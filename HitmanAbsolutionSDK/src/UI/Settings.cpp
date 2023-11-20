@@ -18,12 +18,12 @@
 Settings::Settings()
 {
     isOpen = false;
-    readEngineIni = false;
+    readHMAIni = false;
     patchResources = false;
     pauseOnFocusLoss = false;
     minimizeOnFocusLoss = false;
 
-    GetValueFromIniFile("Settings", "ReadEngineIni", readEngineIni);
+    GetValueFromIniFile("Settings", "ReadHMAIni", readHMAIni);
     GetValueFromIniFile("Settings", "PatchResources", patchResources);
     GetValueFromIniFile("Settings", "PauseOnFocusLoss", pauseOnFocusLoss);
     GetValueFromIniFile("Settings", "MinimizeOnFocusLoss", minimizeOnFocusLoss);
@@ -45,9 +45,9 @@ void Settings::Draw(const bool hasFocus)
 
     if (isWindowVisible)
     {
-        if (ImGui::Checkbox("Read engine.ini", &readEngineIni))
+        if (ImGui::Checkbox("Read HMA.ini", &readHMAIni))
         {
-            UpdateIniFile("ReadEngineIni", readEngineIni);
+            UpdateIniFile("ReadHMAIni", readHMAIni);
         }
 
         if (ImGui::Checkbox("Patch Resources", &patchResources))
@@ -84,9 +84,9 @@ void Settings::Show()
     isOpen = true;
 }
 
-const bool Settings::ReadEngineIni() const
+const bool Settings::ReadHMAIni() const
 {
-    return readEngineIni;
+    return readHMAIni;
 }
 
 const bool Settings::PatchResources() const

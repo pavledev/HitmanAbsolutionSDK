@@ -362,7 +362,7 @@ bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx)
 {
     std::shared_ptr<Settings> settings = SDK::GetInstance().GetSettings();
 
-    if (settings->ReadEngineIni())
+    if (settings->ReadHMAIni())
     {
         const std::filesystem::path iniFilePath = std::filesystem::current_path() / "HMA.ini";
 

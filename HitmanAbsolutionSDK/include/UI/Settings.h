@@ -6,7 +6,7 @@ public:
     Settings();
     void Draw(const bool hasFocus);
     void Show();
-    const bool ReadEngineIni() const;
+    const bool ReadHMAIni() const;
     const bool PatchResources() const;
     const bool PauseOnFocusLoss() const;
     const bool MinimizeOnFocusLoss() const;
@@ -18,7 +18,7 @@ public:
 
 private:
     bool isOpen;
-    bool readEngineIni;
+    bool readHMAIni;
     bool patchResources;
     bool pauseOnFocusLoss;
     bool minimizeOnFocusLoss;
