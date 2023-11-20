@@ -1847,8 +1847,20 @@ void Editor::SMatrix43Property(const std::string& id, const ZEntityRef entityRef
     variant.Set<SMatrix43>(*static_cast<SMatrix43*>(data));
 
     SMatrix43* matrix = &variant.Get<SMatrix43>();
+    SVector3 position;
+    SVector3 rotation;
+    SVector3 scale;
 
-    if (ImGui::InputFloat3((id + "x").c_str(), &matrix->XAxis.x))
+    matrix->Decompose(position, rotation, scale);
+
+    if (ImGui::InputFloat3((id + "Rotation").c_str(), &rotation.x))
+    {
+        *matrix = SMatrix43::Recompose(position, rotation, scale);
+
+        OnSetPropertyValue(entityRef, propertyID, variant);
+    }
+
+    /*if (ImGui::InputFloat3((id + "x").c_str(), &matrix->XAxis.x))
     {
         OnSetPropertyValue(entityRef, propertyID, variant);
     }
@@ -1861,9 +1873,9 @@ void Editor::SMatrix43Property(const std::string& id, const ZEntityRef entityRef
     if (ImGui::InputFloat3((id + "z").c_str(), &matrix->ZAxis.x))
     {
         OnSetPropertyValue(entityRef, propertyID, variant);
-    }
+    }*/
 
-    if (ImGui::InputFloat3((id + "t").c_str(), &matrix->Trans.x))
+    if (ImGui::InputFloat3((id + "Translation").c_str(), &matrix->Trans.x))
     {
         OnSetPropertyValue(entityRef, propertyID, variant);
     }
