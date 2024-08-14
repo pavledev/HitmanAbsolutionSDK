@@ -1,6 +1,10 @@
 # HitmanAbsolutionSDK
  SDK for Hitman Absolution
 
+<a href="https://discord.gg/6UDtuYhZP6">
+	<img src="https://img.shields.io/badge/discord-join-7289DA.svg?logo=discord&longCache=true&style=flat" />
+</a>
+
 ## Install
 Extract the content of the AbsolutionSDK-Release.rar archive to `<drive>:\Program Files (x86)\Steam\steamapps\common\Hitman Absolution`
 
