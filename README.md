@@ -1,6 +1,9 @@
 # HitmanAbsolutionSDK
  SDK for Hitman Absolution
 
+## Install
+Extract the contents of the AbsolutionSDK-Release.rar archive to <drive>:\Program Files (x86)\Steam\steamapps\common\Hitman Absolution
+
 ## Mods
 
 | Name | Description |
