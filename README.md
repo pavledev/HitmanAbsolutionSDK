@@ -11,7 +11,7 @@ Extract the content of the AbsolutionSDK-Release.rar archive to `<drive>:\Progra
 ## Usage
 Open SDK menu by pressing `~` key
 
-##Contracts Mode
+## Contracts Mode
 To use SDK with [Hitman-5-Server](https://github.com/LennardF1989/Hitman-5-Server) add webserviceurl=http://localhost:40147/hm5 below [application] in HMA.ini
 
 ## Mods
