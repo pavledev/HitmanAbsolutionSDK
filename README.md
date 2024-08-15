@@ -8,6 +8,12 @@
 ## Install
 Extract the content of the AbsolutionSDK-Release.rar archive to `<drive>:\Program Files (x86)\Steam\steamapps\common\Hitman Absolution`
 
+## Usage
+Open SDK menu by pressing `~` key
+
+##Contracts Mode
+To use SDK with [Hitman-5-Server](https://github.com/LennardF1989/Hitman-5-Server) add webserviceurl=http://localhost:40147/hm5 below [application] in HMA.ini
+
 ## Mods
 
 | Name | Description |
