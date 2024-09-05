@@ -52,6 +52,20 @@ struct float4
 		return _mm_div_ps(m, _mm_load1_ps(&p_Value));
 	}
 
+	float4& operator+=(const float4& p_Other)
+	{
+		m = _mm_add_ps(m, p_Other.m);
+
+		return *this;
+	}
+
+	float4& operator-=(const float4& p_Other)
+	{
+		m = _mm_sub_ps(m, p_Other.m);
+
+		return *this;
+	}
+
 	union
 	{
 		__m128 m;
