@@ -35,6 +35,8 @@ class IResourceInstaller;
 class ZRuntimeResourceID;
 class ZHM5ReloadController;
 
+class ZRenderGBuffer;
+
 namespace Hooks
 {
 	inline StdCallHook<long, ZApplicationEngineWin32*, HWND, unsigned int, unsigned int, long> ZApplicationEngineWin32_MainWindowProc;
@@ -65,4 +67,10 @@ namespace Hooks
 	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_ResetSceneCallback;
 	inline ThisCallHook<void, ZHM5ReloadController> ZHM5ReloadController_EndReloadWeapon;
 	inline CdeclHook<bool, const ZString&, bool> GetApplicationOptionBool;
+	inline ThisCallHook<void, ZRenderGBuffer,
+		unsigned int,
+		unsigned int,
+		ZString,
+		ZRenderDevice*,
+		unsigned int> ZRenderGBuffer_ZRenderGBuffer;
 }
