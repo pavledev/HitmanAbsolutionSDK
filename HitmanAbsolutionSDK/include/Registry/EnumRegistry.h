@@ -11,7 +11,7 @@ class HitmanAbsolutionSDK_API EnumRegistry
 public:
 	static EnumRegistry& GetInstance();
 	void Load();
-	std::map<int, std::string>* GetEnum(const std::string& typeName);
+	const std::map<int, std::string>& GetEnum(const std::string& typeName);
 
 private:
 	EnumRegistry() = default;
