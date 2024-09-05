@@ -136,7 +136,7 @@ const bool Settings::IniFileHasKey(const std::string& section, const std::string
     return false;
 }
 
-void Settings::GetValueFromIniFile(const std::string& section, const std::string& key, bool& outValue)
+void Settings::GetValueFromIniFile(const std::string& section, const std::string& key, bool& outputValue)
 {
     const std::filesystem::path iniFilePath = std::format("{}\\HitmanAbsolutionSDK.ini", std::filesystem::current_path().string());
 
@@ -159,7 +159,7 @@ void Settings::GetValueFromIniFile(const std::string& section, const std::string
             return std::tolower(c);
         });
 
-        outValue = value == "true" || value == "1";
+        outputValue = value == "true" || value == "1";
     }
 }
 
