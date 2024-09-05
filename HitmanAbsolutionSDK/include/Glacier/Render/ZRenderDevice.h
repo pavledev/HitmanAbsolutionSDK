@@ -73,7 +73,9 @@ public:
 private:
 	PAD(0xE4);
 	ZRenderSwapChain* m_pSwapChain; //0xE8
-	PAD(0x60);
+	PAD(0x10);
+	ZRenderTargetView* m_pRenderTargetViews[8]; //0xFC
+	PAD(0x30);
 	ID3D11Device* m_pDirect3DDevice; //0x14C
 	ID3D11DeviceContext* m_pDeviceContextImmediate; //0x150
 	PAD(0x13C);
