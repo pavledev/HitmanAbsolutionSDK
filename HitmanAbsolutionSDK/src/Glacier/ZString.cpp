@@ -143,6 +143,8 @@ void ZString::Free()
 	IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
 
 	normalAllocator->Free(const_cast<char*>(m_chars));
+
+	m_chars = nullptr;
 }
 
 bool ZString::IsEmpty() const
