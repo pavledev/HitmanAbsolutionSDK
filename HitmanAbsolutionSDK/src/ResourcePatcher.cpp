@@ -388,13 +388,15 @@ void ResourcePatcher::OnStartLoading(ZResourceLibraryLoader* resourceLibraryLoad
     {
         IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
 
-        normalAllocator->Free(resourceLibraryLoader->GetFixedBuffer()->GetData());
+        //normalAllocator->Free(resourceLibraryLoader->GetFixedBuffer()->GetData());
 
         void* data = normalAllocator->Allocate(maxDataSize, 0);
         TSharedPointer<ZResourceDataBuffer> resourceDataBuffer = ZResourceDataBuffer::Create(data, maxDataSize);
 
         if (resourceLibraryLoader->GetFixedBuffer().GetTarget() != resourceDataBuffer.GetTarget())
         {
+            resourceDataBuffer->Insert(resourceLibraryLoader->GetFixedBuffer()->GetData(), resourceLibraryLoader->GetFixedBuffer()->GetSize());
+
             if (resourceLibraryLoader->GetFixedBuffer().GetTarget())
             {
                 resourceLibraryLoader->GetFixedBuffer()->RemoveReference();
