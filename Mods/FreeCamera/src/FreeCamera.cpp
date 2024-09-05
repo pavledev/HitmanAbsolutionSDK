@@ -221,6 +221,13 @@ void FreeCamera::OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent)
         return;
     }
 
+    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+
+    if (!hitman)
+    {
+        return;
+    }
+
     ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
     ZFreeCameraControlEntity* freeCameraControlEntity = engineAppCommon.GetFreeCameraControl().GetRawPointer();
 
