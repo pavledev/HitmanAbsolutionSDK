@@ -59,7 +59,7 @@ private:
 
         unsigned int entityIndex;
         unsigned int entityIndexInReferencedTEMP;
-        std::shared_ptr<EntityTreeNode> parentNode;
+        std::weak_ptr<EntityTreeNode> parentNode;
         std::string entityName;
         ZEntityRef entityRef;
         std::vector<std::shared_ptr<EntityTreeNode>> children;
@@ -128,7 +128,7 @@ private:
     void RenderEntityAABB();
     void RenderBlueprintNodesAndPins(const bool hasFocus);
 
-    void AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntityRef rootEntity, ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory, const int parentIndex = -1, STemplateEntityBlueprint* templateEntityBlueprint = nullptr, bool deleteTemplateEntityBlueprint = true);
+    void AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntityRef rootEntity, ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory, const int parentIndex = -1, STemplateEntityBlueprint* templateEntityBlueprint = nullptr);
     std::shared_ptr<EntityTreeNode> FindNode(const ZEntityRef& entityRef, std::shared_ptr<EntityTreeNode> entityTreeNode) const;
     void SearchEntityNameInTree(std::shared_ptr<EntityTreeNode> node, const std::string& entityName, std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap);
     void SearchTypeNameInTree(std::shared_ptr<EntityTreeNode> node, const std::string& typeName, std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap);

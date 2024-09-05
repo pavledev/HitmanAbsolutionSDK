@@ -25,9 +25,6 @@
 #include <Utility/Builders.h>
 #include <Utility/Widgets.h>
 
-#undef min
-#undef max
-
 Editor::EntityTreeNode::EntityTreeNode()
 {
     entityIndex = -1;
@@ -41,6 +38,23 @@ Editor::EntityTreeNode::EntityTreeNode(const unsigned int entityIndex, const cha
 {
 }
 
+const bool Editor::EntityTreeNode::IsParent(std::shared_ptr<EntityTreeNode> entityTreeNode) const
+{
+    std::shared_ptr<EntityTreeNode> currentNode = parentNode.lock();
+
+    while (currentNode)
+    {
+        if (currentNode.get() == entityTreeNode.get())
+        {
+            return true;
+        }
+
+        currentNode = currentNode->parentNode.lock();
+    }
+
+    return false;
+}
+
 Editor::Pin::Pin(int id, const char* name, PinType type) : id(id), node(nullptr), name(name), type(type), kind(PinKind::Input)
 {
 }
@@ -51,23 +65,6 @@ Editor::BlueprintNode::BlueprintNode(int id, const char* name, ImColor color) : 
 
 Editor::Link::Link(ax::NodeEditor::LinkId id, ax::NodeEditor::PinId startPinId, ax::NodeEditor::PinId endPinId) : id(id), startPinID(startPinId), endPinID(endPinId), color(255, 255, 255)
 {
-}
-
-const bool Editor::EntityTreeNode::IsParent(std::shared_ptr<EntityTreeNode> entityTreeNode) const
-{
-    std::shared_ptr<EntityTreeNode> currentNode = parentNode;
-
-    while (currentNode)
-    {
-        if (currentNode.get() == entityTreeNode.get())
-        {
-            return true;
-        }
-
-        currentNode = currentNode->parentNode;
-    }
-
-    return false;
 }
 
 Editor::Editor() : snapValue{ 1.0f, 1.0f, 1.0f }
@@ -303,7 +300,6 @@ void Editor::RenderEntityTree(const bool hasFocus)
 
         rootNode->entityIndex = templateEntityBlueprintFactory->GetRootEntityIndex();
         rootNode->entityIndexInReferencedTEMP = -1;
-        rootNode->parentNode = nullptr;
         rootNode->entityRef = entitySceneContext->GetLoadedScene();
     }
 
@@ -1248,11 +1244,9 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
     ImGui::PopFont();
 }
 
-void Editor::AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntityRef rootEntity, ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory, const int parentIndex, STemplateEntityBlueprint* templateEntityBlueprint, bool deleteTemplateEntityBlueprint)
+void Editor::AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntityRef rootEntity, ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory, const int parentIndex, STemplateEntityBlueprint* templateEntityBlueprint)
 {
-    ZEntitySceneContext* entitySceneContext = Hitman5Module->GetSceneContext();
     const ZRuntimeResourceID& tbluRuntimeResourceID = templateEntityBlueprintFactory->GetRuntimeResourceID();
-    const ZRuntimeResourceID& headerLibraryRuntimeResourceID = entitySceneContext->GetSceneHeaderLibrary().GetResourceStub()->GetRuntimeResourceID();
 
     if (!templateEntityBlueprints.contains(tbluRuntimeResourceID))
     {
@@ -1271,7 +1265,7 @@ void Editor::AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntity
 
             childNode->parentNode = entityTreeNode;
 
-            AddChildren(childNode, rootEntity, templateEntityBlueprintFactory, childNode->entityIndex, templateEntityBlueprint, false);
+            AddChildren(childNode, rootEntity, templateEntityBlueprintFactory, childNode->entityIndex, templateEntityBlueprint);
 
             if (*reinterpret_cast<void**>(entityBlueprintFactory2) == ZTemplateEntityBlueprintFactoryVFTbl)
             {
@@ -1384,7 +1378,7 @@ void Editor::SearchEntityNameInTree(std::shared_ptr<EntityTreeNode> node, const 
 
     if (entityName3.contains(entityName2))
     {
-        parentMap[node] = node->parentNode;
+        parentMap[node] = node->parentNode.lock();
     }
 
     for (auto& child : node->children)
@@ -1402,7 +1396,7 @@ void Editor::SearchTypeNameInTree(std::shared_ptr<EntityTreeNode> node, const st
 
     if (node->entityRef.HasInterface(typeName))
     {
-        parentMap[node] = node->parentNode;
+        parentMap[node] = node->parentNode.lock();
     }
 
     for (auto& child : node->children)
@@ -1742,11 +1736,11 @@ void Editor::EnumProperty(const std::string& id, const ZEntityRef entityRef, con
     int value = *static_cast<int*>(data);
     STypeID* typeID = propertyData->m_pInfo->m_Type;
     const char* typeName = typeID->pTypeInfo->GetTypeName();
-    std::map<int, std::string>* enumItems = EnumRegistry::GetInstance().GetEnum(typeName);
+    const std::map<int, std::string>& enumItems = EnumRegistry::GetInstance().GetEnum(typeName);
 
     std::string currentValue;
 
-    for (auto it = enumItems->begin(); it != enumItems->end(); ++it)
+    for (auto it = enumItems.begin(); it != enumItems.end(); ++it)
     {
         if (it->first == value)
         {
@@ -1758,7 +1752,7 @@ void Editor::EnumProperty(const std::string& id, const ZEntityRef entityRef, con
 
     if (ImGui::BeginCombo(id.c_str(), currentValue.c_str()))
     {
-        for (auto it = enumItems->begin(); it != enumItems->end(); ++it)
+        for (auto it = enumItems.begin(); it != enumItems.end(); ++it)
         {
             if (ImGui::Selectable(it->second.c_str(), it->first == value))
             {
