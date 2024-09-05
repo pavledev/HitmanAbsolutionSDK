@@ -42,14 +42,16 @@ void EnumRegistry::Load()
 	Logger::GetInstance().Log(Logger::Level::Info, "Sucessfully loaded enums.");
 }
 
-std::map<int, std::string>* EnumRegistry::GetEnum(const std::string& typeName)
+const std::map<int, std::string>& EnumRegistry::GetEnum(const std::string& typeName)
 {
 	auto it = enums.find(typeName);
 
 	if (it != enums.end())
 	{
-		return &it->second;
+		return it->second;
 	}
 
-	return nullptr;
+	static std::map<int, std::string> enumItems;
+
+	return enumItems;
 }
