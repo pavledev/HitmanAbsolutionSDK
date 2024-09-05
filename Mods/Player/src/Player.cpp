@@ -386,6 +386,13 @@ void Player::SetInfiniteAmmo()
 
 void Player::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
 {
+    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+
+    if (!hitman)
+    {
+        return;
+    }
+
     if (getOutfitAction.Digital())
     {
         ZActor* actor = FindNearestActor();
