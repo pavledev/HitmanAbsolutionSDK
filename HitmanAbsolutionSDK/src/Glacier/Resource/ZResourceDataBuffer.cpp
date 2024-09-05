@@ -10,6 +10,11 @@ unsigned char* ZResourceDataBuffer::GetData() const
 	return m_pData;
 }
 
+unsigned int ZResourceDataBuffer::GetSize() const
+{
+	return m_nSize;
+}
+
 void ZResourceDataBuffer::Insert(unsigned char* pData, unsigned int size)
 {
 	memcpy(&m_pData[m_nSize], pData, size);
