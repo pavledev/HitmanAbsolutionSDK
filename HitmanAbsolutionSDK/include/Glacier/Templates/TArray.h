@@ -66,6 +66,10 @@ public:
         IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
 
         normalAllocator->Free(m_pStart);
+
+        m_pStart = nullptr;
+        m_pEnd = nullptr;
+        m_pLast = nullptr;
     }
 
     TArray& operator=(const TArray& other)
@@ -160,6 +164,11 @@ public:
 
     void Reserve(const size_t capacity)
     {
+        if (capacity == 0)
+        {
+            return;
+        }
+
         if (capacity <= Capacity())
         {
             return;
@@ -188,6 +197,11 @@ public:
 
     void Resize(const size_t newSize)
     {
+        if (newSize == 0)
+        {
+            return;
+        }
+
         if (newSize > Capacity())
         {
             Reserve(newSize);
@@ -257,11 +271,6 @@ public:
 
     void RemoveAt(const size_t index)
     {
-        if (index >= Size())
-        {
-            return;
-        }
-
         T* element = m_pStart + index;
 
         element->~T();
@@ -270,7 +279,10 @@ public:
 
         --m_pEnd;
 
-        m_pEnd->~T();
+        if (m_pStart != m_pEnd)
+        {
+            m_pEnd->~T();
+        }
     }
 
     bool operator==(const TArray& other) const
