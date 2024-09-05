@@ -113,6 +113,14 @@ struct SMatrix
 
 		struct
 		{
+			float4 Left;
+			float4 Backward;
+			float4 Up;
+			float4 Pos;
+		};
+
+		struct
+		{
 			float m11;
 			float m12;
 			float m13;
