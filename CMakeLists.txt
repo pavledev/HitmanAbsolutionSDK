@@ -23,6 +23,7 @@ set(MODS
 	Actors
 	Items
 	Editor
+	Noclip
 )
 
 foreach(MOD IN LISTS MODS)
