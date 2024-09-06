@@ -46,7 +46,7 @@ void Noclip::OnEngineInitialized()
 
 void Noclip::OnDrawMenu()
 {
-    if (ImGui::Checkbox(ICON_MD_SELF_IMPROVEMENT " Items", &isNoclipEnabled))
+    if (ImGui::Checkbox(ICON_MD_SELF_IMPROVEMENT " Noclip", &isNoclipEnabled))
     {
         if (isNoclipEnabled)
         {
