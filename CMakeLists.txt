@@ -24,6 +24,7 @@ set(MODS
 	Items
 	Editor
 	Noclip
+	HUD
 )
 
 foreach(MOD IN LISTS MODS)
