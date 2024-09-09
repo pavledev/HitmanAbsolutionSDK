@@ -1,7 +1,5 @@
 #pragma once
 
-#include <array>
-
 #include <Glacier/UI/EHUDItem.h>
 
 #include <ModInterface.h>
