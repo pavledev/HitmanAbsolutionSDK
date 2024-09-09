@@ -25,6 +25,7 @@ set(MODS
 	Editor
 	Noclip
 	HUD
+	Camera
 )
 
 foreach(MOD IN LISTS MODS)
