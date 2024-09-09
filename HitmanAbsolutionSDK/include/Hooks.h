@@ -34,8 +34,9 @@ struct SResourceLibraryEntry;
 class IResourceInstaller;
 class ZRuntimeResourceID;
 class ZHM5ReloadController;
-
 class ZRenderGBuffer;
+class ZHM5MainCamera;
+struct SGameUpdateEvent;
 
 namespace Hooks
 {
@@ -73,4 +74,5 @@ namespace Hooks
 		ZString,
 		ZRenderDevice*,
 		unsigned int> ZRenderGBuffer_ZRenderGBuffer;
+	inline ThisCallHook<void, ZHM5MainCamera, const SGameUpdateEvent*, bool> ZHM5MainCamera_UpdateMainCamera;
 }
