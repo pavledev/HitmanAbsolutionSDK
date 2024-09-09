@@ -17,3 +17,8 @@ void ZCameraEntity::SetFarZ(float fFarZ)
 {
 	Function::CallMethod<ZCameraEntity*, float>(BaseAddress + 0xA0BF0, this, fFarZ);
 }
+
+TEntityRef<IRenderPostfilterControllerEntity>& ZCameraEntity::GetRenderPostfilterControllerEntity()
+{
+	return m_rPostfilter;
+}
