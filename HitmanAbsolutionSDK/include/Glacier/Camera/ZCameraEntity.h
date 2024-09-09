@@ -2,6 +2,7 @@
 
 #include "../IComponentInterface.h"
 #include "../Render/ZRenderableEntity.h"
+#include "../Render/IRenderPostfilterControllerEntity.h"
 
 struct SRenderViewport;
 struct SVector3;
@@ -90,9 +91,12 @@ public:
 	SMatrix GetViewMatrix() const;
 	void SetNearZ(float fNearZ);
 	void SetFarZ(float fFarZ);
+	TEntityRef<IRenderPostfilterControllerEntity>& GetRenderPostfilterControllerEntity();
 
 private:
-	PAD(0x12C);
+	PAD(0x40);
+	TEntityRef<IRenderPostfilterControllerEntity> m_rPostfilter; //0xA4
+	PAD(0xDC);
 };
 
 static_assert(sizeof(ZCameraEntity) == 0x190);
