@@ -37,6 +37,9 @@ class ZHM5ReloadController;
 class ZRenderGBuffer;
 class ZHM5MainCamera;
 struct SGameUpdateEvent;
+class ZRenderPostfilterParametersEntity;
+struct SRenderPostfilterParametersColorCorrection;
+struct SRenderPostfilterParametersMisc;
 
 namespace Hooks
 {
@@ -75,4 +78,5 @@ namespace Hooks
 		ZRenderDevice*,
 		unsigned int> ZRenderGBuffer_ZRenderGBuffer;
 	inline ThisCallHook<void, ZHM5MainCamera, const SGameUpdateEvent*, bool> ZHM5MainCamera_UpdateMainCamera;
+	inline ThisCallHook<void, ZRenderPostfilterParametersEntity, SRenderPostfilterParametersColorCorrection*, SRenderPostfilterParametersMisc*> ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection;
 }
