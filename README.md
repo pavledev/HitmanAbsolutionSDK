@@ -24,3 +24,6 @@ To use SDK with [Hitman-5-Server](https://github.com/LennardF1989/Hitman-5-Serve
 | [Items](/Mods/Items) | Displays all items and has option to teleport all items to hitman. |
 | [StartingOutfitAndWeaponModifier](/Mods/StartingOutfitAndWeaponModifier) | It can be used to set starting outfit and weapon. |
 | [FreeCamera](/Mods/FreeCamera) | Adds support for free camera. |
+| [Noclip](/Mods/Noclip) | Make player fly. |
+| [HUD](/Mods/Noclip) | Toggle HUD and all HUD items. |
+| [Camera](/Mods/Camera) | Change FOV and toggle LUT and Vignette effects. |
