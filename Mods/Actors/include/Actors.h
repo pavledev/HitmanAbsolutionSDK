@@ -42,9 +42,12 @@ private:
     int selectedActorIndex;
     std::vector<ZDynamicResourceLibrary*> dynamicResourceLibraries;
     bool renderActorNames;
+    bool isGodModeEnabled;
     std::vector<FireArmKitEntity> fireArmKitEntities;
     bool spawnWeapon;
     int selectedActorWeaponIndex;
+
+    inline static int* godMode;
 };
 
 DECLARE_MOD(Actors)

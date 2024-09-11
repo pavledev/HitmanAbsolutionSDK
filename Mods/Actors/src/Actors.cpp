@@ -19,6 +19,7 @@ Actors::Actors()
     isOpen = false;
     selectedActorIndex = -1;
     renderActorNames = false;
+    isGodModeEnabled = false;
     spawnWeapon = false;
     selectedActorWeaponIndex = -1;
 }
@@ -40,6 +41,8 @@ void Actors::Initialize()
 
     Hooks::ZEngineAppCommon_DefaultMainLoopSequence.CreateHook("ZEngineAppCommon::DefaultMainLoopSequence", 0x4C7580, ZEngineAppCommon_DefaultMainLoopSequenceHook);
     Hooks::ZEngineAppCommon_DefaultMainLoopSequence.EnableHook();
+
+    godMode = reinterpret_cast<int*>(BaseAddress + 0xD4D91C);
 }
 
 void Actors::OnDrawMenu()
@@ -74,6 +77,11 @@ void Actors::OnDrawUI(const bool hasFocus)
         ImGui::BeginChild("left pane", ImVec2(600, 500), false, ImGuiWindowFlags_HorizontalScrollbar);
 
         ImGui::Checkbox("Render Actor Names", &renderActorNames);
+
+        if (ImGui::Checkbox("God mode", &isGodModeEnabled))
+        {
+            *godMode = static_cast<int>(isGodModeEnabled);
+        }
 
         static char actorName[256]{ "" };
 
