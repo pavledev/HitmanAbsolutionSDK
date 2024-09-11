@@ -96,7 +96,9 @@ public:
 private:
 	PAD(0x40);
 	TEntityRef<IRenderPostfilterControllerEntity> m_rPostfilter; //0xA4
-	PAD(0xDC);
+	PAD(0xD8);
+	TEntityRef<IRenderPostfilterControllerEntity> m_rPostfilterOverride; //0x184
+	PAD(0x4);
 };
 
 static_assert(sizeof(ZCameraEntity) == 0x190);
