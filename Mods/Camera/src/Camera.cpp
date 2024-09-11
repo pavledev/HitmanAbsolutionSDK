@@ -5,6 +5,8 @@
 #include "Glacier/Camera/ZHM5MainCamera.h"
 #include "Glacier/ZLevelManager.h"
 #include "Glacier/Render/ZRenderPostfilterControllerEntity.h"
+#include "Glacier/Render/ZRenderPostfilterParametersEntity.h"
+#include "Glacier/Render/SRenderPostfilterParametersColorCorrection.h"
 
 #include "Camera.h"
 #include "Hooks.h"
@@ -16,9 +18,11 @@ void Camera::Initialize()
 
     Hooks::ZHM5MainCamera_UpdateMainCamera.CreateHook("ZHM5MainCamera::UpdateMainCamera", 0x7E160, ZHM5MainCamera_UpdateMainCameraHook);
     Hooks::ZEntitySceneContext_CreateScene.CreateHook("ZEntitySceneContext::CreateScene", 0x4479E0, ZEntitySceneContext_CreateSceneHook);
+    Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection.CreateHook("ZRenderPostfilterParametersEntity::UpdateParametersColorCorrection", 0x46570, ZRenderPostfilterParametersEntity_UpdateParametersColorCorrectionHook);
 
     Hooks::ZHM5MainCamera_UpdateMainCamera.EnableHook();
     Hooks::ZEntitySceneContext_CreateScene.EnableHook();
+    Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection.EnableHook();
 }
 
 void Camera::OnDrawMenu()
@@ -112,6 +116,18 @@ void Camera::OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZStrin
     currentPostfilterParametersEntity.SetProperty("m_bVignetteEnabled", areLUTAndVignetteEffectsEnabled);
 }
 
+void Camera::OnUpdateParametersColorCorrection(ZRenderPostfilterParametersEntity* renderPostfilterParametersEntity)
+{
+    const bool isColorCorrectionEnabled = renderPostfilterParametersEntity->GetID().GetProperty("m_bColorCorrectionEnabled").Get<bool>();
+
+    if (isColorCorrectionEnabled && !areLUTAndVignetteEffectsEnabled)
+    {
+        renderPostfilterParametersEntity->GetID().SetProperty("m_bColorCorrectionEnabled", areLUTAndVignetteEffectsEnabled);
+        renderPostfilterParametersEntity->GetID().SetProperty("m_bDepthRemapEnabled", areLUTAndVignetteEffectsEnabled);
+        renderPostfilterParametersEntity->GetID().SetProperty("m_bVignetteEnabled", areLUTAndVignetteEffectsEnabled);
+    }
+}
+
 bool Camera::SliderFloatWithSteps(const char* label, float* v, float v_min, float v_max, float v_step, const char* format)
 {
     if (!format)
@@ -144,9 +160,15 @@ void __fastcall ZHM5MainCamera_UpdateMainCameraHook(ZHM5MainCamera* pThis, int e
 void __fastcall ZEntitySceneContext_CreateSceneHook(ZEntitySceneContext* pThis, int edx, const ZString& sStreamingState)
 {
     Hooks::ZEntitySceneContext_CreateScene.CallOriginalFunction(pThis, sStreamingState);
-    GetModInstance()->OnCreateScene(pThis, sStreamingState);
 
-    
+    GetModInstance()->OnCreateScene(pThis, sStreamingState);
+}
+
+void __fastcall ZRenderPostfilterParametersEntity_UpdateParametersColorCorrectionHook(ZRenderPostfilterParametersEntity* pThis, int edx, SRenderPostfilterParametersColorCorrection* parameters, SRenderPostfilterParametersMisc* miscParams)
+{
+    GetModInstance()->OnUpdateParametersColorCorrection(pThis);
+
+    Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection.CallOriginalFunction(pThis, parameters, miscParams);
 }
 
 DEFINE_MOD(Camera);
