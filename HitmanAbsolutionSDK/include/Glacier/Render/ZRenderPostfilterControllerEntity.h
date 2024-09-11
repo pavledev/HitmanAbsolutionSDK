@@ -5,7 +5,7 @@
 
 class ZRenderPostfilterControllerEntity : public ZRenderableEntity, public IRenderPostfilterControllerEntity
 {
-public:
+private:
 	ZEntityRef m_PostfilterParametersEntity; //0x64
 	PAD(0x24);
 	ZEntityRef m_CurrentPostfilterParametersEntity; //0x8C
