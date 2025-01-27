@@ -11,6 +11,7 @@
 #include <Glacier/Math/ZMath.h>
 #include <Glacier/Physics/ZCollisionManager.h>
 #include <Glacier/Actor/ZActor.h>
+#include <Glacier/UI/ZHUDManager.h>
 
 #include "FreeCamera.h"
 #include "Global.h"
@@ -214,6 +215,11 @@ void FreeCamera::OnDrawUI(const bool hasFocus)
 
 void FreeCamera::OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent)
 {
+    if (HUDManager->IsPauseMenuActive())
+    {
+        return;
+    }
+
     ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
 
     if (!applicationEngineWin32)
@@ -386,6 +392,11 @@ void FreeCamera::OnClearScene(ZEntitySceneContext* entitySceneContext, bool full
 
 void FreeCamera::OnUpdateCamera(float delta)
 {
+    if (HUDManager->IsPauseMenuActive())
+    {
+        return;
+    }
+
     ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
     ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
     ZFreeCameraControlEntity* freeCameraControlEntity = engineAppCommon.GetFreeCameraControl().GetRawPointer();
@@ -454,6 +465,11 @@ void FreeCamera::OnUpdateCamera(float delta)
 
 void FreeCamera::OnUpdateMovementFromInput()
 {
+    if (HUDManager->IsPauseMenuActive())
+    {
+        return;
+    }
+
     ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
     ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
     ZFreeCameraControlEntity* freeCameraControlEntity = engineAppCommon.GetFreeCameraControl().GetRawPointer();
