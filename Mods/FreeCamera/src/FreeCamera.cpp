@@ -26,6 +26,7 @@ FreeCamera::FreeCamera() :
     instantlyKillNpcAction("InstantKill"),
     teleportMainCharacterAction("Teleport"),
     areControlsVisible(false),
+    pauseGame(false),
     freeCamSpeedChangeThreshold(0.5f),
     deltaTranslationSpeed(0.f),
     freeCamTranslationSpeedChangeSensitivity(4.f),
@@ -158,6 +159,18 @@ void FreeCamera::OnDrawMenu()
     if (ImGui::Checkbox(ICON_MD_PHOTO_CAMERA " Free Camera", &isFreeCameraActive))
     {
         ToggleFreeCamera();
+    }
+
+    if (ImGui::Checkbox(ICON_MD_TIMER " Pause Game", &pauseGame))
+    {
+        if (pauseGame)
+        {
+            GameLoopManager->SetPlayMode(EPlayMode::PLAYMODE_PAUSED);
+        }
+        else
+        {
+            GameLoopManager->SetPlayMode(EPlayMode::PLAYMODE_PLAYING);
+        }
     }
 
     if (ImGui::Button(ICON_MD_SPORTS_ESPORTS " Free Camera Controls"))

@@ -62,6 +62,7 @@ private:
     bool areControlsVisible;
     std::unordered_map<std::string, std::string> pcControls;
     std::unordered_map<std::string, std::string> controllerControls;
+    bool pauseGame;
 
     float freeCamSpeedChangeThreshold;
     float freeCamTranslationSpeedChangeSensitivity;
