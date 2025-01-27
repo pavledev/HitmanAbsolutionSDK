@@ -12,3 +12,8 @@ void ZGameLoopManager::UnregisterForFrameUpdate(const ZDelegate<void __cdecl(SGa
 {
 	Function::CallMethod<ZGameLoopManager*, const ZDelegate<void __cdecl(SGameUpdateEvent const&)>&>(BaseAddress + 0x59EFF0, this, callback);
 }
+
+void ZGameLoopManager::SetPlayMode(EPlayMode ePlayMode)
+{
+	Function::CallMethod<ZGameLoopManager*, EPlayMode>(BaseAddress + 0x49A8C0, this, ePlayMode);
+}
