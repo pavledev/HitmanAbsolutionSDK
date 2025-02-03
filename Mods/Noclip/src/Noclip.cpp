@@ -38,10 +38,7 @@ void Noclip::OnEngineInitialized()
 
     GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 
-    const char* bindings = "NoclipInput={"
-        "ToggleNoclip=tap(kb,n);};";
-
-    InputActionManager->AddBindings(bindings);
+    AddBindings();
 }
 
 void Noclip::OnDrawMenu()

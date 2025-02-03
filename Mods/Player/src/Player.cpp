@@ -146,13 +146,7 @@ void Player::OnEngineInitialized()
 
     GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 
-    const char* bindings = "PlayerModInput={"
-        "GetOufit=tap(kb,i);"
-        "GetModel=tap(kb,o);"
-        "ChangeOutfit=tap(kb,p);"
-        "TeleportHitman=tap(kb,j);};";
-
-    InputActionManager->AddBindings(bindings);
+    AddBindings();
 }
 
 void Player::OnDrawMenu()

@@ -145,13 +145,7 @@ void FreeCamera::OnEngineInitialized()
 
     GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 
-    const char* bindings = "FreeCameraInput={"
-        "ToggleFreeCamera=tap(kb,k);"
-        "Teleport=& | hold(kb,lctrl) hold(kb,rctrl) tap(kb,f9);"
-        "InstantKill=tap(kb,f9);"
-        "FreezeCamera=tap(kb,f3);};";
-
-    InputActionManager->AddBindings(bindings);
+    AddBindings();
 }
 
 void FreeCamera::OnDrawMenu()
