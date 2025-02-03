@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <sstream>
 
 #include "Utility/StringUtility.h"
 
@@ -47,4 +48,38 @@ void StringUtility::ReplaceAll(std::string& string, const std::string& from, con
 
         startPos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
     }
+}
+
+std::vector<std::string> StringUtility::Split(const std::string& string, const char delimiter)
+{
+    std::vector<std::string> result;
+    std::stringstream ss(string);
+    std::string item;
+
+    while (getline(ss, item, delimiter))
+    {
+        result.push_back(item);
+    }
+
+    return result;
+}
+
+std::vector<std::string> StringUtility::Split(const std::string& string, const std::string& delimiter)
+{
+    size_t startPosition = 0;
+    size_t endPosition = 0;
+    size_t delimiterLength = delimiter.length();
+    std::string token;
+    std::vector<std::string> res;
+
+    while ((endPosition = string.find(delimiter, startPosition)) != std::string::npos)
+    {
+        token = string.substr(startPosition, endPosition - startPosition);
+        startPosition = endPosition + delimiterLength;
+        res.push_back(token);
+    }
+
+    res.push_back(string.substr(startPosition));
+
+    return res;
 }
