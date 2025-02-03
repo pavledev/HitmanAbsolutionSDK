@@ -219,7 +219,7 @@ void FreeCamera::OnDrawUI(const bool hasFocus)
     }
 }
 
-void FreeCamera::OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent)
+void FreeCamera::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
 {
     if (HUDManager->IsPauseMenuActive())
     {
