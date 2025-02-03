@@ -240,7 +240,7 @@ void ModManager::SetEnabledMods(const std::set<std::string>& mods)
 		iniStructure.set(mod, map);
 	}
 
-	iniFile.generate(iniStructure, true);
+	iniFile.generate(iniStructure);
 
 	SDK::GetInstance().GetModSelector()->UpdateAvailableMods(availableMods, GetActiveMods());
 }
