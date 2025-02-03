@@ -16,13 +16,10 @@ add_library(HitmanAbsolutionSDK SHARED
 	${HEADER_FILES}
  )
 
-target_include_directories(HitmanAbsolutionSDK PRIVATE
-	${CMAKE_SOURCE_DIR}/External/mINI/src/mini
-)
-
 target_include_directories(HitmanAbsolutionSDK PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_SOURCE_DIR}/External/IconFontCppHeaders
+	${CMAKE_SOURCE_DIR}/External/mINI/src/mini
 )
 
 target_link_libraries(HitmanAbsolutionSDK PUBLIC
