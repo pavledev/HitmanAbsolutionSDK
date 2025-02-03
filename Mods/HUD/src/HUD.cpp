@@ -2,10 +2,27 @@
 
 #include "imgui.h"
 
+#include "Glacier/ZGameLoopManager.h"
 #include "Glacier/UI/ZHUDManager.h"
+#include "Glacier/ZLevelManager.h"
 
 #include "Global.h"
 #include "HUD.h"
+
+HUD::HUD() :
+    isOpen(false),
+    toggleHUDAction("ToggleHUD")
+{
+}
+
+void HUD::OnEngineInitialized()
+{
+    const ZMemberDelegate<HUD, void(const SGameUpdateEvent&)> delegate(this, &HUD::OnFrameUpdate);
+
+    GameLoopManager->RegisterForFrameUpdate(delegate, 1);
+
+    AddBindings();
+}
 
 void HUD::OnDrawMenu()
 {
@@ -135,6 +152,21 @@ void HUD::ToggleHUDItem(const char* name, const bool show)
     visibleValue.SetBool(show);
 
     value.SetMember("_visible", visibleValue);
+}
+
+void HUD::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
+{
+    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+
+    if (!hitman)
+    {
+        return;
+    }
+
+    if (toggleHUDAction.Digital())
+    {
+        *uiDisableHUD = !*uiDisableHUD;
+    }
 }
 
 DEFINE_MOD(HUD);

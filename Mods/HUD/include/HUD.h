@@ -1,12 +1,17 @@
 #pragma once
 
 #include <Glacier/UI/EHUDItem.h>
+#include <Glacier/SGameUpdateEvent.h>
+#include <Glacier/Input/ZInputAction.h>
 
 #include <ModInterface.h>
 
 class HUD : public ModInterface
 {
 public:
+	HUD();
+
+	void OnEngineInitialized() override;
 	void OnDrawMenu() override;
 	void OnDrawUI(const bool hasFocus) override;
 
@@ -14,6 +19,8 @@ public:
 	void ToggleHUDItem(const char* name, const bool show);
 
 private:
+	void OnFrameUpdate(const SGameUpdateEvent& updateEvent);
+
 	bool isOpen;
 
 	inline static int* uiDisableHUD;
@@ -28,6 +35,7 @@ private:
 	bool isTargetTrackerVisible;
 	bool isAttentionVisible;
 	bool isCrosshairVisible;
+	ZInputAction toggleHUDAction;
 };
 
 DECLARE_MOD(HUD)
