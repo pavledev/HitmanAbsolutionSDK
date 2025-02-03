@@ -25,6 +25,8 @@ FreeCamera::FreeCamera() :
     freezeFreeCameraAction("FreezeCamera"),
     instantlyKillNpcAction("InstantKill"),
     teleportMainCharacterAction("Teleport"),
+    pauseGameAction("PauseGame"),
+    toggleFreeCameraAndPauseGameAction("ToggleFreeCameraAndPauseGame"),
     areControlsVisible(false),
     pauseGame(false),
     freeCamSpeedChangeThreshold(0.5f),
@@ -248,6 +250,12 @@ void FreeCamera::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
         ToggleFreeCamera();
     }
 
+    if (toggleFreeCameraAndPauseGameAction.Digital())
+    {
+        ToggleFreeCamera();
+        SetPlayMode(pauseGame);
+    }
+
     if (isFreeCameraActive)
     {
         if (instantlyKillNpcAction.Digital())
@@ -288,6 +296,11 @@ void FreeCamera::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
                 }
             }
         }
+    }
+
+    if (pauseGameAction.Digital())
+    {
+        SetPlayMode(pauseGame);
     }
 }
 

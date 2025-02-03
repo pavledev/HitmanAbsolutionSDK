@@ -61,6 +61,8 @@ private:
     ZInputAction resetSpeedAction[2];
     ZInputAction instantlyKillNpcAction;
     ZInputAction teleportMainCharacterAction;
+    ZInputAction pauseGameAction;
+    ZInputAction toggleFreeCameraAndPauseGameAction;
     bool areControlsVisible;
     std::unordered_map<std::string, std::string> pcControls;
     std::unordered_map<std::string, std::string> controllerControls;
