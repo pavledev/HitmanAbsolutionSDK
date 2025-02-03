@@ -51,6 +51,8 @@ private:
     void TeleportMainCharacter();
     bool GetFreeCameraRayCastClosestHitQueryOutput(const ERayDetailLevel detailLevel, ZRayQueryOutput& rayQueryOutput);
 
+    static void SetPlayMode(const bool pauseGame);
+
     volatile bool isFreeCameraActive;
     volatile bool freezeCamera;
     ZInputAction toggleFreeCameraAction;

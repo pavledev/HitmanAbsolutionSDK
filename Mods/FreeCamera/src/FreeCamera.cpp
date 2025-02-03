@@ -163,14 +163,7 @@ void FreeCamera::OnDrawMenu()
 
     if (ImGui::Checkbox(ICON_MD_TIMER " Pause Game", &pauseGame))
     {
-        if (pauseGame)
-        {
-            GameLoopManager->SetPlayMode(EPlayMode::PLAYMODE_PAUSED);
-        }
-        else
-        {
-            GameLoopManager->SetPlayMode(EPlayMode::PLAYMODE_PLAYING);
-        }
+        SetPlayMode(pauseGame);
     }
 
     if (ImGui::Button(ICON_MD_SPORTS_ESPORTS " Free Camera Controls"))
@@ -766,6 +759,18 @@ bool FreeCamera::GetFreeCameraRayCastClosestHitQueryOutput(const ERayDetailLevel
     }
 
     return true;
+}
+
+void FreeCamera::SetPlayMode(const bool pauseGame)
+{
+    if (pauseGame)
+    {
+        GameLoopManager->SetPlayMode(EPlayMode::PLAYMODE_PAUSED);
+    }
+    else
+    {
+        GameLoopManager->SetPlayMode(EPlayMode::PLAYMODE_PLAYING);
+    }
 }
 
 void __fastcall ZEntitySceneContext_CreateSceneHook(ZEntitySceneContext* pThis, int edx, const ZString& sStreamingState)
