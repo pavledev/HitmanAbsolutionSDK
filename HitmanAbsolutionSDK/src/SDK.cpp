@@ -205,6 +205,7 @@ void SDK::OnModLoaded(const std::string& name, ModInterface* modInterface, const
 {
     modInterface->SetupUI();
     modInterface->Initialize();
+    modInterface->LoadConfiguration(name);
 
     if (liveLoad && IsEngineInitialized)
     {

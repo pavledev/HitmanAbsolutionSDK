@@ -2,8 +2,13 @@
 
 #include <MinHook.h>
 
+#define MINI_CASE_SENSITIVE
+
+#include "ini.h"
+
 #include "Logger.h"
 #include "SDK.h"
+#include "Utility/StringUtility.h"
 
 class ModInterface
 {
@@ -47,6 +52,15 @@ public:
         ImGui::SetCurrentContext(imGuiContext);
         ImGui::SetAllocatorFunctions(sdk.GetImGuiMemAllocFunc(), sdk.GetImGuiMemFreeFunc(), sdk.GetImGuiUserDataAllocator());
     }
+
+    void LoadConfiguration(const std::string& modName);
+
+protected:
+    __declspec(dllexport) void AddBindings();
+    std::string GenerateBindingExpression(const std::string& actionName, const std::string& keys);
+
+    std::string modName;
+    mINI::INIStructure iniStructure;
 };
 
 using GetModInterface_t = ModInterface * (*)();
