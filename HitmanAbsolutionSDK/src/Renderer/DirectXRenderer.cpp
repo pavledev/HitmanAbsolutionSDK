@@ -7,6 +7,8 @@
 #include "Glacier/ZLevelManager.h"
 #include "Glacier/ZGraphicsSettingsManager.h"
 #include "Glacier/Engine/ZApplicationEngineWin32.h"
+#include "Glacier/UI/ZScaleformManager.h"
+#include "Glacier/UI/ZHUDManager.h"
 
 #include "Renderer/DirectXRenderer.h"
 #include "Renderer/ImGuiRenderer.h"
@@ -105,6 +107,11 @@ void DirectXRenderer::OnPresent(ZRenderDevice* renderDevice)
 		Logger::GetInstance().Log(Logger::Level::Error, "Failed to set up DirectXTK renderer.");
 		Cleanup();
 
+		return;
+	}
+
+	if (ScaleformManager->IsInMainMenu() || HUDManager->IsPauseMenuActive())
+	{
 		return;
 	}
 
