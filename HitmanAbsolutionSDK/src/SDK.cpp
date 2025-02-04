@@ -390,6 +390,8 @@ bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx)
                 ZApplicationEngineWin32::GetInstance()->AddApplicationSpecificOptions(iniFile);
                 ZApplicationEngineWin32::GetInstance()->ApplyOptionOverrides(argc, nullptr);
             }
+
+            Logger::GetInstance().Log(Logger::Level::Info, "HMA.ini was read successfully.");
         }
     }
 
