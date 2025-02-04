@@ -12,6 +12,7 @@
 #include <Glacier/Physics/ZCollisionManager.h>
 #include <Glacier/Actor/ZActor.h>
 #include <Glacier/UI/ZHUDManager.h>
+#include <Glacier/ZGameTimeManager.h>
 
 #include "FreeCamera.h"
 #include "Global.h"
@@ -159,7 +160,7 @@ void FreeCamera::OnDrawMenu()
 
     if (ImGui::Checkbox(ICON_MD_TIMER " Pause Game", &pauseGame))
     {
-        SetPlayMode(pauseGame);
+        GameTimeManager->SetPaused(pauseGame);
     }
 
     if (ImGui::Button(ICON_MD_SPORTS_ESPORTS " Free Camera Controls"))
@@ -247,7 +248,7 @@ void FreeCamera::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
     if (toggleFreeCameraAndPauseGameAction.Digital())
     {
         ToggleFreeCamera();
-        SetPlayMode(pauseGame);
+        GameTimeManager->SetPaused(pauseGame);
     }
 
     if (isFreeCameraActive)
@@ -294,7 +295,9 @@ void FreeCamera::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
 
     if (pauseGameAction.Digital())
     {
-        SetPlayMode(pauseGame);
+        pauseGame = !pauseGame;
+
+        GameTimeManager->SetPaused(pauseGame);
     }
 }
 
@@ -766,18 +769,6 @@ bool FreeCamera::GetFreeCameraRayCastClosestHitQueryOutput(const ERayDetailLevel
     }
 
     return true;
-}
-
-void FreeCamera::SetPlayMode(const bool pauseGame)
-{
-    if (pauseGame)
-    {
-        GameLoopManager->SetPlayMode(EPlayMode::PLAYMODE_PAUSED);
-    }
-    else
-    {
-        GameLoopManager->SetPlayMode(EPlayMode::PLAYMODE_PLAYING);
-    }
 }
 
 void __fastcall ZEntitySceneContext_CreateSceneHook(ZEntitySceneContext* pThis, int edx, const ZString& sStreamingState)
