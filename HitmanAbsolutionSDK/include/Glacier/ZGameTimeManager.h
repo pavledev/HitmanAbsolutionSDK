@@ -11,9 +11,24 @@ public:
     const ZGameTime& GetRealTime() const;
 
 private:
-    PAD(0x2C);
-    ZGameTime m_tRealTime; //0x30
-    PAD(0x50);
+	long long m_nTicksPerSecond;
+	long long m_nLastTimeTicks;
+	ZGameTime m_tGameTime;
+	ZGameTime m_tGameTimePrev;
+	ZGameTime m_tGameTimeDelta;
+	ZGameTime m_tRealTime;
+	ZGameTime m_tRealTimePrev;
+	ZGameTime m_tRealTimeDelta;
+	float m_fGameTimeMultiplier;
+	float m_fDebugTimeMultiplier;
+	ZGameTime m_FrameWait;
+	ZGameTime m_FrameStep;
+	ZGameTime m_FrameRemain;
+	bool m_bPaused;
+	unsigned int m_nFrameCount;
+	bool m_bForcedTimeStep;
+	double m_fForcedTimeStep;
+	double m_fForcedTimeTarget;
 };
 
 static_assert(sizeof(ZGameTimeManager) == 0x88);
