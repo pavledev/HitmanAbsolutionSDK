@@ -13,6 +13,7 @@ HUD::HUD() :
     isOpen(false),
     toggleHUDAction("ToggleHUD")
 {
+    uiDisableHUD = reinterpret_cast<int*>(BaseAddress + 0xD5644C);
 }
 
 void HUD::OnEngineInitialized()
@@ -48,7 +49,6 @@ void HUD::OnDrawUI(const bool hasFocus)
 
     if (isWindowVisible)
     {
-        uiDisableHUD = reinterpret_cast<int*>(BaseAddress + 0xD5644C);
         isHUDVisible = *uiDisableHUD == 0;
         isHealthBarVisible = IsHUDItemVisible("_root.g_mcHealthBar");
         isMinimapVisible = IsHUDItemVisible("_root.g_mcMinimap");
