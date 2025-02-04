@@ -248,6 +248,9 @@ void FreeCamera::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
     if (toggleFreeCameraAndPauseGameAction.Digital())
     {
         ToggleFreeCamera();
+
+        pauseGame = !pauseGame;
+
         GameTimeManager->SetPaused(pauseGame);
     }
 
