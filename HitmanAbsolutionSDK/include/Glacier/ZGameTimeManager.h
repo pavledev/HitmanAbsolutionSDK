@@ -9,6 +9,7 @@ class HitmanAbsolutionSDK_API ZGameTimeManager : public IComponentInterface
 {
 public:
     const ZGameTime& GetRealTime() const;
+	void SetPaused(bool bPaused);
 
 private:
 	long long m_nTicksPerSecond;
