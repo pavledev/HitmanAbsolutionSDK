@@ -39,6 +39,11 @@ ZEntityType** ZEntityRef::GetEntityTypePtrPtr() const
 
 void* ZEntityRef::QueryInterfacePtr(const STypeID* interfaceID) const
 {
+	if (!m_pEntityTypePtrPtr)
+	{
+		return nullptr;
+	}
+
 	SInterfaceData* interfaceData = (*m_pEntityTypePtrPtr)->GetInterfaceData(interfaceID);
 
 	if (!interfaceData)
