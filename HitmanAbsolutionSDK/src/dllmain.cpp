@@ -22,10 +22,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
     }
     else if (dwReason == DLL_PROCESS_DETACH)
     {
-        SDK& sdk = SDK::GetInstance();
-
-        sdk.Cleanup();
-
         HMODULE module = GetModuleHandleA("HitmanAbsolutionSDK.dll");
 
         if (module)

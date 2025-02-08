@@ -20,13 +20,13 @@ void __fastcall ZRenderSwapChain_ResizeHook(ZRenderSwapChain* pThis, int edx, co
 long __stdcall ZApplicationEngineWin32_MainWindowProcHook(ZApplicationEngineWin32* pThis, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
 bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx);
 bool __fastcall ZEngineAppCommon_InitializeHook(ZEngineAppCommon* pThis, int edx, const SRenderDestinationDesc& description);
+void __fastcall ZEngineAppCommon_UninitializeHook(ZEngineAppCommon* pThis, int edx);
 void __fastcall ZMouseWindows_UpdateHook(ZMouseWindows* pThis, int edx, bool bIgnoreOldEvents);
 void __fastcall ZKeyboardWindows_UpdateHook(ZKeyboardWindows* pThis, int edx, bool bIgnoreOldEvents);
 
 class SDK
 {
 public:
-	~SDK();
 	HitmanAbsolutionSDK_API static SDK& GetInstance();
 	void Setup();
 	void Cleanup();
@@ -35,6 +35,7 @@ public:
 	static void InitializeSingletons();
 
 	void OnEngineInitialized();
+	void OnEngineUninitialized();
 	void OnModLoaded(const std::string& name, ModInterface* modInterface, const bool liveLoad);
 	void OnDrawUI(const bool hasFocus);
 	void OnDraw3D();

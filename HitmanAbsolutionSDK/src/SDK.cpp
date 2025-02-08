@@ -62,7 +62,7 @@ SDK::SDK()
     mainMenu = std::make_shared<MainMenu>();
     modSelector = std::make_shared<ModSelector>();
     settings = std::make_shared<Settings>();
-
+    
     if (settings->PatchResources())
     {
         resourcePatcher = std::make_shared<ResourcePatcher>();
@@ -84,6 +84,7 @@ SDK::SDK()
     Hooks::ZApplicationEngineWin32_MainWindowProc.CreateHook("ZApplicationEngineWin32::MainWindowProc", 0x4FF520, ZApplicationEngineWin32_MainWindowProcHook);
     Hooks::ZHitman5Module_Initialize.CreateHook("ZHitman5Module::Initialize", 0x58E8D0, ZHitman5Module_InitializeHook);
     Hooks::ZEngineAppCommon_Initialize.CreateHook("ZEngineAppCommon::Initialize", 0x55A620, ZEngineAppCommon_InitializeHook);
+    Hooks::ZEngineAppCommon_Uninitialize.CreateHook("ZEngineAppCommon::Uninitialize", 0x338F00, ZEngineAppCommon_UninitializeHook);
     Hooks::ZMouseWindows_Update.CreateHook("ZMouseWindows::Update", 0x3F1D90, ZMouseWindows_UpdateHook);
     Hooks::ZKeyboardWindows_Update.CreateHook("ZKeyboardWindows::Update", 0x1EF2C0, ZKeyboardWindows_UpdateHook);
 
@@ -92,20 +93,9 @@ SDK::SDK()
     Hooks::ZApplicationEngineWin32_MainWindowProc.EnableHook();
     Hooks::ZHitman5Module_Initialize.EnableHook();
     Hooks::ZEngineAppCommon_Initialize.EnableHook();
+    Hooks::ZEngineAppCommon_Uninitialize.EnableHook();
     Hooks::ZMouseWindows_Update.EnableHook();
     Hooks::ZKeyboardWindows_Update.EnableHook();
-}
-
-SDK::~SDK()
-{
-    Hooks::ZRenderDevice_PresentHook.DisableHook();
-    Hooks::ZRenderDevice_PresentHook.RemoveHook();
-
-    Hooks::ZRenderSwapChain_ResizeHook.DisableHook();
-    Hooks::ZRenderSwapChain_ResizeHook.RemoveHook();
-
-    Hooks::ZApplicationEngineWin32_MainWindowProc.DisableHook();
-    Hooks::ZApplicationEngineWin32_MainWindowProc.RemoveHook();
 }
 
 SDK& SDK::GetInstance()
@@ -137,13 +127,14 @@ void SDK::Setup()
 
 void SDK::Cleanup()
 {
+    Hooks::ZRenderDevice_PresentHook.RemoveHook();
+    Hooks::ZRenderSwapChain_ResizeHook.RemoveHook();
+    Hooks::ZApplicationEngineWin32_MainWindowProc.RemoveHook();
+
+    modManager.reset();
+
     directXRenderer->Cleanup();
     imGuiRenderer->Cleanup();
-
-    if (MH_DisableHook(MH_ALL_HOOKS) != MH_OK)
-    {
-        Logger::GetInstance().Log(Logger::Level::Error, "Failed to disable hooks.");
-    }
 
     if (MH_Uninitialize() != MH_OK)
     {
@@ -199,6 +190,11 @@ void SDK::OnEngineInitialized()
     }
 
     modManager->UnlockRead();
+}
+
+void SDK::OnEngineUninitialized()
+{
+    Cleanup();
 }
 
 void SDK::OnModLoaded(const std::string& name, ModInterface* modInterface, const bool liveLoad)
@@ -435,6 +431,13 @@ bool __fastcall ZEngineAppCommon_InitializeHook(ZEngineAppCommon* pThis, int edx
     SDK::GetInstance().OnEngineInitialized();
 
     return IsEngineInitialized;
+}
+
+void __fastcall ZEngineAppCommon_UninitializeHook(ZEngineAppCommon* pThis, int edx)
+{
+    Hooks::ZEngineAppCommon_Uninitialize.CallOriginalFunction(pThis);
+
+    SDK::GetInstance().OnEngineUninitialized();
 }
 
 void __fastcall ZMouseWindows_UpdateHook(ZMouseWindows* pThis, int edx, bool bIgnoreOldEvents)
