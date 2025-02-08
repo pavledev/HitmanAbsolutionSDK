@@ -45,7 +45,7 @@ private:
     void DisableFreeCamera();
 
     void UpdateFov(const float delta);
-    static float MoveValueWithinRange(float delta, float currentValue, float pivotValue, float rangeMin, float rangeMax);
+    static float MoveValueWithinRange(const float delta, const float currentValue, const float pivotValue, const float rangeMin, const float rangeMax);
 
     void InstantlyKillNpc();
     void TeleportMainCharacter();
