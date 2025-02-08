@@ -90,13 +90,8 @@ Editor::Editor() : snapValue{ 1.0f, 1.0f, 1.0f }
 
 Editor::~Editor()
 {
-    Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.DisableHook();
     Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.RemoveHook();
-
-    Hooks::ZEntitySceneContext_CreateScene.DisableHook();
     Hooks::ZEntitySceneContext_CreateScene.RemoveHook();
-
-    Hooks::ZEntitySceneContext_ClearScene.DisableHook();
     Hooks::ZEntitySceneContext_ClearScene.RemoveHook();
 
     if (headerBackgroundTexture)
