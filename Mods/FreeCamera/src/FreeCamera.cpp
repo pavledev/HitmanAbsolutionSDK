@@ -95,9 +95,6 @@ FreeCamera::~FreeCamera()
         }
     }
 
-    Hooks::ZInputAction_Digital.DisableHook();
-    Hooks::ZInputAction_Digital.RemoveHook();
-
     Hooks::ZEntitySceneContext_CreateScene.DisableHook();
     Hooks::ZEntitySceneContext_CreateScene.RemoveHook();
 
