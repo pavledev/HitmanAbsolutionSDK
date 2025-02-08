@@ -40,6 +40,7 @@ struct SGameUpdateEvent;
 class ZRenderPostfilterParametersEntity;
 struct SRenderPostfilterParametersColorCorrection;
 struct SRenderPostfilterParametersMisc;
+class ZCameraEntity;
 
 namespace Hooks
 {
@@ -79,4 +80,7 @@ namespace Hooks
 		unsigned int> ZRenderGBuffer_ZRenderGBuffer;
 	inline ThisCallHook<void, ZHM5MainCamera, const SGameUpdateEvent*, bool> ZHM5MainCamera_UpdateMainCamera;
 	inline ThisCallHook<void, ZRenderPostfilterParametersEntity, SRenderPostfilterParametersColorCorrection*, SRenderPostfilterParametersMisc*> ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection;
+	inline ThisCallHook<void, ZCameraEntity, float> ZCameraEntity_SetFovYDeg;
+	inline ThisCallHook<ZFreeCameraControlEntity*, ZFreeCameraControlEntity, char> ZFreeCameraControlEntity_Dtor;
+	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_Uninitialize;
 }
