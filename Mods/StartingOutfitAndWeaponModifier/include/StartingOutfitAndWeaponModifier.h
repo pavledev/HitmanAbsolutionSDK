@@ -14,6 +14,8 @@ class StartingOutfitAndWeaponModifier : public ModInterface
 {
 public:
     StartingOutfitAndWeaponModifier();
+    ~StartingOutfitAndWeaponModifier();
+
     void Initialize() override;
     void OnEngineInitialized() override;
     void OnDrawMenu() override;

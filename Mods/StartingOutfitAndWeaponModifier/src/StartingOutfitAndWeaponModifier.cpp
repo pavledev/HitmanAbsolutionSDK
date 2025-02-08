@@ -52,6 +52,11 @@ StartingOutfitAndWeaponModifier::StartingOutfitAndWeaponModifier()
     selectedItemIndex = -1;
 }
 
+StartingOutfitAndWeaponModifier::~StartingOutfitAndWeaponModifier()
+{
+    Hooks::ZHitman5_ZHitman5.RemoveHook();
+}
+
 void StartingOutfitAndWeaponModifier::Initialize()
 {
     ModInterface::Initialize();
