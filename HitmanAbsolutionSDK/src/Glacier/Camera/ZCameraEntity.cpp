@@ -3,9 +3,19 @@
 #include <Function.h>
 #include <Global.h>
 
+void ZCameraEntity::UpdateProjection()
+{
+	Function::CallMethod<ZCameraEntity*>(BaseAddress + 0x5BDD60, this);
+}
+
 SMatrix ZCameraEntity::GetViewMatrix() const
 {
 	return GetObjectToWorldMatrix().Inverse();
+}
+
+void ZCameraEntity::SetFovYDeg(const float fovYDeg)
+{
+	m_fFovYDeg = fovYDeg;
 }
 
 void ZCameraEntity::SetNearZ(float fNearZ)
@@ -21,4 +31,9 @@ void ZCameraEntity::SetFarZ(float fFarZ)
 TEntityRef<IRenderPostfilterControllerEntity>& ZCameraEntity::GetRenderPostfilterControllerEntity()
 {
 	return m_rPostfilter;
+}
+
+void ZCameraEntity::SetFovY(const float fovY)
+{
+	m_fFovY = fovY;
 }

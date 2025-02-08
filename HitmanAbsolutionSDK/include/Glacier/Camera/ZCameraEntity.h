@@ -88,10 +88,14 @@ class HitmanAbsolutionSDK_API alignas(16) ZCameraEntity : public ZRenderableEnti
 public:
 	virtual float GetFov() const = 0;
 
+	void UpdateProjection();
+
 	SMatrix GetViewMatrix() const;
+	void SetFovYDeg(const float fovYDeg);
 	void SetNearZ(float fNearZ);
 	void SetFarZ(float fFarZ);
 	TEntityRef<IRenderPostfilterControllerEntity>& GetRenderPostfilterControllerEntity();
+	void SetFovY(const float fovY);
 
 private:
 	EProjectionType m_eProjectionType;
