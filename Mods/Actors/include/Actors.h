@@ -5,11 +5,7 @@
 
 #include <ModInterface.h>
 
-class ZActor;
 class ZDynamicResourceLibrary;
-class ZEntityType;
-class ZEntityManager;
-class IEntityFactory;
 
 void __fastcall ZEngineAppCommon_DefaultMainLoopSequenceHook(ZEngineAppCommon* pThis, int edx);
 
