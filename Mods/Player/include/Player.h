@@ -16,7 +16,6 @@ class ZEntityRef;
 class ZHM5WeaponControl;
 class ZHM5ReloadController;
 
-void __fastcall ZEngineAppCommon_DefaultMainLoopSequenceHook(ZEngineAppCommon* pThis, int edx);
 ZEntityType** __fastcall ZEntityManager_ConstructUninitializedEntityHook(ZEntityManager* pThis, int edx, const ZString& sDebugName, IEntityFactory* pEntityFactory, unsigned char* pMemBlock);
 void __fastcall ZHM5ReloadController_EndReloadWeaponHook(ZHM5ReloadController* pThis, int edx);
 
@@ -30,7 +29,6 @@ public:
     void OnDrawMenu() override;
     void OnDrawUI(const bool hasFocus) override;
 
-    void OnDefaultMainLoopSequence();
     void OnConstructUninitializedEntity(IEntityFactory* pEntityFactory, ZEntityType** entityType);
 
     const bool IsInfiniteAmmoEnabled() const;

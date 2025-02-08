@@ -115,9 +115,6 @@ Player::~Player()
 
     GameLoopManager->UnregisterForFrameUpdate(delegate);
 
-    Hooks::ZEngineAppCommon_DefaultMainLoopSequence.DisableHook();
-    Hooks::ZEngineAppCommon_DefaultMainLoopSequence.RemoveHook();
-
     for (size_t i = 0; i < dynamicResourceLibraries.size(); ++i)
     {
         FreeObject(dynamicResourceLibraries[i]);
@@ -128,11 +125,9 @@ void Player::Initialize()
 {
     ModInterface::Initialize();
 
-    Hooks::ZEngineAppCommon_DefaultMainLoopSequence.CreateHook("ZEngineAppCommon::DefaultMainLoopSequence", 0x4C7580, ZEngineAppCommon_DefaultMainLoopSequenceHook);
     Hooks::ZEntityManager_ConstructUninitializedEntity.CreateHook("ZEntityManager::ConstructUninitializedEntity", 0x565200, ZEntityManager_ConstructUninitializedEntityHook);
     Hooks::ZHM5ReloadController_EndReloadWeapon.CreateHook("ZHM5ReloadController_EndReloadWeapon", 0x56BDB0, ZHM5ReloadController_EndReloadWeaponHook);
 
-    Hooks::ZEngineAppCommon_DefaultMainLoopSequence.EnableHook();
     Hooks::ZEntityManager_ConstructUninitializedEntity.EnableHook();
     Hooks::ZHM5ReloadController_EndReloadWeapon.EnableHook();
 
@@ -204,36 +199,6 @@ void Player::OnDrawUI(const bool hasFocus)
     ImGui::PopFont();
     ImGui::End();
     ImGui::PopFont();
-}
-
-void Player::OnDefaultMainLoopSequence()
-{
-    if (spawnWeapon)
-    {
-        SpawnWeapon(fireArmKitEntities[selectedWeaponIndex].runtimeResourceID, weaponCount, addWeaponToWorld);
-
-        if (!addWeaponToWorld)
-        {
-            spawnWeapon = false;
-        }
-    }
-    else if (spawnItem)
-    {
-        SpawnItem(propKitEntities[selectedItemIndex].runtimeResourceID, itemCount, addItemToWorld);
-
-        if (!addItemToWorld)
-        {
-            spawnItem = false;
-        }
-    }
-    else if (spawnProp)
-    {
-        SpawnProp();
-    }
-    else if (spawnActor)
-    {
-        SpawnActor();
-    }
 }
 
 void Player::OnConstructUninitializedEntity(IEntityFactory* pEntityFactory, ZEntityType** entityType)
@@ -438,6 +403,33 @@ void Player::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
         ZCheckPointManagerEntity* checkPointManagerEntity = CheckPointManager->GetCheckPointManagerEntity().GetRawPointer();
 
         checkPointManagerEntity->ActivateJumpPoint(checkPointManagerEntity->GetCurrentJumpPoint() + 1, true);
+    }
+
+    if (spawnWeapon)
+    {
+        SpawnWeapon(fireArmKitEntities[selectedWeaponIndex].runtimeResourceID, weaponCount, addWeaponToWorld);
+
+        if (!addWeaponToWorld)
+        {
+            spawnWeapon = false;
+        }
+    }
+    else if (spawnItem)
+    {
+        SpawnItem(propKitEntities[selectedItemIndex].runtimeResourceID, itemCount, addItemToWorld);
+
+        if (!addItemToWorld)
+        {
+            spawnItem = false;
+        }
+    }
+    else if (spawnProp)
+    {
+        SpawnProp();
+    }
+    else if (spawnActor)
+    {
+        SpawnActor();
     }
 }
 
@@ -1490,13 +1482,6 @@ void Player::SetPropertiesForGuardActor(ZEntityRef& entityRef)
     entityRef.SetProperty("m_pCompiledBehaviorTree", aizbResourcePtr);
     entityRef.SetProperty("m_fOcclusionLowpassLow", 3000.f);
     entityRef.SetProperty("Oneliner_Attenuation", -3.f);
-}
-
-void __fastcall ZEngineAppCommon_DefaultMainLoopSequenceHook(ZEngineAppCommon* pThis, int edx)
-{
-    GetModInstance()->OnDefaultMainLoopSequence();
-
-    Hooks::ZEngineAppCommon_DefaultMainLoopSequence.CallOriginalFunction(pThis);
 }
 
 ZEntityType** __fastcall ZEntityManager_ConstructUninitializedEntityHook(ZEntityManager* pThis, int edx, const ZString& sDebugName, IEntityFactory* pEntityFactory, unsigned char* pMemBlock)
