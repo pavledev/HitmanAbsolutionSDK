@@ -42,6 +42,7 @@ public:
 	void SetDeltaRoll(const float deltaRoll);
 	void SetFov(const float fov);
 	void SetDeltaFov(const float deltaFov);
+	void SetControllerID(const int controllerID);
 	float4 GetUpdatedCameraPosition(float fMoveX, float fMoveY, float fMoveZ, const SMatrix& mCurrentCameraToWorld);
 	SMatrix GetUpdatedCameraRotation(float fDeltaRoll, float fDeltaPitch, float fDeltaYaw, const SMatrix& mCurrentCameraToWorld);
 

@@ -158,6 +158,11 @@ void ZFreeCameraControlEntity::SetDeltaFov(const float deltaFov)
 	m_fDeltaFov = deltaFov;
 }
 
+void ZFreeCameraControlEntity::SetControllerID(const int controllerID)
+{
+	m_nControllerId = controllerID;
+}
+
 float4 ZFreeCameraControlEntity::GetUpdatedCameraPosition(float fMoveX, float fMoveY, float fMoveZ, const SMatrix& mCurrentCameraToWorld)
 {
 	return Function::CallRVOMethodAndReturn<float4, ZFreeCameraControlEntity*, float, float, float, const SMatrix&>(BaseAddress + 0x431820, this, fMoveX, fMoveY, fMoveZ, mCurrentCameraToWorld);
