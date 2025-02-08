@@ -3,6 +3,9 @@
 #include "../IComponentInterface.h"
 #include "../Render/ZRenderableEntity.h"
 #include "../Render/IRenderPostfilterControllerEntity.h"
+#include "SRenderViewport.h"
+#include "../SColorRGB.h"
+#include "../Resource/ZResourcePtr.h"
 
 struct SRenderViewport;
 struct SVector3;
@@ -94,11 +97,43 @@ public:
 	TEntityRef<IRenderPostfilterControllerEntity>& GetRenderPostfilterControllerEntity();
 
 private:
-	PAD(0x40);
-	TEntityRef<IRenderPostfilterControllerEntity> m_rPostfilter; //0xA4
-	PAD(0xD8);
-	TEntityRef<IRenderPostfilterControllerEntity> m_rPostfilterOverride; //0x184
-	PAD(0x4);
+	EProjectionType m_eProjectionType;
+	float m_fFovYDeg;
+	float m_fFPSFovYDeg;
+	float m_fWidth;
+	float m_fAspectWByH;
+	float m_fNearZ;
+	float m_fFarZ;
+	ZEntityRef m_pRootNode;
+	ZEntityRef m_pOSDRootNode;
+	SColorRGB m_vClearColor;
+	bool m_bAutoSize;
+	bool m_bAutoAspect;
+	bool m_bFPSSeperateFOV;
+	bool m_bAllowAutoCameraCuts;
+	float m_fCameraCutTriggerDistance;
+	float m_fCameraCutTriggerAngleDeg;
+	ZResourcePtr m_pHelper;
+	TEntityRef<IRenderPostfilterControllerEntity> m_rPostfilter;
+	TEntityRef<ZSpatialEntity> m_pRoomReferencePosOverride;
+	float4 m_vRoomReferencePosOverrideCode;
+	float m_fDepthExportNearZ;
+	float m_fDepthExportFarZ;
+	float m_fFovY;
+	float m_fFPSFovY;
+	SMatrix44 m_mProjection;
+	SMatrix44 m_mFPSProjection;
+	SRenderViewport m_Viewport;
+	SRenderViewport m_DestinationViewport;
+	float m_fAutoAspectWByH;
+	TEntityRef<IRenderPostfilterControllerEntity> m_rPostfilterOverride;
+	bool m_bOverridePostfilter : 1;
+	bool m_bForceUpdated : 1;
+	bool m_bGlowActive : 1;
+	bool m_bHintsActive : 1;
+	bool m_bWantCameraCut : 1;
+	bool m_bFPSDrawLocal : 1;
+	bool m_bRoomReferencePosOverrideCode : 1;
 };
 
 static_assert(sizeof(ZCameraEntity) == 0x190);
