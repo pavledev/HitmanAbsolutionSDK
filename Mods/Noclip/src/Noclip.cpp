@@ -18,8 +18,7 @@ Noclip::~Noclip()
     const ZMemberDelegate<Noclip, void(const SGameUpdateEvent&)> delegate(this, &Noclip::OnFrameUpdate);
 
     GameLoopManager->UnregisterForFrameUpdate(delegate);
-
-    Hooks::ZEntitySceneContext_ClearScene.DisableHook();
+	
     Hooks::ZEntitySceneContext_ClearScene.RemoveHook();
 }
 
