@@ -7,26 +7,25 @@
 
 class ZDynamicResourceLibrary;
 
-void __fastcall ZEngineAppCommon_DefaultMainLoopSequenceHook(ZEngineAppCommon* pThis, int edx);
-
 class Actors : public ModInterface
 {
 public:
     Actors();
     ~Actors() override;
     void Initialize() override;
+    void OnEngineInitialized() override;
     void OnDrawMenu() override;
     void OnDrawUI(const bool hasFocus) override;
     void OnDraw3D() override;
 
-    void OnDefaultMainLoopSequence();
+private:
+    void OnFrameUpdate(const SGameUpdateEvent& updateEvent);
 
     void EquipModel(ZActor* actor, const std::string& resourceID);
     void SpawnWeapon(const ZRuntimeResourceID& runtimeResourceID);
 
     void GetWeapons();
 
-private:
     struct FireArmKitEntity
     {
         std::string title;

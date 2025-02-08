@@ -8,6 +8,7 @@
 #include <Glacier/Actor/ZActorManager.h>
 #include <Glacier/Player/ZHitman5.h>
 #include <Glacier/ZLevelManager.h>
+#include <Glacier/ZGameLoopManager.h>
 
 #include <Actors.h>
 #include <Utility/ResourceUtility.h>
@@ -26,8 +27,9 @@ Actors::Actors()
 
 Actors::~Actors()
 {
-    Hooks::ZEngineAppCommon_DefaultMainLoopSequence.DisableHook();
-    Hooks::ZEngineAppCommon_DefaultMainLoopSequence.RemoveHook();
+    const ZMemberDelegate<Actors, void(const SGameUpdateEvent&)> delegate(this, &Actors::OnFrameUpdate);
+
+    GameLoopManager->UnregisterForFrameUpdate(delegate);
 
     for (size_t i = 0; i < dynamicResourceLibraries.size(); ++i)
     {
@@ -39,10 +41,14 @@ void Actors::Initialize()
 {
     ModInterface::Initialize();
 
-    Hooks::ZEngineAppCommon_DefaultMainLoopSequence.CreateHook("ZEngineAppCommon::DefaultMainLoopSequence", 0x4C7580, ZEngineAppCommon_DefaultMainLoopSequenceHook);
-    Hooks::ZEngineAppCommon_DefaultMainLoopSequence.EnableHook();
-
     godMode = reinterpret_cast<int*>(BaseAddress + 0xD4D91C);
+}
+
+void Actors::OnEngineInitialized()
+{
+    const ZMemberDelegate<Actors, void(const SGameUpdateEvent&)> delegate(this, &Actors::OnFrameUpdate);
+
+    GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 }
 
 void Actors::OnDrawMenu()
@@ -265,7 +271,7 @@ void Actors::OnDraw3D()
     }
 }
 
-void Actors::OnDefaultMainLoopSequence()
+void Actors::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
 {
     if (spawnWeapon)
     {
@@ -340,13 +346,6 @@ void Actors::GetWeapons()
         fireArmKitEntity.tokenID = STokenID(object["hash"].GetUint());
         fireArmKitEntity.runtimeResourceID = object["runtimeResourceID"].GetUint64();
     }
-}
-
-void __fastcall ZEngineAppCommon_DefaultMainLoopSequenceHook(ZEngineAppCommon* pThis, int edx)
-{
-    GetModInstance()->OnDefaultMainLoopSequence();
-
-    Hooks::ZEngineAppCommon_DefaultMainLoopSequence.CallOriginalFunction(pThis);
 }
 
 DEFINE_MOD(Actors);
