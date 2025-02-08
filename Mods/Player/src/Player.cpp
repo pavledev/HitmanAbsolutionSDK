@@ -119,6 +119,9 @@ Player::~Player()
     {
         FreeObject(dynamicResourceLibraries[i]);
     }
+	
+    Hooks::ZEntityManager_ConstructUninitializedEntity.RemoveHook();
+    Hooks::ZHM5ReloadController_EndReloadWeapon.RemoveHook();
 }
 
 void Player::Initialize()
