@@ -87,9 +87,6 @@ class HitmanAbsolutionSDK_API alignas(16) ZCameraEntity : public ZRenderableEnti
 {
 public:
 	virtual float GetFov() const = 0;
-	virtual float CalculateNearZ() const = 0;
-	virtual float CalculateFarZ() const = 0;
-	virtual void SetFovYDeg(float fFovYDeg) = 0;
 
 	SMatrix GetViewMatrix() const;
 	void SetNearZ(float fNearZ);
