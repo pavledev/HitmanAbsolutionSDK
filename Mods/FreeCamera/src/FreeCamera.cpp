@@ -688,7 +688,7 @@ void FreeCamera::UpdateFov(float delta)
     }
 }
 
-float FreeCamera::MoveValueWithinRange(float delta, float currentValue, float pivotValue, float rangeMin, float rangeMax)
+float FreeCamera::MoveValueWithinRange(const float delta, const float currentValue, const float pivotValue, const float rangeMin, const float rangeMax)
 {
     float result;
 
