@@ -43,8 +43,8 @@ private:
     void ToggleFreeCamera();
     void EnableFreeCamera();
     void DisableFreeCamera();
-    
-    void UpdateFov(float delta);
+
+    void UpdateFov(const float delta);
     static float MoveValueWithinRange(float delta, float currentValue, float pivotValue, float rangeMin, float rangeMax);
 
     void InstantlyKillNpc();
