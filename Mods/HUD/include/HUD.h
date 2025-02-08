@@ -10,6 +10,7 @@ class HUD : public ModInterface
 {
 public:
 	HUD();
+	~HUD();
 
 	void OnEngineInitialized() override;
 	void OnDrawMenu() override;

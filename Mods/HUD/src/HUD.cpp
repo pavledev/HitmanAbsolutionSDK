@@ -16,6 +16,13 @@ HUD::HUD() :
     uiDisableHUD = reinterpret_cast<int*>(BaseAddress + 0xD5644C);
 }
 
+HUD::~HUD()
+{
+    const ZMemberDelegate<HUD, void(const SGameUpdateEvent&)> delegate(this, &HUD::OnFrameUpdate);
+
+    GameLoopManager->UnregisterForFrameUpdate(delegate);
+}
+
 void HUD::OnEngineInitialized()
 {
     const ZMemberDelegate<HUD, void(const SGameUpdateEvent&)> delegate(this, &HUD::OnFrameUpdate);
