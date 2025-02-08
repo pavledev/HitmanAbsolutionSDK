@@ -20,6 +20,8 @@ void __fastcall ZRenderPostfilterParametersEntity_UpdateParametersColorCorrectio
 class Camera : public ModInterface
 {
 public:
+	~Camera();
+
 	void Initialize() override;
 	void OnDrawMenu() override;
 	void OnDrawUI(const bool hasFocus) override;

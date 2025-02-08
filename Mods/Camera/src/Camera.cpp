@@ -12,6 +12,13 @@
 #include "Hooks.h"
 #include <imgui_internal.h>
 
+Camera::~Camera()
+{
+    Hooks::ZEntitySceneContext_CreateScene.RemoveHook();
+    Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection.RemoveHook();
+    Hooks::ZCameraEntity_SetFovYDeg.RemoveHook();
+}
+
 void Camera::Initialize()
 {
     ModInterface::Initialize();
