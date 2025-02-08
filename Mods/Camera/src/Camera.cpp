@@ -16,13 +16,13 @@ void Camera::Initialize()
 {
     ModInterface::Initialize();
 
-    Hooks::ZHM5MainCamera_UpdateMainCamera.CreateHook("ZHM5MainCamera::UpdateMainCamera", 0x7E160, ZHM5MainCamera_UpdateMainCameraHook);
     Hooks::ZEntitySceneContext_CreateScene.CreateHook("ZEntitySceneContext::CreateScene", 0x4479E0, ZEntitySceneContext_CreateSceneHook);
     Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection.CreateHook("ZRenderPostfilterParametersEntity::UpdateParametersColorCorrection", 0x46570, ZRenderPostfilterParametersEntity_UpdateParametersColorCorrectionHook);
+    Hooks::ZCameraEntity_SetFovYDeg.CreateHook("ZCameraEntity::SetFovYDeg", 0x1BC520, ZCameraEntity_SetFovYDegHook);
 
-    Hooks::ZHM5MainCamera_UpdateMainCamera.EnableHook();
     Hooks::ZEntitySceneContext_CreateScene.EnableHook();
     Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection.EnableHook();
+    Hooks::ZCameraEntity_SetFovYDeg.EnableHook();
 }
 
 void Camera::OnDrawMenu()
@@ -90,11 +90,21 @@ void Camera::OnDrawUI(const bool hasFocus)
     ImGui::PopFont();
 }
 
-void Camera::OnUpdateMainCamera(ZHM5MainCamera* mainCamera)
+void Camera::OnSetFovYDeg(ZCameraEntity* cameraEntity, float fFovYDeg)
 {
     if (fov > 0)
     {
-        mainCamera->SetFovYDeg(fov);
+        fFovYDeg = fov;
+    }
+
+    if (cameraEntity->GetFovYDeg() != fFovYDeg)
+    {
+        constexpr float degToRad = 3.1415927f / 180.0f;
+        const float fFovYRad = fFovYDeg * degToRad;
+
+        cameraEntity->SetFovYDeg(fFovYDeg);
+        cameraEntity->SetFovY(fFovYRad >= 0.0099999998 ? fFovYRad : 0.0099999998);
+        cameraEntity->UpdateProjection();
     }
 }
 
@@ -150,11 +160,9 @@ bool Camera::SliderFloatWithSteps(const char* label, float* v, float v_min, floa
     return valueChanged;
 }
 
-void __fastcall ZHM5MainCamera_UpdateMainCameraHook(ZHM5MainCamera* pThis, int edx, const SGameUpdateEvent* updateEvent, bool bPaused)
+void __fastcall ZCameraEntity_SetFovYDegHook(ZCameraEntity* pThis, int edx, float fFovYDeg)
 {
-    Hooks::ZHM5MainCamera_UpdateMainCamera.CallOriginalFunction(pThis, updateEvent, bPaused);
-
-    GetModInstance()->OnUpdateMainCamera(pThis);
+    GetModInstance()->OnSetFovYDeg(pThis, fFovYDeg);
 }
 
 void __fastcall ZEntitySceneContext_CreateSceneHook(ZEntitySceneContext* pThis, int edx, const ZString& sStreamingState)

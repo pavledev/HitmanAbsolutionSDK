@@ -9,7 +9,7 @@ class ZRenderPostfilterParametersEntity;
 struct SRenderPostfilterParametersColorCorrection;
 struct SRenderPostfilterParametersMisc;
 
-void __fastcall ZHM5MainCamera_UpdateMainCameraHook(ZHM5MainCamera* pThis, int edx, const SGameUpdateEvent* updateEvent, bool bPaused);
+void __fastcall ZCameraEntity_SetFovYDegHook(ZCameraEntity* pThis, int edx, float fFovYDeg);
 void __fastcall ZEntitySceneContext_CreateSceneHook(ZEntitySceneContext* pThis, int edx, const ZString& sStreamingState);
 void __fastcall ZRenderPostfilterParametersEntity_UpdateParametersColorCorrectionHook(
 	ZRenderPostfilterParametersEntity* pThis,
@@ -24,7 +24,7 @@ public:
 	void OnDrawMenu() override;
 	void OnDrawUI(const bool hasFocus) override;
 
-	void OnUpdateMainCamera(ZHM5MainCamera* mainCamera);
+	void OnSetFovYDeg(ZCameraEntity* cameraEntity, float fFovYDeg);
 	void OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState);
 	void OnUpdateParametersColorCorrection(ZRenderPostfilterParametersEntity* renderPostfilterParametersEntity);
 
