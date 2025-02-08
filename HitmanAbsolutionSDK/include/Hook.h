@@ -309,7 +309,7 @@ public:
 	{
 		this->functionName = functionName;
 
-		Function pFunction = reinterpret_cast<Function>(BaseAddress + offset);
+		pFunction = reinterpret_cast<Function>(BaseAddress + offset);
 		MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(pFunction), reinterpret_cast<LPVOID>(hookFunction), reinterpret_cast<LPVOID*>(&pOriginalFunction));
 
 		if (status == MH_OK)
