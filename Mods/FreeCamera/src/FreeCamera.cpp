@@ -97,6 +97,7 @@ FreeCamera::~FreeCamera()
 	
     Hooks::ZEntitySceneContext_CreateScene.RemoveHook();
     Hooks::ZEntitySceneContext_ClearScene.RemoveHook();
+    Hooks::ZFreeCameraControlEntity_UpdateCamera.RemoveHook();
 	Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput.RemoveHook();
 	Hooks::ZEngineAppCommon_ResetSceneCallback.RemoveHook();
 	Hooks::ZFreeCameraControlEntity_Dtor.RemoveHook();
@@ -108,14 +109,14 @@ void FreeCamera::Initialize()
 
     Hooks::ZEntitySceneContext_CreateScene.CreateHook("ZEntitySceneContext::CreateScene", 0x4479E0, ZEntitySceneContext_CreateSceneHook);
     Hooks::ZEntitySceneContext_ClearScene.CreateHook("ZEntitySceneContext::ClearScene", 0x265A80, ZEntitySceneContext_ClearSceneHook);
-    Hooks::ZFreeCameraControlEntity_UpdateCamera.CreateHook("ZFreeCameraControlEntity::UpdateCamera", 0x192990, ZFreeCameraControlEntity_UpdateCameraHook);
+    //Hooks::ZFreeCameraControlEntity_UpdateCamera.CreateHook("ZFreeCameraControlEntity::UpdateCamera", 0x192990, ZFreeCameraControlEntity_UpdateCameraHook);
     Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput.CreateHook("ZFreeCameraControlEntity::UpdateMovementFromInput", 0x3DFA70, ZFreeCameraControlEntity_UpdateMovementFromInputHook);
     Hooks::ZEngineAppCommon_ResetSceneCallback.CreateHook("ZEngineAppCommon::ResetSceneCallbackHook", 0x53D390, ZEngineAppCommon_ResetSceneCallbackHook);
     Hooks::ZFreeCameraControlEntity_Dtor.CreateHook("ZFreeCameraControlEntity::~ZFreeCameraControlEntity", 0x796F0, ZFreeCameraControlEntity_DtorHook);
 
     Hooks::ZEntitySceneContext_CreateScene.EnableHook();
     Hooks::ZEntitySceneContext_ClearScene.EnableHook();
-    Hooks::ZFreeCameraControlEntity_UpdateCamera.EnableHook();
+    //Hooks::ZFreeCameraControlEntity_UpdateCamera.EnableHook();
     Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput.EnableHook();
     Hooks::ZEngineAppCommon_ResetSceneCallback.EnableHook();
     Hooks::ZFreeCameraControlEntity_Dtor.EnableHook();
@@ -310,6 +311,9 @@ void FreeCamera::ToggleFreeCamera()
 
     if (!engineAppCommon.GetFreeCamera().GetRawPointer())
     {
+        //Hooks::ZFreeCameraControlEntity_UpdateCamera.CreateHook("ZFreeCameraControlEntity::UpdateCamera", 0x192990, ZFreeCameraControlEntity_UpdateCameraHook);
+        //Hooks::ZFreeCameraControlEntity_UpdateCamera.EnableHook();
+
         engineAppCommon.CreateFreeCameraAndControl();
 
         InputActionManager->AddBindings("FreeCamControl0={SpeedModifier0=| hold(gc0,b) | hold(gc0,circle) | hold(kb,lalt) hold(kb, ralt);};");
@@ -390,6 +394,9 @@ void FreeCamera::DisableFreeCamera()
 
 void FreeCamera::OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState)
 {
+    Hooks::ZFreeCameraControlEntity_UpdateCamera.CreateHook("ZFreeCameraControlEntity::UpdateCamera", 0x192990, ZFreeCameraControlEntity_UpdateCameraHook);
+    Hooks::ZFreeCameraControlEntity_UpdateCamera.EnableHook();
+
     if (isFreeCameraActive)
     {
         DisableFreeCamera();
@@ -400,6 +407,8 @@ void FreeCamera::OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZS
 
 void FreeCamera::OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnloadScene)
 {
+    Hooks::ZFreeCameraControlEntity_UpdateCamera.RemoveHook();
+
     if (isFreeCameraActive)
     {
         DisableFreeCamera();
@@ -813,7 +822,7 @@ void __fastcall ZEngineAppCommon_ResetSceneCallbackHook(ZEngineAppCommon* pThis,
 
 ZFreeCameraControlEntity* __fastcall ZFreeCameraControlEntity_DtorHook(ZFreeCameraControlEntity* pThis, int edx, char a2)
 {
-    Hooks::ZFreeCameraControlEntity_UpdateCamera.RemoveHook();
+    //Hooks::ZFreeCameraControlEntity_UpdateCamera.RemoveHook();
 
     return Hooks::ZFreeCameraControlEntity_Dtor.CallOriginalFunction(pThis, a2);
 }
