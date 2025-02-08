@@ -18,6 +18,7 @@ public:
 	};
 
 	ModManager();
+	~ModManager();
 	std::set<std::string> GetActiveMods();
 	std::unordered_map<std::string, LoadedMod>& GetLoadedMods();
 	void FindAvailableMods();

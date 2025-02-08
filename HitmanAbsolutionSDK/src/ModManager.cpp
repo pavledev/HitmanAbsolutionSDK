@@ -14,6 +14,11 @@ ModManager::ModManager()
 	InitializeSRWLock(&srwLock);
 }
 
+ModManager::~ModManager()
+{
+	UnloadAllMods();
+}
+
 std::set<std::string> ModManager::GetActiveMods()
 {
 	ScopedSharedGuard scopedSharedGuard = ScopedSharedGuard(&srwLock);
