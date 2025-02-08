@@ -35,7 +35,7 @@ public:
 
     void OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState);
     void OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnloadScene);
-    void OnUpdateCamera(float delta);
+    void OnUpdateCamera(const float delta);
     void OnUpdateMovementFromInput();
 
 private:
