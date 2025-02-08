@@ -21,7 +21,6 @@ void __fastcall ZEntitySceneContext_ClearSceneHook(ZEntitySceneContext* pThis, i
 void __fastcall ZFreeCameraControlEntity_UpdateCameraHook(ZFreeCameraControlEntity* pThis, int edx, float dt);
 void __fastcall ZFreeCameraControlEntity_UpdateMovementFromInputHook(ZFreeCameraControlEntity* pThis, int edx);
 void __fastcall ZEngineAppCommon_ResetSceneCallbackHook(ZEngineAppCommon* pThis, int edx);
-ZFreeCameraControlEntity* __fastcall ZFreeCameraControlEntity_DtorHook(ZFreeCameraControlEntity* pThis, int edx, char a2);
 
 class FreeCamera : public ModInterface
 {

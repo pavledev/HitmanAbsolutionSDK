@@ -112,14 +112,12 @@ void FreeCamera::Initialize()
     //Hooks::ZFreeCameraControlEntity_UpdateCamera.CreateHook("ZFreeCameraControlEntity::UpdateCamera", 0x192990, ZFreeCameraControlEntity_UpdateCameraHook);
     Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput.CreateHook("ZFreeCameraControlEntity::UpdateMovementFromInput", 0x3DFA70, ZFreeCameraControlEntity_UpdateMovementFromInputHook);
     Hooks::ZEngineAppCommon_ResetSceneCallback.CreateHook("ZEngineAppCommon::ResetSceneCallbackHook", 0x53D390, ZEngineAppCommon_ResetSceneCallbackHook);
-    Hooks::ZFreeCameraControlEntity_Dtor.CreateHook("ZFreeCameraControlEntity::~ZFreeCameraControlEntity", 0x796F0, ZFreeCameraControlEntity_DtorHook);
 
     Hooks::ZEntitySceneContext_CreateScene.EnableHook();
     Hooks::ZEntitySceneContext_ClearScene.EnableHook();
     //Hooks::ZFreeCameraControlEntity_UpdateCamera.EnableHook();
     Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput.EnableHook();
     Hooks::ZEngineAppCommon_ResetSceneCallback.EnableHook();
-    Hooks::ZFreeCameraControlEntity_Dtor.EnableHook();
 
     leftBumperAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE53714);
     rightBumperAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE536FC);
@@ -818,13 +816,6 @@ void __fastcall ZEngineAppCommon_ResetSceneCallbackHook(ZEngineAppCommon* pThis,
     TEntityRef<ZCameraEntity> freeCamera;
 
     applicationEngineWin32->GetEngineAppCommon().SetFreeCamera(freeCamera);
-}
-
-ZFreeCameraControlEntity* __fastcall ZFreeCameraControlEntity_DtorHook(ZFreeCameraControlEntity* pThis, int edx, char a2)
-{
-    //Hooks::ZFreeCameraControlEntity_UpdateCamera.RemoveHook();
-
-    return Hooks::ZFreeCameraControlEntity_Dtor.CallOriginalFunction(pThis, a2);
 }
 
 DEFINE_MOD(FreeCamera);
