@@ -409,7 +409,7 @@ void FreeCamera::OnClearScene(ZEntitySceneContext* entitySceneContext, bool full
     isFreeCameraActive = false;
 }
 
-void FreeCamera::OnUpdateCamera(float delta)
+void FreeCamera::OnUpdateCamera(const float delta)
 {
     if (HUDManager->IsPauseMenuActive())
     {
