@@ -97,6 +97,9 @@ FreeCamera::~FreeCamera()
 	
     Hooks::ZEntitySceneContext_CreateScene.RemoveHook();
     Hooks::ZEntitySceneContext_ClearScene.RemoveHook();
+	Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput.RemoveHook();
+	Hooks::ZEngineAppCommon_ResetSceneCallback.RemoveHook();
+	Hooks::ZFreeCameraControlEntity_Dtor.RemoveHook();
 }
 
 void FreeCamera::Initialize()
