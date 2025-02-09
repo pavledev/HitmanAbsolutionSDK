@@ -104,15 +104,17 @@ void Camera::OnSetFovYDeg(ZCameraEntity* cameraEntity, float fFovYDeg)
         fFovYDeg = fov;
     }
 
-    if (cameraEntity->GetFovYDeg() != fFovYDeg)
-    {
-        constexpr float degToRad = 3.1415927f / 180.0f;
-        const float fFovYRad = fFovYDeg * degToRad;
+    cameraEntity->SetFovYDeg(fFovYDeg);
 
-        cameraEntity->SetFovYDeg(fFovYDeg);
-        cameraEntity->SetFovY(fFovYRad >= 0.0099999998 ? fFovYRad : 0.0099999998);
-        cameraEntity->UpdateProjection();
-    }
+    //if (cameraEntity->GetFovYDeg() != fFovYDeg)
+    //{
+    //    constexpr float degToRad = 3.1415927f / 180.0f;
+    //    const float fFovYRad = fFovYDeg * degToRad;
+
+    //    cameraEntity->SetFovYDeg(fFovYDeg);
+    //    cameraEntity->SetFovY(fFovYRad >= 0.0099999998 ? fFovYRad : 0.0099999998);
+    //    cameraEntity->UpdateProjection();
+    //}
 }
 
 void Camera::OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState)
