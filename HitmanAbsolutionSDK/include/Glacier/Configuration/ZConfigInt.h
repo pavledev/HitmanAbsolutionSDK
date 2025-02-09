@@ -4,4 +4,9 @@
 
 class ZConfigInt : public ZConfigIntBase
 {
+public:
+    int GetVal() const
+    {
+        return m_Value;
+    }
 };
