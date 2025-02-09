@@ -15,7 +15,16 @@ SMatrix ZCameraEntity::GetViewMatrix() const
 
 void ZCameraEntity::SetFovYDeg(const float fovYDeg)
 {
-	m_fFovYDeg = fovYDeg;
+	if (m_fFovYDeg != fovYDeg)
+	{
+		constexpr float degToRad = 3.1415927f / 180.0f;
+		const float fFovYRad = fovYDeg * degToRad;
+
+		m_fFovYDeg = fovYDeg;
+		m_fFovY = fFovYRad >= 0.0099999998 ? fFovYRad : 0.0099999998;
+
+		UpdateProjection();
+	}
 }
 
 void ZCameraEntity::SetNearZ(float fNearZ)
