@@ -103,7 +103,7 @@ void Actors::OnDrawUI(const bool hasFocus)
             ZActor* actor = actors[i].GetRawPointer();
             const ZString& actorName2 = actor->GetActorName();
 
-            if (!strstr(actorName2.ToCString(), actorName))
+            if (!StringUtility::Contains(actorName2.ToCString(), actorName, false))
             {
                 continue;
             }
@@ -194,7 +194,7 @@ void Actors::OnDrawUI(const bool hasFocus)
             {
                 for (size_t i = 0; i < fireArmKitEntities.size(); ++i)
                 {
-                    if (!strstr(fireArmKitEntities[i].title.c_str(), actorWeaponName))
+                    if (!StringUtility::Contains(fireArmKitEntities[i].title, actorWeaponName, false))
                     {
                         continue;
                     }

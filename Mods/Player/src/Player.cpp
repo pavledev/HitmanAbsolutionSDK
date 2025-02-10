@@ -501,7 +501,7 @@ void Player::RenderOutfitsTabItem()
 
     for (size_t i = 0; i < outfitKitEntities.size(); ++i)
     {
-        if (!strstr(outfitKitEntities[i].title.c_str(), outfitName))
+        if (!StringUtility::Contains(outfitKitEntities[i].title, outfitName, false))
         {
             continue;
         }
@@ -625,7 +625,7 @@ void Player::RenderOutfitsTabItem()
             ZActor* actor = actors[i].GetRawPointer();
             const ZString& actorName2 = actor->GetActorName();
 
-            if (!strstr(actorName2.ToCString(), actorName))
+            if (!StringUtility::Contains(actorName2.ToCString(), actorName, false))
             {
                 continue;
             }
@@ -717,7 +717,7 @@ void Player::RenderWeaponsTabItem()
 
     for (size_t i = 0; i < fireArmKitEntities.size(); ++i)
     {
-        if (!strstr(fireArmKitEntities[i].title.c_str(), weaponName))
+        if (!StringUtility::Contains(fireArmKitEntities[i].title, weaponName, false))
         {
             continue;
         }
@@ -813,7 +813,7 @@ void Player::RenderItemsTabItem()
 
     for (size_t i = 0; i < propKitEntities.size(); ++i)
     {
-        if (!strstr(propKitEntities[i].title.c_str(), itemName))
+        if (!StringUtility::Contains(propKitEntities[i].title, itemName, false))
         {
             continue;
         }
@@ -978,7 +978,7 @@ void Player::RenderActorsTabItem()
     {
         for (size_t i = 0; i < fireArmKitEntities.size(); ++i)
         {
-            if (!strstr(fireArmKitEntities[i].title.c_str(), actorWeaponName))
+            if (!StringUtility::Contains(fireArmKitEntities[i].title, actorWeaponName, false))
             {
                 continue;
             }
@@ -992,7 +992,7 @@ void Player::RenderActorsTabItem()
             }
         }
 
-        if (isInputTextEnterPressed || (!isInputTextActive && !ImGui::IsWindowFocused()))
+        if (isInputTextEnterPressed2 || (!isInputTextActive2 && !ImGui::IsWindowFocused()))
         {
             ImGui::CloseCurrentPopup();
         }

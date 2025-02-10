@@ -64,7 +64,7 @@ void Items::OnDrawUI(const bool hasFocus)
             IHM5Item* item = object.GetEntityRef().QueryInterfacePtr<IHM5Item>();
             std::string itemName2 = std::format("{} ({})", item->GetItemName().ToCString(), index);
 
-            if (!strstr(itemName2.c_str(), itemName))
+            if (!StringUtility::Contains(itemName2, itemName, false))
             {
                 ++index;
 
