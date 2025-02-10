@@ -185,8 +185,6 @@ void Actors::OnDrawUI(const bool hasFocus)
             if (ImGui::IsItemActivated())
             {
                 ImGui::OpenPopup("##Popup");
-                ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
-                ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
             }
 
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
