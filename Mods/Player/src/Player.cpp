@@ -610,10 +610,11 @@ void Player::RenderOutfitsTabItem()
 
     if (ImGui::IsItemActivated())
     {
-        ImGui::OpenPopup("##Popup");
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
-        ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
+        ImGui::OpenPopup("##Popup"); 
     }
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+    ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
 
     if (ImGui::BeginPopup("##Popup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
     {
@@ -967,12 +968,13 @@ void Player::RenderActorsTabItem()
 
     if (ImGui::IsItemActivated())
     {
-        ImGui::OpenPopup("##Popup");
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
-        ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
+        ImGui::OpenPopup("##WeaponNamePopup");
     }
 
-    if (ImGui::BeginPopup("##Popup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+    ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
+
+    if (ImGui::BeginPopup("##WeaponNamePopup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
     {
         for (size_t i = 0; i < fireArmKitEntities.size(); ++i)
         {

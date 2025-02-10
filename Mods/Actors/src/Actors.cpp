@@ -189,6 +189,9 @@ void Actors::OnDrawUI(const bool hasFocus)
                 ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
             }
 
+            ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+            ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
+
             if (ImGui::BeginPopup("##Popup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
             {
                 for (size_t i = 0; i < fireArmKitEntities.size(); ++i)
