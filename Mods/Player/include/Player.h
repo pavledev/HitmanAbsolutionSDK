@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 #include <Glacier/STokenID.h>
 #include <Glacier/Resource/ZRuntimeResourceID.h>
 #include <Glacier/ZGameLoopManager.h>
@@ -108,6 +110,8 @@ private:
     void SetPropertiesForCivilianActor(ZEntityRef& entityRef);
     void SetPropertiesForGuardActor(ZEntityRef& entityRef);
 
+    void LoadActorTypesAndResourceIDs();
+
     bool isOpen;
 
     bool isGodModeEnabled;
@@ -142,11 +146,12 @@ private:
     bool addWeaponToWorld;
     bool addItemToWorld;
     char propResourceID[512]{ "" };
-    char actorResourceID[512]{ "" };
+    std::string actorResourceID;
     char actorName[50]{ "" };
     bool spawnCivilianActor;
     int selectedActorWeaponIndex;
     ZRuntimeResourceID sourceResourceRuntimeResourceID;
+    std::map<std::string, std::string> actorVariationsToResourceIDs;
 };
 
 DECLARE_MOD(Player)

@@ -145,6 +145,8 @@ void Player::OnEngineInitialized()
     GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 
     AddBindings();
+
+    LoadActorTypesAndResourceIDs();
 }
 
 void Player::OnDrawMenu()
@@ -931,9 +933,46 @@ void Player::RenderActorsTabItem()
     static char numberOfActorsToSpawn[4]{ "1" };
 
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Actor Resource ID");
+    ImGui::Text("Actor Variation");
     ImGui::SameLine();
-    ImGui::InputText("##ActorsResourceID", actorResourceID, sizeof(actorResourceID));
+
+    static char actorVariation[128]{ "" };
+    const bool isInputTextEnterPressed = ImGui::InputText("##ActorVariation", actorVariation, sizeof(actorVariation), ImGuiInputTextFlags_EnterReturnsTrue);
+    const bool isInputTextActive = ImGui::IsItemActive();
+
+    if (ImGui::IsItemActivated())
+    {
+        ImGui::OpenPopup("##ActorVariationPopup");
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+    ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
+
+    if (ImGui::BeginPopup("##ActorVariationPopup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
+    {
+        for (auto it = actorVariationsToResourceIDs.begin(); it != actorVariationsToResourceIDs.end(); ++it)
+        {
+            if (!StringUtility::Contains(it->first, actorVariation, false))
+            {
+                continue;
+            }
+
+            if (ImGui::Selectable(it->first.c_str()))
+            {
+                ImGui::ClearActiveID();
+                strcpy_s(actorVariation, it->first.c_str());
+
+                actorResourceID = it->second.c_str();
+            }
+        }
+
+        if (isInputTextEnterPressed || (!isInputTextActive && !ImGui::IsWindowFocused()))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
 
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Actor Name");
@@ -963,8 +1002,8 @@ void Player::RenderActorsTabItem()
     ImGui::SameLine();
 
     static char actorWeaponName[50]{ "" };
-    const bool isInputTextEnterPressed = ImGui::InputText("##WeaponName", actorWeaponName, sizeof(actorWeaponName), ImGuiInputTextFlags_EnterReturnsTrue);
-    const bool isInputTextActive = ImGui::IsItemActive();
+    const bool isInputTextEnterPressed2 = ImGui::InputText("##WeaponName", actorWeaponName, sizeof(actorWeaponName), ImGuiInputTextFlags_EnterReturnsTrue);
+    const bool isInputTextActive2 = ImGui::IsItemActive();
 
     if (ImGui::IsItemActivated())
     {
@@ -1360,7 +1399,7 @@ void Player::SpawnActor()
 
             if (spawnCivilianActor)
             {
-                if (!strstr(actorResourceID, "male civilian"))
+                if (actorResourceID.contains("male civilian"))
                 {
                     SetPropertiesForCivilianActor(entityRef);
                 }
@@ -1369,7 +1408,7 @@ void Player::SpawnActor()
             }
             else
             {
-                if (!strstr(actorResourceID, "male guard"))
+                if (actorResourceID.contains("male guard"))
                 {
                     SetPropertiesForGuardActor(entityRef);
                 }
@@ -1487,6 +1526,21 @@ void Player::SetPropertiesForGuardActor(ZEntityRef& entityRef)
     entityRef.SetProperty("m_pCompiledBehaviorTree", aizbResourcePtr);
     entityRef.SetProperty("m_fOcclusionLowpassLow", 3000.f);
     entityRef.SetProperty("Oneliner_Attenuation", -3.f);
+}
+
+void Player::LoadActorTypesAndResourceIDs()
+{
+    std::ifstream ifstream = std::ifstream("assets/Actors.txt");
+    std::string line;
+
+    while (getline(ifstream, line))
+    {
+        const size_t index = line.find("#");
+        const std::string actorType = line.substr(0, index);
+        const std::string resourceID = line.substr(index + 1);
+
+        actorVariationsToResourceIDs.insert(std::make_pair(actorType, resourceID));
+    }
 }
 
 ZEntityType** __fastcall ZEntityManager_ConstructUninitializedEntityHook(ZEntityManager* pThis, int edx, const ZString& sDebugName, IEntityFactory* pEntityFactory, unsigned char* pMemBlock)
