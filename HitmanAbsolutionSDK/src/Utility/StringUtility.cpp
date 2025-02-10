@@ -83,3 +83,19 @@ std::vector<std::string> StringUtility::Split(const std::string& string, const s
 
     return res;
 }
+
+const bool StringUtility::Contains(const std::string& str, const std::string& substr, bool caseSensitive)
+{
+    if (caseSensitive)
+    {
+        return str.find(substr) != std::string::npos;
+    }
+
+    std::string strLower = str;
+    std::string substrLower = substr;
+
+    std::transform(strLower.begin(), strLower.end(), strLower.begin(), ::tolower);
+    std::transform(substrLower.begin(), substrLower.end(), substrLower.begin(), ::tolower);
+
+    return strLower.find(substrLower) != std::string::npos;
+}

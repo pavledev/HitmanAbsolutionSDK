@@ -12,4 +12,5 @@ public:
 	static void ReplaceAll(std::string& string, const std::string& from, const std::string& to);
 	static std::vector<std::string> Split(const std::string& string, const char delimiter);
 	static std::vector<std::string> Split(const std::string& string, const std::string& delimiter);
+	static const bool Contains(const std::string& str, const std::string& substr, bool caseSensitive = true);
 };
