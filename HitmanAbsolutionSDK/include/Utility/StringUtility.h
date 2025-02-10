@@ -3,7 +3,9 @@
 #include <string>
 #include <vector>
 
-class StringUtility
+#include "Common.h"
+
+class HitmanAbsolutionSDK_API StringUtility
 {
 public:
 	static std::string ToUpperCase(const std::string& string);
