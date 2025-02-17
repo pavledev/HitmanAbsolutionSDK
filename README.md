@@ -61,9 +61,9 @@ Adds support for free camera.
 ## Configuration
 
 ### General Settings
-`Read HMA.ini` is used to re-activate the contract feature in the game.
-`Patch Resources`
-`Pause On Focus Loss` will pause the game at ALT-TAB. Uncheck this is you want to switch windows without pause. Usefull option for screenshooting. 
+`Read HMA.ini` is used to re-activate the contract feature in the game. <p></p>
+`Patch Resources` is used for installing modified files. <p></p>
+`Pause On Focus Loss` will pause the game at ALT-TAB. Uncheck this is you want to switch windows without pause. Usefull option for screenshooting. <p></p>
 The last option will minimize the game to the task bar. <p></p>
 ![image](https://github.com/user-attachments/assets/b9c25952-6a79-484a-815f-1d2d9e92f267)
 
