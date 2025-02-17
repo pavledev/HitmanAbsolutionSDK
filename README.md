@@ -58,6 +58,55 @@ Make player fly.
 ### FreeCamera
 Adds support for free camera.
 
+## Configuration
+
+### General Settings
+`Read HMA.ini` is used to re-activate the contract feature in the game.
+`Patch Resources`
+`Pause On Focus Loss` will pause the game at ALT-TAB. Uncheck this is you want to switch windows without pause. Usefull option for screenshooting. 
+The last option will minimize the game to the task bar. <p></p>
+![image](https://github.com/user-attachments/assets/b9c25952-6a79-484a-815f-1d2d9e92f267)
+
+
+### Mods Configuration
+Mods like `FreeCamera`, `HUD`, `NoClip` and `Player` have a configurable `.ini` file in which you can change the key bindings at wish.
+Files are located in `.\steamapps\common\Hitman Absolution\mod`
+Accepted bindigs can be found in [THIS FILE](https://github.com/user-attachments/files/18822180/keys.txt).
+
+## Controls
+
+|Key | Description|
+| -------- | ----------- |
+|**Free Camera**||
+|K |	Enable/Disable Free Camera|
+|B+R |	Increase/Decrease Camera Speed|
+|LS |	Forward/Backward/Left/Right|
+|RS |	Pan/Tilt|
+|A+LS |	Roll Camera|
+|Y+LS |	Change FOV|
+|LB |	Lock Camera and Enable 47 Input|
+|RT (HOLD) |	Faster Camera Movements|
+|LT+RS |	Camera Lift Up/Down|
+|A+LS (Press)|	Reset Roll|
+|F9 |	Kill NPC|
+|CTRL+F9|	Teleport 47 To Camera|
+|F10 |	Pause/Unpause Game and Activate/Deactivate Free Camera|
+|F11 |	Pause/Unpause Game|
+| | |
+|**HUD**| |
+|F8 |Enable/Disable HUD|
+| | |
+|**No Clip**| |
+|N |Enable/Disable No Clip|
+| | |
+|**Player** | |
+|I |Get Outfit|
+|O |Get Model|
+|P | Change Outfit|
+|J |Teleport Hitman|
+
+
+
 <!---
 | Name | Description |
 | -------- | ----------- |
