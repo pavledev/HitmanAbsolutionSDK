@@ -8,7 +8,7 @@
 ![HMA_POST](https://github.com/user-attachments/assets/0bfcc67d-f588-4b8a-98c8-f5108a2e4bcb)
 
 ## Install
-Extract the content of the AbsolutionSDK-Release.rar archive to `<drive>:\Program Files (x86)\Steam\steamapps\common\Hitman Absolution`
+Extract the content of the `AbsolutionSDK-Release.zip` archive to `<drive>:\Program Files (x86)\Steam\steamapps\common\Hitman Absolution`
 
 ## Usage
 Open SDK menu by pressing `~` key
