@@ -32,6 +32,18 @@ Displays all actors and has options to equip model of actors, teleport actor to 
 Change FOV and toggle LUT and Vignette effects. <p></p>
 ![image](https://github.com/user-attachments/assets/c486b511-0474-4ac9-8a03-943829a4c2ed)
 
+Before disabling LUT and FOV change
+![image](https://github.com/user-attachments/assets/1ff8f9ac-bc1b-418d-9f6f-85d948a0182a)
+<p></p>
+After disabling LUT 
+
+![image](https://github.com/user-attachments/assets/70b34a57-b5fd-4ee0-8c96-802af886d24c)
+<p></p>
+FOV Change
+
+![image](https://github.com/user-attachments/assets/1cf859ee-8843-4749-a50f-d01088311e78)
+
+
 ### Editor
 Displays tree with entities of scene and it can be used to modify properties and trigger input/output pins. <p></p>
 ![image](https://github.com/user-attachments/assets/efd5a54f-3060-47eb-be82-5fb6a8e6e76b)
