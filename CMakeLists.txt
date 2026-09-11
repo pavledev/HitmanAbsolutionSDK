@@ -43,3 +43,25 @@ if (EXISTS ${GAME_INSTALL_PATH})
 	file(TO_CMAKE_PATH "${GAME_INSTALL_PATH}" GAME_INSTALL_PATH_CMAKE)
 	install(DIRECTORY "${CMAKE_SOURCE_DIR}/assets/" DESTINATION "${GAME_INSTALL_PATH_CMAKE}/assets")
 endif()
+
+# Collect all licenses from ${VCPKG_BUILD_ROOT}/share/<lib>/copyright into licenses/<lib>.txt
+install(CODE "set(VCPKG_BUILD_ROOT \"${VCPKG_BUILD_ROOT}\")")
+install(CODE "set(INSTALL_DIR \"${CMAKE_INSTALL_PREFIX}\")")
+install(CODE [[
+	message(STATUS "Collecting licenses from ${VCPKG_BUILD_ROOT}/share/")
+	file(GLOB_RECURSE LICENSES "${VCPKG_BUILD_ROOT}/share/*/copyright")
+
+	foreach(LICENSE IN LISTS LICENSES)
+		# Get the name of the library (containing folder).
+		get_filename_component(LICENSE_DIR "${LICENSE}" DIRECTORY)
+		get_filename_component(LICENSE_DIR "${LICENSE_DIR}" NAME)
+
+		message(STATUS "Installing ${LICENSE} as licenses/${LICENSE_DIR}.txt")
+		file(COPY "${LICENSE}" DESTINATION "${INSTALL_DIR}/licenses")
+		file(RENAME "${INSTALL_DIR}/licenses/copyright" "${INSTALL_DIR}/licenses/${LICENSE_DIR}.txt")
+	endforeach()
+]])
+
+# Install licenses from external projects.
+install(FILES "External/mINI/LICENSE" DESTINATION licenses RENAME mINI.txt)
+install(FILES "External/IconFontCppHeaders/licence.txt" DESTINATION licenses RENAME IconFontCppHeaders.txt)
