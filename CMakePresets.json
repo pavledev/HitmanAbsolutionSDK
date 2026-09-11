@@ -42,7 +42,7 @@
       "name": "x86-Release",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
       }
     }
