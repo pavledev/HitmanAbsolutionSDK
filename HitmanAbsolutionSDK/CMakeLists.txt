@@ -38,3 +38,5 @@ install(TARGETS HitmanAbsolutionSDK
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
 )
+
+install(FILES $<TARGET_PDB_FILE:HitmanAbsolutionSDK> DESTINATION bin)

@@ -20,3 +20,5 @@ set_target_properties(DirectInputProxy PROPERTIES
 install(TARGETS DirectInputProxy
 	RUNTIME DESTINATION bin
 )
+
+install(FILES $<TARGET_PDB_FILE:DirectInputProxy> DESTINATION bin)
