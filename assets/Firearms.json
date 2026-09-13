@@ -1,0 +1,189 @@
+{
+    "firearms": [
+        {
+            "title": "SA .44 Auto",
+            "runtimeResourceID": 56580554652875048,
+			"hash": 476753173
+        },
+        {
+            "title": "Skurky's Mustang Snub",
+            "runtimeResourceID": 13737891613987251,
+			"hash": 4208340020
+        },
+        {
+            "title": "Silverballer",
+            "runtimeResourceID": 29413674487717638,
+			"hash": 1575676105
+        },
+        {
+            "title": "Aries Charging Ram",
+            "runtimeResourceID": 41220691154825368,
+			"hash": 3041185398
+        },
+        {
+            "title": "Jagd P22G",
+            "runtimeResourceID": 57800742305928183,
+			"hash": 2461854180
+        },
+        {
+            "title": "The Absolver",
+            "runtimeResourceID": 23124956787956895,
+			"hash": 3610853160
+        },
+        {
+            "title": "Agency JAGD P22G",
+            "runtimeResourceID": 40084690921983740,
+			"hash": 2110907031
+        },
+        {
+            "title": "Layla's JAGD P22G",
+            "runtimeResourceID": 13538011182736896,
+			"hash": 3454637095
+        },
+        {
+            "title": "Pink Aries Charging Ram",
+            "runtimeResourceID": 23402816326539008,
+			"hash": 1240604610
+        },
+        {
+            "title": "Agency ARZ 160",
+            "runtimeResourceID": 25023030038226494,
+			"hash": 2872318762
+        },
+        {
+            "title": "Swiss 3000",
+            "runtimeResourceID": 40356506039719655,
+			"hash": 2882205327
+        },
+        {
+            "title": "HX AP-15",
+            "runtimeResourceID": 70725149958260681,
+			"hash": 532195171
+        },
+        {
+            "title": "Agency Swiss 3000",
+            "runtimeResourceID": 26185850253099288,
+			"hash": 1227342716
+        },
+        {
+            "title": "Travis' Swiss 3000",
+            "runtimeResourceID": 24236427905820004,
+			"hash": 894512301
+        },
+        {
+            "title": "STG 58",
+            "runtimeResourceID": 51197561973305663,
+			"hash": 547214690
+        },
+        {
+            "title": "Aries 24-7",
+            "runtimeResourceID": 3789775192607964,
+			"hash": 3704253567
+        },
+        {
+            "title": "Worn Z&M Model 60",
+            "runtimeResourceID": 34640638567738722,
+			"hash": 1699415459
+        },
+        {
+            "title": "STG 58 Elite",
+            "runtimeResourceID": 52905467785259616,
+			"hash": 2368004037
+        },
+        {
+            "title": "Worn M590 12ga",
+            "runtimeResourceID": 27609507277970603,
+			"hash": 1934714184
+        },
+        {
+            "title": "Z&M Model 60",
+            "runtimeResourceID": 36658799267091139,
+			"hash": 3653089698
+        },
+        {
+            "title": "Police M590 12GA",
+            "runtimeResourceID": 49794841198910833,
+			"hash": 1664506614
+        },
+        {
+            "title": "Mustang Snub",
+            "runtimeResourceID": 39899523401311037,
+			"hash": 2866294630
+        },
+        {
+            "title": "SPS 12",
+            "runtimeResourceID": 67193248890158548,
+			"hash": 3140963856
+        },
+        {
+            "title": "Agency SPS 12",
+            "runtimeResourceID": 6396494343874544,
+			"hash": 4076190780
+        },
+        {
+            "title": "SPS 12 Compact",
+            "runtimeResourceID": 24405182327643778,
+			"hash": 3645515207
+        },
+        {
+            "title": "AH 74U",
+            "runtimeResourceID": 38987105672537766,
+			"hash": 3805849906
+        },
+        {
+            "title": "HX UMP",
+            "runtimeResourceID": 36810095496072811,
+			"hash": 1933349261
+        },
+        {
+            "title": "Agency HX UMP",
+            "runtimeResourceID": 21715755916722916,
+			"hash": 1537995458
+        },
+        {
+            "title": "Agency Dynamics CPW",
+            "runtimeResourceID": 66276205077041538,
+			"hash": 336150250
+        },
+        {
+            "title": "Zug TMP",
+            "runtimeResourceID": 15433964571682621,
+			"hash": 2312347
+        },
+        {
+            "title": "Ilyon R700",
+            "runtimeResourceID": 7890340879240170,
+			"hash": 1554216869
+        },
+        {
+            "title": "Kazo TRG",
+            "runtimeResourceID": 28044063628104526,
+			"hash": 2165471480
+        },
+        {
+            "title": "M590 12ga",
+            "runtimeResourceID": 32278699022691456,
+			"hash": 1513815721
+        },
+        {
+            "title": "Swiss Derringer",
+            "runtimeResourceID": 49790982509346806,
+			"hash": 3823819082
+        },
+        {
+            "title": "Dexter's Ultramax",
+            "runtimeResourceID": 50692098308250903,
+			"hash": 3760310151
+        },
+        {
+            "title": "Agency Kazo TRG",
+            "runtimeResourceID": 59379122694257819,
+			"hash": 2251163725
+        },
+        {
+            "title": "Black Kazo TRG",
+            "runtimeResourceID": 13012191870414396,
+			"hash": 3731704541
+        }
+    ]
+}

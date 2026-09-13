@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.8)
 
 project("HitmanAbsolutionSDK" C CXX)
 
@@ -8,6 +8,7 @@ set(VCPKG_BUILD_ROOT "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
 find_package(directxtk CONFIG REQUIRED)
 find_package(minhook CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 add_subdirectory(External/imgui-docking-layout)
 add_subdirectory(External/imguizmo)
@@ -18,7 +19,7 @@ add_subdirectory(DirectInputProxy)
 
 set(MODS
 	FreeCamera
-	StartingOutfitAndWeaponModifier
+	StartingLoadout
 	Player
 	Actors
 	Items

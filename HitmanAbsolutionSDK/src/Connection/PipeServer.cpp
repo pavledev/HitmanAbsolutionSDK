@@ -3,9 +3,7 @@
 #include <sstream>
 
 #include "Connection/PipeServer.h"
-#include "Global.h"
-#include "Logger.h"
-#include "Mutex.h"
+#include "Logging.h"
 
 PipeServer::PipeServer()
 {
@@ -40,11 +38,11 @@ void PipeServer::Start()
 
 	if (pipe == INVALID_HANDLE_VALUE)
 	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Failed to create named pipe. Error: {}", Logger::GetLastError());
+		Logger::Error("Failed to create named pipe. Error: {}", GetLastError());
 	}
 	else
 	{
-		Logger::GetInstance().Log(Logger::Level::Info, "Successfully created name pipe.");
+		Logger::Info("Successfully created name pipe.");
 	}
 }
 
@@ -75,7 +73,7 @@ void PipeServer::Update()
 
 			if (isConnectedWithEditor)
 			{
-				Logger::GetInstance().Log(Logger::Level::Info, "Successfully connected editor with engine.");
+				Logger::Info("Successfully connected editor with engine.");
 
 				connectionCallback();
 			}
@@ -95,7 +93,7 @@ void PipeServer::Update()
 
 			if (!WriteFile(pipe, data.data(), static_cast<DWORD>(data.size()), &written, nullptr))
 			{
-				Logger::GetInstance().Log(Logger::Level::Error, "Failed to send pipe data. Error: {}", Logger::GetLastError());
+				Logger::Error("Failed to send pipe data. Error: {}", GetLastError());
 
 				//CloseHandle(pipe);
 				//pipe = nullptr;
@@ -113,7 +111,7 @@ void PipeServer::Update()
 
 		if (!PeekNamedPipe(pipe, nullptr, 0, nullptr, &pendingBytes, nullptr))
 		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to peek pipe. Error: {}", Logger::GetLastError());
+			Logger::Error("Failed to peek pipe. Error: {}", GetLastError());
 
 			//CloseHandle(pipe);
 			//pipe = nullptr;
@@ -138,7 +136,7 @@ void PipeServer::Update()
 
 				if (lastError != ERROR_MORE_DATA)
 				{
-					Logger::GetInstance().Log(Logger::Level::Error, "Failed to read message length. Error: {}", Logger::GetLastError());
+					Logger::Error("Failed to read message length. Error: {}", GetLastError());
 
 					//CloseHandle(pipe);
 					//pipe = nullptr;
@@ -164,7 +162,7 @@ void PipeServer::Update()
 		// Read the handshake length.
 		if (!ReadFile(pipe, messageBuffer, pendingMessageLength, &messageBufferLength, nullptr) || messageBufferLength != pendingMessageLength)
 		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to read message. Error: {}", Logger::GetLastError());
+			Logger::Error("Failed to read message. Error: {}", GetLastError());
 
 			delete[] messageBuffer;
 

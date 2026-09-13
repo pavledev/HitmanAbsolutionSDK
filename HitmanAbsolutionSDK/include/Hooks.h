@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Hook.h"
+#include "Glacier/TArray.h"
+#include "Glacier/ZResource.h"
 
 class ZApplicationEngineWin32;
 class ZRenderSwapChain;
@@ -19,12 +21,13 @@ class ZHitman5;
 class ZComponentCreateInfo;
 class ZMouseWindows;
 class ZKeyboardWindows;
+class ZEntityType;
 class ZEntityManager;
 class IEntityFactory;
 class ZTemplateEntityBlueprintFactory;
 struct STemplateEntityBlueprint;
 class ZResourcePending;
-template <typename T> class TSharedPointer;
+template<typename T> class TSharedPointer;
 class ZResourceDataBuffer;
 class ZHeaderLibraryInstaller;
 class ZResourceLibraryInfo;
@@ -41,46 +44,72 @@ class ZRenderPostfilterParametersEntity;
 struct SRenderPostfilterParametersColorCorrection;
 struct SRenderPostfilterParametersMisc;
 class ZCameraEntity;
+class ZTossGeometry;
+struct float4;
+class ZLevelDescriptor;
+class ZMenuManager;
+enum EMenuStartupState;
+class ZLevelSelectManager;
 
-namespace Hooks
+class HitmanAbsolutionSDK_API Hooks
 {
-	inline StdCallHook<long, ZApplicationEngineWin32*, HWND, unsigned int, unsigned int, long> ZApplicationEngineWin32_MainWindowProc;
-	inline ThisCallHook<void, ZRenderDevice> ZRenderDevice_PresentHook;
-	inline ThisCallHook<void, ZRenderSwapChain, const SRenderDestinationDesc*> ZRenderSwapChain_ResizeHook;
-	inline StdCallHook<BOOL, const RECT*> ClipCursor;
-	inline ThisCallHook<bool, ZHitman5Module> ZHitman5Module_Initialize;
-	inline ThisCallHook<bool, ZInputAction> ZInputAction_Digital;
-	inline ThisCallHook<void, ZEntitySceneContext, const ZString&> ZEntitySceneContext_CreateScene;
-	inline ThisCallHook<void, ZEntitySceneContext, bool> ZEntitySceneContext_ClearScene;
-	inline ThisCallHook<void, ZFreeCameraControlEntity, float> ZFreeCameraControlEntity_UpdateCamera;
-	inline ThisCallHook<void, ZFreeCameraControlEntity> ZFreeCameraControlEntity_UpdateMovementFromInput;
-	inline ThisCallHook<bool, ZInputActionManager, const char*> ZInputActionManager_AddBindings;
-	inline ThisCallHook<bool, ZEngineAppCommon, const SRenderDestinationDesc&> ZEngineAppCommon_Initialize;
-	inline ThisCallHook<void, ZHitman5, ZComponentCreateInfo&> ZHitman5_ZHitman5;
-	inline ThisCallHook<void, ZMouseWindows, bool> ZMouseWindows_Update;
-	inline ThisCallHook<void, ZKeyboardWindows, bool> ZKeyboardWindows_Update;
-	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_DefaultMainLoopSequence;
-	inline ThisCallHook<ZEntityType**, ZEntityManager, const ZString&, IEntityFactory*, unsigned char*> ZEntityManager_ConstructUninitializedEntity;
-	inline ThisCallHook<void, ZTemplateEntityBlueprintFactory, STemplateEntityBlueprint*, ZResourcePending&> ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory;
-	inline ThisCallHook<bool, ZHeaderLibraryInstaller, ZResourcePending&> ZHeaderLibraryInstaller_Install;
-	inline ThisCallHook<bool, ZResourceLibraryInfo, unsigned int, TSharedPointer<ZResourceDataBuffer>> ZResourceLibraryInfo_InstallResource;
-	inline ThisCallHook<bool, ZResourceLibraryLoader, ZBufferBlock*> ZResourceLibraryLoader_ProcessBlock;
-	inline ThisCallHook<SResourceLibraryEntry*, ZResourceLibraryInfo, SResourceLibraryEntry*, unsigned int> ZResourceLibraryInfo_GetEntry;
-	inline ThisCallHook<void, ZResourceLibraryLoader, IResourceInstaller*, unsigned int, ZRuntimeResourceID> ZResourceLibraryLoader_AllocateEntry;
-	inline ThisCallHook<void, ZResourceLibraryLoader, ZResourcePending&, ZResourceLibraryInfo*> ZResourceLibraryLoader_ZResourceLibraryLoader;
-	inline ThisCallHook<void, ZResourceLibraryLoader> ZResourceLibraryLoader_StartLoading;
-	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_ResetSceneCallback;
-	inline ThisCallHook<void, ZHM5ReloadController> ZHM5ReloadController_EndReloadWeapon;
-	inline CdeclHook<bool, const ZString&, bool> GetApplicationOptionBool;
-	inline ThisCallHook<void, ZRenderGBuffer,
-		unsigned int,
-		unsigned int,
-		ZString,
-		ZRenderDevice*,
-		unsigned int> ZRenderGBuffer_ZRenderGBuffer;
-	inline ThisCallHook<void, ZHM5MainCamera, const SGameUpdateEvent*, bool> ZHM5MainCamera_UpdateMainCamera;
-	inline ThisCallHook<void, ZRenderPostfilterParametersEntity, SRenderPostfilterParametersColorCorrection*, SRenderPostfilterParametersMisc*> ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection;
-	inline ThisCallHook<void, ZCameraEntity, float> ZCameraEntity_SetFovYDeg;
-	inline ThisCallHook<ZFreeCameraControlEntity*, ZFreeCameraControlEntity, char> ZFreeCameraControlEntity_Dtor;
-	inline ThisCallHook<void, ZEngineAppCommon> ZEngineAppCommon_Uninitialize;
-}
+  public:
+    static StdcallHook<LRESULT(ZApplicationEngineWin32* th, HWND hWnd, UINT uMsgId, WPARAM wParam, LPARAM lParam)>*
+        ZApplicationEngineWin32_MainWindowProc;
+
+    static ThiscallHook<void(ZRenderDevice* th)>* ZRenderDevice_Present;
+
+    static ThiscallHook<void(ZRenderSwapChain* th, const SRenderDestinationDesc* pDescription)>* ZRenderSwapChain_Resize;
+
+    static ThiscallHook<bool(ZHitman5Module* th)>* ZHitman5Module_Initialize;
+
+    static ThiscallHook<void(ZEntitySceneContext* th, const ZString& sStreamingState)>* ZEntitySceneContext_CreateScene;
+
+    static ThiscallHook<void(ZEntitySceneContext* th, bool bFullyUnloadScene)>* ZEntitySceneContext_ClearScene;
+
+    static ThiscallHook<void(ZFreeCameraControlEntity* th, float dt)>* ZFreeCameraControlEntity_UpdateCamera;
+
+    static ThiscallHook<void(ZFreeCameraControlEntity* th)>* ZFreeCameraControlEntity_UpdateMovementFromInput;
+
+    static ThiscallHook<bool(ZEngineAppCommon* th, const SRenderDestinationDesc& description)>* ZEngineAppCommon_Initialize;
+
+    static ThiscallHook<void(ZHitman5* th, const ZString& sSubset)>* ZHitman5_Activate;
+
+    static ThiscallHook<void(ZMouseWindows* th, bool bIgnoreOldEvents)>* ZMouseWindows_Update;
+
+    static ThiscallHook<void(ZKeyboardWindows* th, bool bIgnoreOldEvents)>* ZKeyboardWindows_Update;
+
+    static ThiscallHook<ZEntityType**(ZEntityManager* th, const ZString& sDebugName, IEntityFactory* pEntityFactory, uint8_t* pMemBlock)>*
+        ZEntityManager_ConstructUninitializedEntity;
+
+    static ThiscallHook<ZTemplateEntityBlueprintFactory*(
+        ZTemplateEntityBlueprintFactory* th, STemplateEntityBlueprint* pTemplateEntityBlueprint, ZResourcePending& ResourcePending
+    )>* ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory;
+
+    static ThiscallHook<bool(ZHeaderLibraryInstaller* th, ZResourcePending& ResourcePending)>* ZHeaderLibraryInstaller_Install;
+
+    static ThiscallHook<bool(ZResourceLibraryLoader* th, ZBufferBlock* pBlock)>* ZResourceLibraryLoader_ProcessBlock;
+
+    static ThiscallHook<void(ZResourceLibraryLoader* th, IResourceInstaller* pInstaller, uint32_t nSize, ZRuntimeResourceID ridResource)>*
+        ZResourceLibraryLoader_AllocateEntry;
+
+    static ThiscallHook<void(ZResourceLibraryLoader* th)>* ZResourceLibraryLoader_StartLoading;
+
+    static ThiscallHook<void(ZEngineAppCommon* th)>* ZEngineAppCommon_ResetSceneCallback;
+
+    static ThiscallHook<void(ZHM5ReloadController* th)>* ZHM5ReloadController_EndReloadWeapon;
+
+    static ThiscallHook<void(
+        ZRenderPostfilterParametersEntity* th, SRenderPostfilterParametersColorCorrection* parameters, SRenderPostfilterParametersMisc* miscParams
+    )>* ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection;
+
+    static ThiscallHook<void(ZCameraEntity* th, float fFovYDeg)>* ZCameraEntity_SetFovYDeg;
+
+    static ThiscallHook<void(ZEngineAppCommon* th)>* ZEngineAppCommon_Uninitialize;
+
+    // static ThiscallHook<void, ZLevelDescriptor> ZLevelDescriptor_Init;
+
+    static ThiscallHook<void(ZMenuManager* th, EMenuStartupState eNewState)>* ZMenuManager_SetStartupState;
+
+    static ThiscallHook<ZRuntimeResourceID*(ZLevelSelectManager* th, ZRuntimeResourceID& result)>* ZLevelSelectManager_GetBootMovie;
+};

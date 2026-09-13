@@ -1,95 +1,100 @@
+#include "Camera.h"
+
 #include <IconsMaterialDesign.h>
 
 #include "imgui.h"
 
-#include "Glacier/Camera/ZHM5MainCamera.h"
+#include "Glacier/ZCamera.h"
 #include "Glacier/ZLevelManager.h"
-#include "Glacier/Render/ZRenderPostfilterControllerEntity.h"
-#include "Glacier/Render/ZRenderPostfilterParametersEntity.h"
-#include "Glacier/Render/SRenderPostfilterParametersColorCorrection.h"
+#include "Glacier/ZRender.h"
 
-#include "Camera.h"
 #include "Hooks.h"
 #include <imgui_internal.h>
 
-Camera::~Camera()
-{
-    Hooks::ZEntitySceneContext_CreateScene.RemoveHook();
-    Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection.RemoveHook();
-    Hooks::ZCameraEntity_SetFovYDeg.RemoveHook();
-}
-
 void Camera::Initialize()
 {
-    ModInterface::Initialize();
-
-    Hooks::ZEntitySceneContext_CreateScene.CreateHook("ZEntitySceneContext::CreateScene", 0x4479E0, ZEntitySceneContext_CreateSceneHook);
-    Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection.CreateHook("ZRenderPostfilterParametersEntity::UpdateParametersColorCorrection", 0x46570, ZRenderPostfilterParametersEntity_UpdateParametersColorCorrectionHook);
-    Hooks::ZCameraEntity_SetFovYDeg.CreateHook("ZCameraEntity::SetFovYDeg", 0x1BC520, ZCameraEntity_SetFovYDegHook);
-
-    Hooks::ZEntitySceneContext_CreateScene.EnableHook();
-    Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection.EnableHook();
-    Hooks::ZCameraEntity_SetFovYDeg.EnableHook();
+    Hooks::ZEntitySceneContext_CreateScene->AddDetour(this, &Camera::ZEntitySceneContext_CreateScene);
+    Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection->AddDetour(
+        this, &Camera::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection
+    );
+    Hooks::ZCameraEntity_SetFovYDeg->AddDetour(this, &Camera::ZCameraEntity_SetFovYDeg);
 }
 
 void Camera::OnDrawMenu()
 {
     if (ImGui::Button(ICON_MD_CAMERA " Camera"))
     {
-        isOpen = !isOpen;
+        m_ShowWindow = !m_ShowWindow;
     }
 }
 
 void Camera::OnDrawUI(const bool hasFocus)
 {
-    if (!hasFocus || !isOpen)
+    if (!hasFocus || !m_ShowWindow)
     {
         return;
     }
 
     ImGui::PushFont(SDK::GetInstance().GetBoldFont());
-    ImGui::SetNextWindowSize(ImVec2(1250, 850), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(500, 300), ImGuiCond_FirstUseEver);
 
-    const bool isWindowVisible = ImGui::Begin(ICON_MD_CAMERA " Camera", &isOpen, ImGuiWindowFlags_NoScrollbar);
+    const bool isWindowExpanded = ImGui::Begin(ICON_MD_CAMERA " Camera", &m_ShowWindow);
 
     ImGui::PushFont(SDK::GetInstance().GetRegularFont());
 
-    if (isWindowVisible)
+    if (isWindowExpanded)
     {
-        ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+        ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
         ZHM5MainCamera* mainCamera = nullptr;
 
         if (hitman)
         {
-            mainCamera = hitman->GetMainCamera();
+            mainCamera = hitman->m_rMainCamera.m_pInterfaceRef;
         }
 
-        if (mainCamera && fov == 0)
+        if (mainCamera && m_FOV == 0)
         {
-            fov = mainCamera->GetFovYDeg();
+            m_FOV = mainCamera->GetFovYDeg();
         }
 
-        SliderFloatWithSteps("Field Of View", &fov, 1.f, 90.f, 1.f, nullptr);
+        ImGui::BeginDisabled(!mainCamera);
 
-        if (ImGui::Checkbox("LUT And Vignette Effects", &areLUTAndVignetteEffectsEnabled))
-        {
-            if (mainCamera)
-            {
-                ZRenderPostfilterControllerEntity* renderPostfilterControllerEntity = static_cast<ZRenderPostfilterControllerEntity*>(mainCamera->GetRenderPostfilterControllerEntity().GetRawPointer());
-                ZEntityRef currentPostfilterParametersEntity = renderPostfilterControllerEntity->GetCurrentParametersEntity().GetEntityRef();
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Field of view");
 
-                currentPostfilterParametersEntity.SetProperty("m_bColorCorrectionEnabled", areLUTAndVignetteEffectsEnabled);
-                currentPostfilterParametersEntity.SetProperty("m_bDepthRemapEnabled", areLUTAndVignetteEffectsEnabled);
-                currentPostfilterParametersEntity.SetProperty("m_bVignetteEnabled", areLUTAndVignetteEffectsEnabled);
-            }
-        }
+        ImGui::SameLine();
+
+        SliderFloatWithSteps("##FieldOfView", &m_FOV, 1.f, 90.f, 1.f, nullptr);
 
         ImGui::Separator();
 
-        if (ImGui::Button("Ok"))
+        ZEntityRef currentPostfilterParametersEntity;
+
+        if (mainCamera && mainCamera->m_rPostfilter.m_pInterfaceRef)
         {
-            isOpen = false;
+            const auto renderPostfilterControllerEntity = static_cast<ZRenderPostfilterControllerEntity*>(mainCamera->m_rPostfilter.m_pInterfaceRef);
+            currentPostfilterParametersEntity = renderPostfilterControllerEntity->GetCurrentParametersEntity().m_entityRef;
         }
+
+        ImGui::TextUnformatted("Effects");
+        ImGui::Spacing();
+
+        if (ImGui::Checkbox("Color correction", &m_ColorCorrectionEnabled))
+        {
+            currentPostfilterParametersEntity.SetProperty("m_bColorCorrectionEnabled", m_ColorCorrectionEnabled);
+        }
+
+        if (ImGui::Checkbox("Depth remap", &m_DepthRemapEnabled))
+        {
+            currentPostfilterParametersEntity.SetProperty("m_bDepthRemapEnabled", m_DepthRemapEnabled);
+        }
+
+        if (ImGui::Checkbox("Vignette", &m_VignetteEnabled))
+        {
+            currentPostfilterParametersEntity.SetProperty("m_bVignetteEnabled", m_VignetteEnabled);
+        }
+
+        ImGui::EndDisabled();
     }
 
     ImGui::PopFont();
@@ -97,95 +102,91 @@ void Camera::OnDrawUI(const bool hasFocus)
     ImGui::PopFont();
 }
 
-void Camera::OnSetFovYDeg(ZCameraEntity* cameraEntity, float fFovYDeg)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Camera, void, ZCameraEntity_SetFovYDeg, ZCameraEntity* p_CameraEntity, float p_FovYDeg)
 {
-    if (fov > 0)
+    if (m_FOV > 0)
     {
-        fFovYDeg = fov;
+        p_FovYDeg = m_FOV;
     }
 
-    cameraEntity->SetFovYDeg(fFovYDeg);
+    p_CameraEntity->SetFovYDeg(p_FovYDeg);
 
-    //if (cameraEntity->GetFovYDeg() != fFovYDeg)
-    //{
-    //    constexpr float degToRad = 3.1415927f / 180.0f;
-    //    const float fFovYRad = fFovYDeg * degToRad;
-
-    //    cameraEntity->SetFovYDeg(fFovYDeg);
-    //    cameraEntity->SetFovY(fFovYRad >= 0.0099999998 ? fFovYRad : 0.0099999998);
-    //    cameraEntity->UpdateProjection();
-    //}
+    return {HookAction::Return()};
 }
 
-void Camera::OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    Camera, void, ZEntitySceneContext_CreateScene, ZEntitySceneContext* p_EntitySceneContext, const ZString& p_StreamingState
+)
 {
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+    p_Hook->CallOriginal(p_EntitySceneContext, p_StreamingState);
+
+    ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
     if (!hitman)
     {
-        return;
+        return {HookAction::Return()};
     }
 
-    ZHM5MainCamera* mainCamera = hitman->GetMainCamera();
-    ZRenderPostfilterControllerEntity* renderPostfilterControllerEntity = static_cast<ZRenderPostfilterControllerEntity*>(mainCamera->GetRenderPostfilterControllerEntity().GetRawPointer());
-    ZEntityRef currentPostfilterParametersEntity = renderPostfilterControllerEntity->GetCurrentParametersEntity().GetEntityRef();
+    ZHM5MainCamera* mainCamera = hitman->m_rMainCamera.m_pInterfaceRef;
+    const auto renderPostfilterControllerEntity = static_cast<ZRenderPostfilterControllerEntity*>(mainCamera->m_rPostfilter.m_pInterfaceRef);
+    ZEntityRef currentPostfilterParametersEntity = renderPostfilterControllerEntity->GetCurrentParametersEntity().m_entityRef;
 
-    currentPostfilterParametersEntity.SetProperty("m_bColorCorrectionEnabled", areLUTAndVignetteEffectsEnabled);
-    currentPostfilterParametersEntity.SetProperty("m_bDepthRemapEnabled", areLUTAndVignetteEffectsEnabled);
-    currentPostfilterParametersEntity.SetProperty("m_bVignetteEnabled", areLUTAndVignetteEffectsEnabled);
+    currentPostfilterParametersEntity.SetProperty("m_bColorCorrectionEnabled", m_ColorCorrectionEnabled);
+    currentPostfilterParametersEntity.SetProperty("m_bDepthRemapEnabled", m_DepthRemapEnabled);
+    currentPostfilterParametersEntity.SetProperty("m_bVignetteEnabled", m_VignetteEnabled);
+
+    return {HookAction::Return()};
 }
 
-void Camera::OnUpdateParametersColorCorrection(ZRenderPostfilterParametersEntity* renderPostfilterParametersEntity)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    Camera, void, ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection,
+    ZRenderPostfilterParametersEntity* p_RenderPostfilterParametersEntity, SRenderPostfilterParametersColorCorrection* p_Parameters,
+    SRenderPostfilterParametersMisc* p_MiscParams
+)
 {
-    const bool isColorCorrectionEnabled = renderPostfilterParametersEntity->GetID().GetProperty("m_bColorCorrectionEnabled").Get<bool>();
+    ZEntityRef entityRef = p_RenderPostfilterParametersEntity->GetID();
 
-    if (isColorCorrectionEnabled && !areLUTAndVignetteEffectsEnabled)
+    const bool isColorCorrectionEnabled = entityRef.GetProperty("m_bColorCorrectionEnabled").Get<bool>();
+    const bool isDepthRemapEnabled = entityRef.GetProperty("m_bDepthRemapEnabled").Get<bool>();
+    const bool isVignetteEnabled = entityRef.GetProperty("m_bVignetteEnabled").Get<bool>();
+
+    if (isColorCorrectionEnabled && !m_ColorCorrectionEnabled)
     {
-        renderPostfilterParametersEntity->GetID().SetProperty("m_bColorCorrectionEnabled", areLUTAndVignetteEffectsEnabled);
-        renderPostfilterParametersEntity->GetID().SetProperty("m_bDepthRemapEnabled", areLUTAndVignetteEffectsEnabled);
-        renderPostfilterParametersEntity->GetID().SetProperty("m_bVignetteEnabled", areLUTAndVignetteEffectsEnabled);
+        entityRef.SetProperty("m_bColorCorrectionEnabled", m_ColorCorrectionEnabled);
     }
+
+    if (isDepthRemapEnabled && !m_DepthRemapEnabled)
+    {
+        entityRef.SetProperty("m_bDepthRemapEnabled", m_DepthRemapEnabled);
+    }
+
+    if (isVignetteEnabled && !m_VignetteEnabled)
+    {
+        entityRef.SetProperty("m_bVignetteEnabled", m_VignetteEnabled);
+    }
+
+    return {HookAction::Continue()};
 }
 
-bool Camera::SliderFloatWithSteps(const char* label, float* v, float v_min, float v_max, float v_step, const char* format)
+bool Camera::SliderFloatWithSteps(const char* p_Label, float* p_Value, float p_Min, float p_Max, float p_Step, const char* p_Format)
 {
-    if (!format)
+    if (!p_Format)
     {
-        format = "%.3f";
+        p_Format = "%.3f";
     }
 
     char textBuffer[64] = {};
 
-    ImFormatString(textBuffer, IM_ARRAYSIZE(textBuffer), format, *v);
+    ImFormatString(textBuffer, IM_ARRAYSIZE(textBuffer), p_Format, *p_Value);
 
-    // Map from [v_min,v_max] to [0,N]
-    const int countValues = int((v_max - v_min) / v_step);
-    int v_i = int((*v - v_min) / v_step);
-    const bool valueChanged = ImGui::SliderInt(label, &v_i, 0, countValues, textBuffer);
+    const int32_t stepCount = static_cast<int32_t>((p_Max - p_Min) / p_Step);
+    int32_t stepIndex = static_cast<int32_t>(std::round((*p_Value - p_Min) / p_Step));
 
-    // Remap from [0,N] to [v_min,v_max]
-    *v = v_min + float(v_i) * v_step;
+    const bool valueChanged = ImGui::SliderInt(p_Label, &stepIndex, 0, stepCount, textBuffer);
+
+    *p_Value = p_Min + static_cast<float>(stepIndex) * p_Step;
 
     return valueChanged;
-}
-
-void __fastcall ZCameraEntity_SetFovYDegHook(ZCameraEntity* pThis, int edx, float fFovYDeg)
-{
-    GetModInstance()->OnSetFovYDeg(pThis, fFovYDeg);
-}
-
-void __fastcall ZEntitySceneContext_CreateSceneHook(ZEntitySceneContext* pThis, int edx, const ZString& sStreamingState)
-{
-    Hooks::ZEntitySceneContext_CreateScene.CallOriginalFunction(pThis, sStreamingState);
-
-    GetModInstance()->OnCreateScene(pThis, sStreamingState);
-}
-
-void __fastcall ZRenderPostfilterParametersEntity_UpdateParametersColorCorrectionHook(ZRenderPostfilterParametersEntity* pThis, int edx, SRenderPostfilterParametersColorCorrection* parameters, SRenderPostfilterParametersMisc* miscParams)
-{
-    GetModInstance()->OnUpdateParametersColorCorrection(pThis);
-
-    Hooks::ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection.CallOriginalFunction(pThis, parameters, miscParams);
 }
 
 DEFINE_MOD(Camera);

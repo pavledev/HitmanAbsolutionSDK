@@ -1,17 +1,17 @@
 #pragma once
 
-#include <ModInterface.h>
+#include <IModInterface.h>
 
-class Items : public ModInterface
+class Items : public IModInterface
 {
-public:
-	Items();
-	void OnDrawMenu() override;
-	void OnDrawUI(const bool hasFocus) override;
+  public:
+    Items();
+    void OnDrawMenu() override;
+    void OnDrawUI(const bool hasFocus) override;
 
-private:
-	bool isOpen;
-	int selectedItemIndex;
+  private:
+    bool isOpen;
+    int selectedItemIndex;
 };
 
 DECLARE_MOD(Items)

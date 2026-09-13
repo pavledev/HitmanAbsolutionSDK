@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Templates/TArray.h"
-#include "Templates/TFixedArray.h"
+#include "TArray.h"
+#include "TFixedArray.h"
 
 class ZCurve
 {
-private:
-	TArray<TFixedArray<float, 8>> data;
+  public:
+    TArray<TFixedArray<float, 8>> data;
 };

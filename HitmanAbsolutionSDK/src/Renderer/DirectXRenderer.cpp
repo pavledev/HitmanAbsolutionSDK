@@ -3,457 +3,462 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include "Glacier/Render/ZRenderManager.h"
+#include "Glacier/ZRender.h"
 #include "Glacier/ZLevelManager.h"
 #include "Glacier/ZGraphicsSettingsManager.h"
-#include "Glacier/Engine/ZApplicationEngineWin32.h"
-#include "Glacier/UI/ZScaleformManager.h"
-#include "Glacier/UI/ZHUDManager.h"
+#include "Glacier/ZApplication.h"
+#include "Glacier/ZScaleform.h"
 
 #include "Renderer/DirectXRenderer.h"
 #include "Renderer/ImGuiRenderer.h"
-#include "Global.h"
+#include "Globals.h"
 #include "Hooks.h"
-#include "Mutex.h"
 #include "Connection/PipeServer.h"
 #include "SDK.h"
 
 DirectXRenderer::DirectXRenderer()
 {
-	isRendererSetup = false;
-	hwnd = nullptr;
-	windowWidth = 0;
-	windowHeight = 0;
-	inputLayout = nullptr;
+    m_IsRendererSetup = false;
+    m_Hwnd = nullptr;
+    m_WindowWidth = 0;
+    m_WindowHeight = 0;
+    m_InputLayout = nullptr;
 }
 
-DirectXRenderer::~DirectXRenderer()
-{
-}
+DirectXRenderer::~DirectXRenderer() {}
 
 bool DirectXRenderer::Setup()
 {
-	if (isRendererSetup)
-	{
-		return true;
-	}
+    if (m_IsRendererSetup)
+    {
+        return true;
+    }
 
-	hwnd = GraphicsSettingsManager->GetHWND();
+    m_Hwnd = Globals::GraphicsSettingsManager->m_hWnd;
 
-	ZRenderDevice* renderDevice = RenderManager->GetRenderDevice();
-	ID3D11Device* device = renderDevice->GetDirect3DDevice();
-	ID3D11DeviceContext* immediateContext = renderDevice->GetImmediateContext();
-	RECT rect = { 0, 0, 0, 0 };
+    ZRenderDevice* renderDevice = Globals::RenderManager->m_pRenderDevice;
+    ID3D11Device* device = renderDevice->m_pDirect3DDevice;
+    ID3D11DeviceContext* immediateContext = renderDevice->m_pDeviceContextImmediate;
+    RECT rect = { 0, 0, 0, 0 };
 
-	GetClientRect(hwnd, &rect);
+    GetClientRect(m_Hwnd, &rect);
 
-	windowWidth = static_cast<float>(rect.right - rect.left);
-	windowHeight = static_cast<float>(rect.bottom - rect.top);
+    m_WindowWidth = static_cast<float>(rect.right - rect.left);
+    m_WindowHeight = static_cast<float>(rect.bottom - rect.top);
 
-	lineBatch = std::make_unique<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>(immediateContext);
-	lineEffect = std::make_unique<DirectX::BasicEffect>(device);
+    m_LineBatch = std::make_unique<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>(immediateContext);
+    m_LineEffect = std::make_unique<DirectX::BasicEffect>(device);
 
-	void const* shaderByteCode;
-	size_t byteCodeLength;
+    void const* shaderByteCode;
+    size_t byteCodeLength;
 
-	lineEffect->SetVertexColorEnabled(true);
-	lineEffect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+    m_LineEffect->SetVertexColorEnabled(true);
+    m_LineEffect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
-	HRESULT hr = renderDevice->GetDirect3DDevice()->CreateInputLayout(
-		DirectX::VertexPositionColor::InputElements,
-		DirectX::VertexPositionColor::InputElementCount,
-		shaderByteCode, byteCodeLength,
-		&inputLayout
-	);
+    HRESULT hr = renderDevice->m_pDirect3DDevice->CreateInputLayout(
+        DirectX::VertexPositionColor::InputElements, DirectX::VertexPositionColor::InputElementCount, shaderByteCode, byteCodeLength, &m_InputLayout
+    );
 
-	if (FAILED(hr))
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Unable to create device input layout.");
+    if (FAILED(hr))
+    {
+        Logger::Error("Unable to create device input layout.");
 
-		return false;
-	}
+        return false;
+    }
 
-	constexpr const wchar_t* robotoRegularFontPath = L"assets/fonts/Roboto-Regular.spritefont";
+    constexpr const wchar_t* robotoRegularFontPath = L"assets/fonts/Roboto-Regular.spritefont";
 
-	font = std::make_unique<DirectX::SpriteFont>(device, robotoRegularFontPath);
-	spriteBatch = std::make_unique<DirectX::SpriteBatch>(immediateContext);
+    m_Font = std::make_unique<DirectX::SpriteFont>(device, robotoRegularFontPath);
+    m_SpriteBatch = std::make_unique<DirectX::SpriteBatch>(immediateContext);
 
-	D3D11_VIEWPORT viewport = { 0.0f, 0.0f, windowWidth, windowHeight, D3D11_MIN_DEPTH, D3D11_MAX_DEPTH };
+    D3D11_VIEWPORT viewport = { 0.0f, 0.0f, m_WindowWidth, m_WindowHeight, D3D11_MIN_DEPTH, D3D11_MAX_DEPTH };
 
-	spriteBatch->SetViewport(viewport);
+    m_SpriteBatch->SetViewport(viewport);
 
-	lineEffect->SetWorld(world);
-	lineEffect->SetView(view);
-	lineEffect->SetProjection(projection);
+    m_LineEffect->SetWorld(m_World);
+    m_LineEffect->SetView(m_View);
+    m_LineEffect->SetProjection(m_Projection);
 
-	CD3D11_TEXTURE2D_DESC sceneDesc(
-		DXGI_FORMAT_R8G8B8A8_UNORM, windowWidth, windowHeight,
-		1, 1, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+    CD3D11_TEXTURE2D_DESC sceneDesc(
+        DXGI_FORMAT_R8G8B8A8_UNORM, m_WindowWidth, m_WindowHeight, 1, 1, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE
+    );
 
-	device->CreateTexture2D(&sceneDesc, nullptr, &sceneTexture);
-	device->CreateRenderTargetView(sceneTexture, nullptr, &sceneView);
+    device->CreateTexture2D(&sceneDesc, nullptr, &m_SceneTexture);
+    device->CreateRenderTargetView(m_SceneTexture, nullptr, &m_SceneView);
 
-	Logger::GetInstance().Log(Logger::Level::Info, "DirectX renderer successfully set up.");
+    Logger::Info("DirectX renderer successfully set up.");
 
-	isRendererSetup = true;
+    m_IsRendererSetup = true;
 
-	return true;
+    return true;
 }
 
-void DirectXRenderer::OnPresent(ZRenderDevice* renderDevice)
+void DirectXRenderer::OnPresent(ZRenderDevice* p_RenderDevice)
 {
-	if (!Setup())
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Failed to set up DirectXTK renderer.");
-		Cleanup();
+    if (!Setup())
+    {
+        Logger::Error("Failed to set up DirectXTK renderer.");
+        Cleanup();
 
-		return;
-	}
+        return;
+    }
 
-	if (ScaleformManager->IsInMainMenu() || HUDManager->IsPauseMenuActive())
-	{
-		return;
-	}
+    if (Globals::ScaleformManager->m_bIsInMainMenu || Globals::HUDManager->m_bPauseMenuActive)
+    {
+        return;
+    }
 
-	ID3D11Device* device = renderDevice->GetDirect3DDevice();
-	ID3D11DeviceContext* immediateContext = renderDevice->GetImmediateContext();
-	ZHitman5* player = LevelManager->GetHitman().GetRawPointer();
+    ID3D11Device* device = p_RenderDevice->m_pDirect3DDevice;
+    ID3D11DeviceContext* immediateContext = p_RenderDevice->m_pDeviceContextImmediate;
+    ZHitman5* player = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
-	if (player)
-	{
-		ZCameraEntity* activeCamera = ZApplicationEngineWin32::GetInstance()->GetActiveCamera();
-		const SMatrix viewMatrix = activeCamera->GetViewMatrix();
-		const SMatrix projectionMatrix = activeCamera->GetProjectionMatrix();
+    if (player)
+    {
+        ZCameraEntity* activeCamera = (*Globals::ApplicationEngineWin32)->GetActiveCamera();
+        const SMatrix viewMatrix = activeCamera->GetViewMatrix();
+        const SMatrix projectionMatrix = activeCamera->GetProjectionMatrix();
 
-		view = *reinterpret_cast<DirectX::FXMMATRIX*>(&viewMatrix);
-		projection = *reinterpret_cast<DirectX::FXMMATRIX*>(&projectionMatrix);
+        m_View = *reinterpret_cast<DirectX::FXMMATRIX*>(&viewMatrix);
+        m_Projection = *reinterpret_cast<DirectX::FXMMATRIX*>(&projectionMatrix);
 
-		viewProjection = view * projection;
-		projectionViewInverse = (projection * view).Invert();
+        m_ViewProjection = m_View * m_Projection;
+        m_ProjectionViewInverse = (m_Projection * m_View).Invert();
 
-		lineEffect->SetView(view);
-		lineEffect->SetProjection(projection);
+        m_LineEffect->SetView(m_View);
+        m_LineEffect->SetProjection(m_Projection);
 
-		std::unique_ptr<DirectX::CommonStates> states = std::make_unique<DirectX::CommonStates>(device);
+        std::unique_ptr<DirectX::CommonStates> states = std::make_unique<DirectX::CommonStates>(device);
 
-		immediateContext->OMSetBlendState(states->AlphaBlend(), nullptr, 0xFFFFFFFF);
-		immediateContext->OMSetDepthStencilState(states->DepthReadReverseZ(), 0);
-		immediateContext->RSSetState(states->CullNone());
+        immediateContext->OMSetBlendState(states->AlphaBlend(), nullptr, 0xFFFFFFFF);
+        immediateContext->OMSetDepthStencilState(states->DepthReadReverseZ(), 0);
+        immediateContext->RSSetState(states->CullNone());
 
-		lineEffect->Apply(immediateContext);
-		immediateContext->IASetInputLayout(inputLayout);
+        m_LineEffect->Apply(immediateContext);
+        immediateContext->IASetInputLayout(m_InputLayout);
 
-		//immediateContext->OMSetRenderTargets(1, &sceneView, nullptr);
+        // immediateContext->OMSetRenderTargets(1, &sceneView, nullptr);
 
-		Render();
-	}
+        Render();
+    }
 }
 
-void DirectXRenderer::OnResize(const SRenderDestinationDesc* pDescription)
+void DirectXRenderer::OnResize(const SRenderDestinationDesc* p_Description)
 {
-	if (spriteBatch.get())
-	{
-		windowWidth = static_cast<float>(pDescription->m_nWidth);
-		windowHeight = static_cast<float>(pDescription->m_nHeight);
+    if (m_SpriteBatch.get())
+    {
+        m_WindowWidth = static_cast<float>(p_Description->m_nWidth);
+        m_WindowHeight = static_cast<float>(p_Description->m_nHeight);
 
-		D3D11_VIEWPORT viewport = { 0.0f, 0.0f, windowWidth, windowHeight, D3D11_MIN_DEPTH, D3D11_MAX_DEPTH };
+        D3D11_VIEWPORT viewport = { 0.0f, 0.0f, m_WindowWidth, m_WindowHeight, D3D11_MIN_DEPTH, D3D11_MAX_DEPTH };
 
-		spriteBatch->SetViewport(viewport);
-	}
+        m_SpriteBatch->SetViewport(viewport);
+    }
 }
 
 void DirectXRenderer::Cleanup()
 {
-	lineEffect.reset();
-	lineBatch.reset();
-	font.reset();
-	spriteBatch.reset();
-	inputLayout->Release();
+    m_LineEffect.reset();
+    m_LineBatch.reset();
+    m_Font.reset();
+    m_SpriteBatch.reset();
+    m_InputLayout->Release();
 }
 
 void DirectXRenderer::Render()
 {
-	spriteBatch->Begin();
-	lineBatch->Begin();
+    m_SpriteBatch->Begin();
+    m_LineBatch->Begin();
 
-	SDK::GetInstance().OnDraw3D();
+    SDK::GetInstance().OnDraw3D();
 
-	lineBatch->End();
-	spriteBatch->End();
+    m_LineBatch->End();
+    m_SpriteBatch->End();
 }
 
-void DirectXRenderer::DrawLine3D(const SVector3& from, const SVector3& to, const SVector4& fromColor, const SVector4& toColor)
+void DirectXRenderer::DrawLine3D(const SVector3& p_From, const SVector4& p_FromColor, const SVector3& p_To, const SVector4& p_ToColor)
 {
-	DirectX::VertexPositionColor from2(
-		DirectX::SimpleMath::Vector3(from.x, from.y, from.z),
-		DirectX::SimpleMath::Vector4(fromColor.x, fromColor.y, fromColor.z, fromColor.w)
-	);
+    DirectX::VertexPositionColor from2(
+        DirectX::SimpleMath::Vector3(p_From.x, p_From.y, p_From.z),
+        DirectX::SimpleMath::Vector4(p_FromColor.x, p_FromColor.y, p_FromColor.z, p_FromColor.w)
+    );
 
-	DirectX::VertexPositionColor to2(
-		DirectX::SimpleMath::Vector3(to.x, to.y, to.z),
-		DirectX::SimpleMath::Vector4(toColor.x, toColor.y, toColor.z, toColor.w)
-	);
+    DirectX::VertexPositionColor to2(
+        DirectX::SimpleMath::Vector3(p_To.x, p_To.y, p_To.z), DirectX::SimpleMath::Vector4(p_ToColor.x, p_ToColor.y, p_ToColor.z, p_ToColor.w)
+    );
 
-	lineBatch->DrawLine(from2, to2);
+    m_LineBatch->DrawLine(from2, to2);
 }
 
-void DirectXRenderer::DrawQuad3D(const SVector3& vector1, const SVector4& color1, const SVector3& vector2, const SVector4& color2, const SVector3& vector3, const SVector4& color3, const SVector3& vector4, const SVector4& color4)
+void DirectXRenderer::DrawQuad3D(
+    const SVector3& p_Vertex1, const SVector4& p_Color1, const SVector3& p_Vertex2, const SVector4& p_Color2, const SVector3& p_Vertex3,
+    const SVector4& p_Color3, const SVector3& p_Vertex4, const SVector4& p_Color4
+)
 {
-	lineBatch->DrawQuad(
-		DirectX::VertexPositionColor(DirectX::SimpleMath::Vector3(vector1.x, vector1.y, vector1.z), DirectX::SimpleMath::Vector4(color1.x, color1.y, color1.z, color1.w)),
-		DirectX::VertexPositionColor(DirectX::SimpleMath::Vector3(vector2.x, vector2.y, vector2.z), DirectX::SimpleMath::Vector4(color2.x, color2.y, color2.z, color2.w)),
-		DirectX::VertexPositionColor(DirectX::SimpleMath::Vector3(vector3.x, vector3.y, vector3.z), DirectX::SimpleMath::Vector4(color3.x, color3.y, color3.z, color3.w)),
-		DirectX::VertexPositionColor(DirectX::SimpleMath::Vector3(vector4.x, vector4.y, vector4.z), DirectX::SimpleMath::Vector4(color4.x, color4.y, color4.z, color4.w))
-	);
+    m_LineBatch->DrawQuad(
+        DirectX::VertexPositionColor(
+            DirectX::SimpleMath::Vector3(p_Vertex1.x, p_Vertex1.y, p_Vertex1.z),
+            DirectX::SimpleMath::Vector4(p_Color1.x, p_Color1.y, p_Color1.z, p_Color1.w)
+        ),
+        DirectX::VertexPositionColor(
+            DirectX::SimpleMath::Vector3(p_Vertex2.x, p_Vertex2.y, p_Vertex2.z),
+            DirectX::SimpleMath::Vector4(p_Color2.x, p_Color2.y, p_Color2.z, p_Color2.w)
+        ),
+        DirectX::VertexPositionColor(
+            DirectX::SimpleMath::Vector3(p_Vertex3.x, p_Vertex3.y, p_Vertex3.z),
+            DirectX::SimpleMath::Vector4(p_Color3.x, p_Color3.y, p_Color3.z, p_Color3.w)
+        ),
+        DirectX::VertexPositionColor(
+            DirectX::SimpleMath::Vector3(p_Vertex4.x, p_Vertex4.y, p_Vertex4.z),
+            DirectX::SimpleMath::Vector4(p_Color4.x, p_Color4.y, p_Color4.z, p_Color4.w)
+        )
+    );
 }
 
-void DirectXRenderer::DrawText2D(const ZString& text, const SVector2& pos, const SVector4& color, float rotation, float scale, TextAlignment alignment)
+void DirectXRenderer::DrawText2D(
+    const ZString& p_Text, const SVector2& p_Position, const SVector4& p_Color, float p_Rotation, float p_Scale, TextAlignment p_Alignment
+)
 {
-	const std::string text2(text.ToCString(), text.Length());
-	const DirectX::SimpleMath::Vector2 stringSize = font->MeasureString(text2.c_str());
+    const std::string text2(p_Text.ToCString(), p_Text.Length());
+    const DirectX::SimpleMath::Vector2 stringSize = m_Font->MeasureString(text2.c_str());
 
-	DirectX::SimpleMath::Vector2 s_Origin(0.f, 0.f);
+    DirectX::SimpleMath::Vector2 origin(0.f, 0.f);
 
-	if (alignment == TextAlignment::Center)
-	{
-		s_Origin.x = stringSize.x / 2.f;
-	}
-	else if (alignment == TextAlignment::Right)
-	{
-		s_Origin.x = stringSize.x;
-	}
+    if (p_Alignment == TextAlignment::Center)
+    {
+        origin.x = stringSize.x / 2.f;
+    }
+    else if (p_Alignment == TextAlignment::Right)
+    {
+        origin.x = stringSize.x;
+    }
 
-	font->DrawString(
-		spriteBatch.get(),
-		text2.c_str(),
-		DirectX::SimpleMath::Vector2(pos.x, pos.y),
-		DirectX::SimpleMath::Vector4(color.x, color.y, color.z, color.w),
-		rotation,
-		s_Origin,
-		scale
-	);
+    m_Font->DrawString(
+        m_SpriteBatch.get(), text2.c_str(), DirectX::SimpleMath::Vector2(p_Position.x, p_Position.y),
+        DirectX::SimpleMath::Vector4(p_Color.x, p_Color.y, p_Color.z, p_Color.w), p_Rotation, origin, p_Scale
+    );
 }
 
-bool DirectXRenderer::WorldToScreen(const SVector3& worldPos, SVector2& out)
+bool DirectXRenderer::WorldToScreen(const SVector3& p_WorldPosition, SVector2& p_Out)
 {
-	const DirectX::SimpleMath::Vector4 world(worldPos.x, worldPos.y, worldPos.z, 1.f);
-	const DirectX::SimpleMath::Vector4 projected = DirectX::XMVector4Transform(world, viewProjection);
+    const DirectX::SimpleMath::Vector4 world(p_WorldPosition.x, p_WorldPosition.y, p_WorldPosition.z, 1.f);
+    const DirectX::SimpleMath::Vector4 projected = DirectX::XMVector4Transform(world, m_ViewProjection);
 
-	if (projected.w <= 0.000001f)
-	{
-		return false;
-	}
+    if (projected.w <= 0.000001f)
+    {
+        return false;
+    }
 
-	const float invertedZ = 1.f / projected.w;
-	const DirectX::SimpleMath::Vector3 finalProjected(projected.x * invertedZ, projected.y * invertedZ, projected.z * invertedZ);
+    const float invertedZ = 1.f / projected.w;
+    const DirectX::SimpleMath::Vector3 finalProjected(projected.x * invertedZ, projected.y * invertedZ, projected.z * invertedZ);
 
-	out.x = (1.f + finalProjected.x) * 0.5f * windowWidth;
-	out.y = (1.f - finalProjected.y) * 0.5f * windowHeight;
+    p_Out.x = (1.f + finalProjected.x) * 0.5f * m_WindowWidth;
+    p_Out.y = (1.f - finalProjected.y) * 0.5f * m_WindowHeight;
 
-	return true;
+    return true;
 }
 
-bool DirectXRenderer::ScreenToWorld(const SVector2& screenPos, SVector3& worldPosOut, SVector3& directionOut)
+bool DirectXRenderer::ScreenToWorld(const SVector2& p_ScreenPosition, SVector3& p_OutWorldPosition, SVector3& p_OutDirection)
 {
-	ZHitman5* player = LevelManager->GetHitman().GetRawPointer();
+    ZHitman5* player = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
-	if (!player)
-	{
-		return false;
-	}
+    if (!player)
+    {
+        return false;
+    }
 
-	ZCameraEntity* activeCamera = ZApplicationEngineWin32::GetInstance()->GetActiveCamera();
-	SMatrix cameraTrans = activeCamera->GetObjectToWorldMatrix();
+    ZCameraEntity* activeCamera = (*Globals::ApplicationEngineWin32)->GetActiveCamera();
+    SMatrix cameraTrans = activeCamera->GetObjectToWorldMatrix();
 
-	auto screenPos2 = DirectX::SimpleMath::Vector3((2.0f * screenPos.x) / windowWidth - 1.0f, 1.0f - (2.0f * screenPos.y) / windowHeight, 1.f);
-	auto rayClip = DirectX::SimpleMath::Vector4(screenPos2.x, screenPos2.y, 0.f, 1.f);
+    auto screenPosition =
+        DirectX::SimpleMath::Vector3((2.0f * p_ScreenPosition.x) / m_WindowWidth - 1.0f, 1.0f - (2.0f * p_ScreenPosition.y) / m_WindowHeight, 1.f);
+    auto rayClip = DirectX::SimpleMath::Vector4(screenPosition.x, screenPosition.y, 0.f, 1.f);
 
-	DirectX::SimpleMath::Vector4 rayEye = DirectX::XMVector4Transform(rayClip, projection.Invert());
-	rayEye.z = -1.f;
-	rayEye.w = 0.f;
+    DirectX::SimpleMath::Vector4 rayEye = DirectX::XMVector4Transform(rayClip, m_Projection.Invert());
+    rayEye.z = -1.f;
+    rayEye.w = 0.f;
 
-	DirectX::SimpleMath::Vector4 rayWorld = DirectX::XMVector4Transform(rayEye, view.Invert());
-	rayWorld.Normalize();
+    DirectX::SimpleMath::Vector4 rayWorld = DirectX::XMVector4Transform(rayEye, m_View.Invert());
+    rayWorld.Normalize();
 
-	worldPosOut.x = cameraTrans.Trans.x + rayWorld.x;
-	worldPosOut.y = cameraTrans.Trans.y + rayWorld.y;
-	worldPosOut.z = cameraTrans.Trans.z + rayWorld.z;
+    p_OutWorldPosition.x = cameraTrans.Trans.x + rayWorld.x;
+    p_OutWorldPosition.y = cameraTrans.Trans.y + rayWorld.y;
+    p_OutWorldPosition.z = cameraTrans.Trans.z + rayWorld.z;
 
-	directionOut.x = rayWorld.x;
-	directionOut.y = rayWorld.y;
-	directionOut.z = rayWorld.z;
+    p_OutDirection.x = rayWorld.x;
+    p_OutDirection.y = rayWorld.y;
+    p_OutDirection.z = rayWorld.z;
 
-	return true;
+    return true;
 }
 
-void DirectXRenderer::DrawBox3D(const SVector3& min, const SVector3& max, const SVector4& color)
+void DirectXRenderer::DrawBox3D(const SVector3& p_Min, const SVector3& p_Max, const SVector4& p_Color)
 {
-	SVector3 corners[] = {
-		SVector3(min.x, min.y, min.z),
-		SVector3(min.x, max.y, min.z),
-		SVector3(max.x, max.y, min.z),
-		SVector3(max.x, min.y, min.z),
-		SVector3(max.x, max.y, max.z),
-		SVector3(min.x, max.y, max.z),
-		SVector3(min.x, min.y, max.z),
-		SVector3(max.x, min.y, max.z),
-	};
+    SVector3 corners[] = {
+        SVector3(p_Min.x, p_Min.y, p_Min.z), SVector3(p_Min.x, p_Max.y, p_Min.z), SVector3(p_Max.x, p_Max.y, p_Min.z),
+        SVector3(p_Max.x, p_Min.y, p_Min.z), SVector3(p_Max.x, p_Max.y, p_Max.z), SVector3(p_Min.x, p_Max.y, p_Max.z),
+        SVector3(p_Min.x, p_Min.y, p_Max.z), SVector3(p_Max.x, p_Min.y, p_Max.z),
+    };
 
-	DrawLine3D(corners[0], corners[1], color, color);
-	DrawLine3D(corners[1], corners[2], color, color);
-	DrawLine3D(corners[2], corners[3], color, color);
-	DrawLine3D(corners[3], corners[0], color, color);
+    DrawLine3D(corners[0], p_Color, corners[1], p_Color);
+    DrawLine3D(corners[1], p_Color, corners[2], p_Color);
+    DrawLine3D(corners[2], p_Color, corners[3], p_Color);
+    DrawLine3D(corners[3], p_Color, corners[0], p_Color);
 
-	DrawLine3D(corners[4], corners[5], color, color);
-	DrawLine3D(corners[5], corners[6], color, color);
-	DrawLine3D(corners[6], corners[7], color, color);
-	DrawLine3D(corners[7], corners[4], color, color);
+    DrawLine3D(corners[4], p_Color, corners[5], p_Color);
+    DrawLine3D(corners[5], p_Color, corners[6], p_Color);
+    DrawLine3D(corners[6], p_Color, corners[7], p_Color);
+    DrawLine3D(corners[7], p_Color, corners[4], p_Color);
 
-	DrawLine3D(corners[1], corners[5], color, color);
-	DrawLine3D(corners[0], corners[6], color, color);
+    DrawLine3D(corners[1], p_Color, corners[5], p_Color);
+    DrawLine3D(corners[0], p_Color, corners[6], p_Color);
 
-	DrawLine3D(corners[2], corners[4], color, color);
-	DrawLine3D(corners[3], corners[7], color, color);
+    DrawLine3D(corners[2], p_Color, corners[4], p_Color);
+    DrawLine3D(corners[3], p_Color, corners[7], p_Color);
 }
 
 SVector3 XMVecToSVec3(const DirectX::XMVECTOR& vector)
 {
-	return SVector3(DirectX::XMVectorGetX(vector), DirectX::XMVectorGetY(vector), DirectX::XMVectorGetZ(vector));
+    return SVector3(DirectX::XMVectorGetX(vector), DirectX::XMVectorGetY(vector), DirectX::XMVectorGetZ(vector));
 }
 
-void DirectXRenderer::DrawOBB3D(const SVector3& min, const SVector3& max, const SMatrix& transform, const SVector4& color)
+void DirectXRenderer::DrawOBB3D(const SVector3& p_Min, const SVector3& p_Max, const SMatrix& p_Transform, const SVector4& p_Color)
 {
-	const auto transform2 = *reinterpret_cast<DirectX::FXMMATRIX*>(&transform);
+    const auto transform2 = *reinterpret_cast<DirectX::FXMMATRIX*>(&p_Transform);
 
-	DirectX::XMVECTOR corners[] = {
-		DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(min.x, min.y, min.z), transform2),
-		DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(min.x, max.y, min.z), transform2),
-		DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(max.x, max.y, min.z), transform2),
-		DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(max.x, min.y, min.z), transform2),
-		DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(max.x, max.y, max.z), transform2),
-		DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(min.x, max.y, max.z), transform2),
-		DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(min.x, min.y, max.z), transform2),
-		DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(max.x, min.y, max.z), transform2),
-	};
+    DirectX::XMVECTOR corners[] = {
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Min.x, p_Min.y, p_Min.z), transform2),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Min.x, p_Max.y, p_Min.z), transform2),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Max.x, p_Max.y, p_Min.z), transform2),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Max.x, p_Min.y, p_Min.z), transform2),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Max.x, p_Max.y, p_Max.z), transform2),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Min.x, p_Max.y, p_Max.z), transform2),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Min.x, p_Min.y, p_Max.z), transform2),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Max.x, p_Min.y, p_Max.z), transform2),
+    };
 
-	DrawLine3D(XMVecToSVec3(corners[0]), XMVecToSVec3(corners[1]), color, color);
-	DrawLine3D(XMVecToSVec3(corners[1]), XMVecToSVec3(corners[2]), color, color);
-	DrawLine3D(XMVecToSVec3(corners[2]), XMVecToSVec3(corners[3]), color, color);
-	DrawLine3D(XMVecToSVec3(corners[3]), XMVecToSVec3(corners[0]), color, color);
+    DrawLine3D(XMVecToSVec3(corners[0]), p_Color, XMVecToSVec3(corners[1]), p_Color);
+    DrawLine3D(XMVecToSVec3(corners[1]), p_Color, XMVecToSVec3(corners[2]), p_Color);
+    DrawLine3D(XMVecToSVec3(corners[2]), p_Color, XMVecToSVec3(corners[3]), p_Color);
+    DrawLine3D(XMVecToSVec3(corners[3]), p_Color, XMVecToSVec3(corners[0]), p_Color);
 
-	DrawLine3D(XMVecToSVec3(corners[4]), XMVecToSVec3(corners[5]), color, color);
-	DrawLine3D(XMVecToSVec3(corners[5]), XMVecToSVec3(corners[6]), color, color);
-	DrawLine3D(XMVecToSVec3(corners[6]), XMVecToSVec3(corners[7]), color, color);
-	DrawLine3D(XMVecToSVec3(corners[7]), XMVecToSVec3(corners[4]), color, color);
+    DrawLine3D(XMVecToSVec3(corners[4]), p_Color, XMVecToSVec3(corners[5]), p_Color);
+    DrawLine3D(XMVecToSVec3(corners[5]), p_Color, XMVecToSVec3(corners[6]), p_Color);
+    DrawLine3D(XMVecToSVec3(corners[6]), p_Color, XMVecToSVec3(corners[7]), p_Color);
+    DrawLine3D(XMVecToSVec3(corners[7]), p_Color, XMVecToSVec3(corners[4]), p_Color);
 
-	DrawLine3D(XMVecToSVec3(corners[1]), XMVecToSVec3(corners[5]), color, color);
-	DrawLine3D(XMVecToSVec3(corners[0]), XMVecToSVec3(corners[6]), color, color);
+    DrawLine3D(XMVecToSVec3(corners[1]), p_Color, XMVecToSVec3(corners[5]), p_Color);
+    DrawLine3D(XMVecToSVec3(corners[0]), p_Color, XMVecToSVec3(corners[6]), p_Color);
 
-	DrawLine3D(XMVecToSVec3(corners[2]), XMVecToSVec3(corners[4]), color, color);
-	DrawLine3D(XMVecToSVec3(corners[3]), XMVecToSVec3(corners[7]), color, color);
+    DrawLine3D(XMVecToSVec3(corners[2]), p_Color, XMVecToSVec3(corners[4]), p_Color);
+    DrawLine3D(XMVecToSVec3(corners[3]), p_Color, XMVecToSVec3(corners[7]), p_Color);
 }
 
-void DirectXRenderer::CreateDDSTextureFromMemory(const void* data, const unsigned int resourceDataSize, ID3D11Resource** texture, ID3D11ShaderResourceView** textureView, float& width, float& height)
+void DirectXRenderer::CreateDDSTextureFromMemory(
+    const void* data, const unsigned int resourceDataSize, ID3D11Resource** texture, ID3D11ShaderResourceView** textureView, float& width,
+    float& height
+)
 {
-	ID3D11Device* device = RenderManager->GetRenderDevice()->GetDirect3DDevice();
-	HRESULT result = DirectX::CreateDDSTextureFromMemory(device, static_cast<const unsigned char*>(data), resourceDataSize, texture, textureView);
+    ID3D11Device* device = Globals::RenderManager->m_pRenderDevice->m_pDirect3DDevice;
+    HRESULT result = DirectX::CreateDDSTextureFromMemory(device, static_cast<const unsigned char*>(data), resourceDataSize, texture, textureView);
 
-	if (FAILED(result))
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Failed to create DDS texture!");
+    if (FAILED(result))
+    {
+        Logger::Error("Failed to create DDS texture!");
 
-		return;
-	}
+        return;
+    }
 
-	ID3D11Texture2D* texture2D = nullptr;
-	result = (*texture)->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&texture2D));
+    ID3D11Texture2D* texture2D = nullptr;
+    result = (*texture)->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&texture2D));
 
-	if (FAILED(result))
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Failed to query ID3D11Texture2D interface!");
+    if (FAILED(result))
+    {
+        Logger::Error("Failed to query ID3D11Texture2D interface!");
 
-		return;
-	}
+        return;
+    }
 
-	if (texture2D)
-	{
-		D3D11_TEXTURE2D_DESC desc;
+    if (texture2D)
+    {
+        D3D11_TEXTURE2D_DESC desc;
 
-		texture2D->GetDesc(&desc);
+        texture2D->GetDesc(&desc);
 
-		width = static_cast<float>(desc.Width);
-		height = static_cast<float>(desc.Height);
+        width = static_cast<float>(desc.Width);
+        height = static_cast<float>(desc.Height);
 
-		texture2D->Release();
-	}
+        texture2D->Release();
+    }
 }
 
-void DirectXRenderer::LoadTextureFromFile(const char* textureFilePath, ID3D11Texture2D** texture, ID3D11ShaderResourceView** texureView, unsigned int& width, unsigned int& height)
+void DirectXRenderer::LoadTextureFromFile(
+    const char* textureFilePath, ID3D11Texture2D** texture, ID3D11ShaderResourceView** texureView, unsigned int& width, unsigned int& height
+)
 {
-	ID3D11Device* device = RenderManager->GetRenderDevice()->GetDirect3DDevice();
-	int imageWidth = 0;
-	int imageHeight = 0;
-	unsigned char* imageData = stbi_load(textureFilePath, &imageWidth, &imageHeight, nullptr, 4);
+    ID3D11Device* device = Globals::RenderManager->m_pRenderDevice->m_pDirect3DDevice;
+    int imageWidth = 0;
+    int imageHeight = 0;
+    unsigned char* imageData = stbi_load(textureFilePath, &imageWidth, &imageHeight, nullptr, 4);
 
-	if (!imageData)
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Failed to load texture!");
+    if (!imageData)
+    {
+        Logger::Error("Failed to load texture!");
 
-		return;
-	}
+        return;
+    }
 
-	width = static_cast<unsigned int>(imageWidth);
-	height = static_cast<unsigned int>(imageHeight);
+    width = static_cast<unsigned int>(imageWidth);
+    height = static_cast<unsigned int>(imageHeight);
 
-	D3D11_TEXTURE2D_DESC desc;
+    D3D11_TEXTURE2D_DESC desc;
 
-	ZeroMemory(&desc, sizeof(desc));
+    ZeroMemory(&desc, sizeof(desc));
 
-	desc.Width = width;
-	desc.Height = height;
-	desc.MipLevels = 1;
-	desc.ArraySize = 1;
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	desc.SampleDesc.Count = 1;
-	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	desc.CPUAccessFlags = 0;
+    desc.Width = width;
+    desc.Height = height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    desc.CPUAccessFlags = 0;
 
-	D3D11_SUBRESOURCE_DATA subResource;
-	subResource.pSysMem = imageData;
-	subResource.SysMemPitch = desc.Width * 4;
-	subResource.SysMemSlicePitch = 0;
+    D3D11_SUBRESOURCE_DATA subResource;
+    subResource.pSysMem = imageData;
+    subResource.SysMemPitch = desc.Width * 4;
+    subResource.SysMemSlicePitch = 0;
 
-	HRESULT result = device->CreateTexture2D(&desc, &subResource, texture);
+    HRESULT result = device->CreateTexture2D(&desc, &subResource, texture);
 
-	if (FAILED(result))
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Failed to create texture!");
+    if (FAILED(result))
+    {
+        Logger::Error("Failed to create texture!");
 
-		stbi_image_free(imageData);
+        stbi_image_free(imageData);
 
-		return;
-	}
+        return;
+    }
 
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 
-	ZeroMemory(&srvDesc, sizeof(srvDesc));
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
 
-	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = desc.MipLevels;
-	srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = desc.MipLevels;
+    srvDesc.Texture2D.MostDetailedMip = 0;
 
-	result = device->CreateShaderResourceView(*texture, &srvDesc, texureView);
+    result = device->CreateShaderResourceView(*texture, &srvDesc, texureView);
 
-	if (FAILED(result))
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Failed to create DDS texture!");
+    if (FAILED(result))
+    {
+        Logger::Error("Failed to create DDS texture!");
 
-		stbi_image_free(imageData);
+        stbi_image_free(imageData);
 
-		return;
-	}
+        return;
+    }
 
-	stbi_image_free(imageData);
+    stbi_image_free(imageData);
 }

@@ -1,29 +1,21 @@
 cmake_minimum_required(VERSION 3.8)
 
-file(GLOB_RECURSE HEADER_FILES
-	CONFIGURE_DEPENDS
-	include/*.h
-)
-
 file(GLOB_RECURSE SRC_FILES
 	CONFIGURE_DEPENDS
-	src/*.cpp
-	src/*.c
+	Src/*.cpp
+  Src/*.c
+  Src/*.hpp
+  Src/*.h
 )
 
 add_library(HUD SHARED
-	${HEADER_FILES}
 	${SRC_FILES}
 )
 
 target_include_directories(HUD PRIVATE
-	${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/Src
 )
 
 target_link_libraries(HUD PRIVATE
 	HitmanAbsolutionSDK
-)
-
-install(TARGETS HUD
-	RUNTIME DESTINATION bin/mods
 )

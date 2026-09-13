@@ -1,88 +1,92 @@
+#include "Noclip.h"
+
 #include <IconsMaterialDesign.h>
 
 #include <Glacier/ZGameLoopManager.h>
-#include <Glacier/Input/ZInputActionManager.h>
 #include <Glacier/ZLevelManager.h>
 
-#include <Noclip.h>
 #include <Hooks.h>
 
-Noclip::Noclip() :
-    isNoclipEnabled(false),
-    toggleNoclipAction("ToggleNoclip")
-{
-}
+Noclip::Noclip()
+    : m_IsNoclipEnabled(false)
+    , m_ToggleNoclipAction("ToggleNoclip")
+    , m_ForwardAction("Forward")
+    , m_BackwardAction("Backward")
+    , m_LeftAction("Left")
+    , m_RightAction("Right")
+    , m_FastAction("Fast")
+{}
 
 Noclip::~Noclip()
 {
     const ZMemberDelegate<Noclip, void(const SGameUpdateEvent&)> delegate(this, &Noclip::OnFrameUpdate);
-
-    GameLoopManager->UnregisterForFrameUpdate(delegate);
-	
-    Hooks::ZEntitySceneContext_ClearScene.RemoveHook();
+    Globals::GameLoopManager->UnregisterForFrameUpdate(delegate);
 }
 
 void Noclip::Initialize()
 {
-    ModInterface::Initialize();
-
-    Hooks::ZEntitySceneContext_ClearScene.CreateHook("ZEntitySceneContext::ClearScene", 0x265A80, ZEntitySceneContext_ClearSceneHook);
-
-    Hooks::ZEntitySceneContext_ClearScene.EnableHook();
+    Hooks::ZEntitySceneContext_ClearScene->AddDetour(this, &Noclip::ZEntitySceneContext_ClearScene);
 }
 
 void Noclip::OnEngineInitialized()
 {
     const ZMemberDelegate<Noclip, void(const SGameUpdateEvent&)> delegate(this, &Noclip::OnFrameUpdate);
+    Globals::GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 
-    GameLoopManager->RegisterForFrameUpdate(delegate, 1);
+    const char* bindings = "NoclipInput={"
+                           "ToggleNoclip=& hold(kb,lctrl) tap(kb,n);"
+                           "Forward=hold(kb,w);"
+                           "Backward=hold(kb,s);"
+                           "Left=hold(kb,a);"
+                           "Right=hold(kb,d);"
+                           "Fast=hold(kb,lshift);};";
 
-    AddBindings();
+    Globals::InputActionManager->AddBindings(bindings);
 }
 
 void Noclip::OnDrawMenu()
 {
-    if (ImGui::Checkbox(ICON_MD_SELF_IMPROVEMENT " Noclip", &isNoclipEnabled))
+    if (ImGui::Checkbox(ICON_MD_SELF_IMPROVEMENT " Noclip", &m_IsNoclipEnabled))
     {
-        if (isNoclipEnabled)
+        if (m_IsNoclipEnabled)
         {
-            ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+            ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
             if (hitman)
             {
-                playerPosition = hitman->GetSpatialEntityPtr()->GetWorldPosition();
+                m_PlayerPosition = hitman->GetSpatialEntityPtr()->GetWorldPosition();
             }
         }
     }
 }
 
-void Noclip::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
+void Noclip::OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent)
 {
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+    ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
     if (!hitman)
     {
         return;
     }
 
-    if (toggleNoclipAction.Digital())
-    {
-        isNoclipEnabled = !isNoclipEnabled;
+    ZHM5MainCamera* mainCamera = hitman->m_rMainCamera.m_pInterfaceRef;
 
-        if (isNoclipEnabled)
-        {
-            playerPosition = hitman->GetSpatialEntityPtr()->GetWorldPosition();
-        }
-    }
-
-    if (!isNoclipEnabled)
+    if (!mainCamera)
     {
         return;
     }
 
-    ZHM5MainCamera* mainCamera = hitman->GetMainCamera();
+    if (m_ToggleNoclipAction.Digital())
+    {
+        m_IsNoclipEnabled = !m_IsNoclipEnabled;
 
-    if (!mainCamera)
+        if (m_IsNoclipEnabled)
+        {
+            m_PlayerPosition = hitman->GetSpatialEntityPtr()->GetWorldPosition();
+        }
+    }
+
+    if (!m_IsNoclipEnabled)
     {
         return;
     }
@@ -90,34 +94,41 @@ void Noclip::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
     const SMatrix cameraTransform = mainCamera->GetObjectToWorldMatrix();
     float moveSpeed = 5.f;
 
-    if (GetAsyncKeyState(VK_SHIFT))
+    if (m_FastAction.Digital())
+    {
         moveSpeed = 20.f;
+    }
 
-    if (GetAsyncKeyState('W'))
-        playerPosition += cameraTransform.Up * -moveSpeed * updateEvent.m_GameTimeDelta.ToSeconds();
+    const float gameTimeDelta = static_cast<float>(p_UpdateEvent.m_GameTimeDelta.ToSeconds());
 
-    if (GetAsyncKeyState('S'))
-        playerPosition += cameraTransform.Up * moveSpeed * updateEvent.m_GameTimeDelta.ToSeconds();
+    if (m_ForwardAction.Digital())
+    {
+        m_PlayerPosition += cameraTransform.Up * -moveSpeed * gameTimeDelta;
+    }
 
-    if (GetAsyncKeyState('A'))
-        playerPosition += cameraTransform.Left * -moveSpeed * updateEvent.m_GameTimeDelta.ToSeconds();
+    if (m_BackwardAction.Digital())
+    {
+        m_PlayerPosition += cameraTransform.Up * moveSpeed * gameTimeDelta;
+    }
 
-    if (GetAsyncKeyState('D'))
-        playerPosition += cameraTransform.Left * moveSpeed * updateEvent.m_GameTimeDelta.ToSeconds();
+    if (m_LeftAction.Digital())
+    {
+        m_PlayerPosition += cameraTransform.Left * -moveSpeed * gameTimeDelta;
+    }
 
-    hitman->GetSpatialEntityPtr()->SetWorldPosition(playerPosition);
+    if (m_RightAction.Digital())
+    {
+        m_PlayerPosition += cameraTransform.Left * moveSpeed * gameTimeDelta;
+    }
+
+    hitman->GetSpatialEntityPtr()->SetWorldPosition(m_PlayerPosition);
 }
 
-void Noclip::OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnloadScene)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Noclip, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene)
 {
-    isNoclipEnabled = false;
-}
+    m_IsNoclipEnabled = false;
 
-void __fastcall ZEntitySceneContext_ClearSceneHook(ZEntitySceneContext* pThis, int edx, bool bFullyUnloadScene)
-{
-    GetModInstance()->OnClearScene(pThis, bFullyUnloadScene);
-
-    Hooks::ZEntitySceneContext_ClearScene.CallOriginalFunction(pThis, bFullyUnloadScene);
+    return { HookAction::Continue() };
 }
 
 DEFINE_MOD(Noclip);

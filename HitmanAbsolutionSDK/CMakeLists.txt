@@ -1,14 +1,14 @@
-﻿file(GLOB_RECURSE SRC_FILES
+file(GLOB_RECURSE SRC_FILES
 	CONFIGURE_DEPENDS
-	src/*.cpp
-	src/*.c
-	src/*.hpp
-	src/*.h,
+	Src/*.cpp
+	Src/*.c
+	Src/*.hpp
+	Src/*.h,
 )
 
 file(GLOB_RECURSE HEADER_FILES
 	CONFIGURE_DEPENDS
-	include/*.h
+	Include/*.h
 )
 
 add_library(HitmanAbsolutionSDK SHARED
@@ -17,7 +17,7 @@ add_library(HitmanAbsolutionSDK SHARED
  )
 
 target_include_directories(HitmanAbsolutionSDK PUBLIC
-	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_CURRENT_SOURCE_DIR}/Include
 	${CMAKE_SOURCE_DIR}/External/IconFontCppHeaders
 	${CMAKE_SOURCE_DIR}/External/mINI/src/mini
 )
@@ -27,6 +27,7 @@ target_link_libraries(HitmanAbsolutionSDK PUBLIC
 	imgui-docking-layout
 	minhook::minhook
 	winmm
+	spdlog::spdlog_header_only
 )
 
 target_compile_definitions(HitmanAbsolutionSDK PRIVATE

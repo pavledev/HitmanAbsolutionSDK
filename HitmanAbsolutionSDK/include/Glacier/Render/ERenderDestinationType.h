@@ -1,7 +1,0 @@
-#pragma once
-
-enum ERenderDestinationType
-{
-	RENDER_DESTINATION_TYPE_SCREEN = 0,
-	RENDER_DESTINATION_TYPE_OFFSCREEN = 1
-};

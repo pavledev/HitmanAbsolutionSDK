@@ -2,11 +2,11 @@
 
 #include <Common.h>
 
-class HitmanAbsolutionSDK_API ISharedPointerTarget
+class ISharedPointerTarget
 {
-public:
-	virtual ~ISharedPointerTarget() = default;
-	virtual void AddReference() const = 0;
-	virtual void RemoveReference() const = 0;
-	virtual unsigned int GetRefCount() const = 0;
+  public:
+    virtual ~ISharedPointerTarget() = default;
+    virtual void AddReference() const = 0;
+    virtual void RemoveReference() const = 0;
+    virtual uint32_t GetRefCount() const = 0;
 };

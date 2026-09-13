@@ -1,5 +1,5 @@
 #include "Connection/SharedMemoryServer.h"
-#include "Logger.h"
+#include "Logging.h"
 
 SharedMemoryServer::SharedMemoryServer()
 {
@@ -20,13 +20,13 @@ void SharedMemoryServer::Start()
 
 	if (mapFile == INVALID_HANDLE_VALUE)
 	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Failed to create file mapping object. Error: {}", Logger::GetLastError());
+		Logger::Error("Failed to create file mapping object. Error: {}", GetLastError());
 
 		return;
 	}
 	else
 	{
-		Logger::GetInstance().Log(Logger::Level::Info, "Successfully created file mapping object.");
+		Logger::Info("Successfully created file mapping object.");
 	}
 
 	if (mapFile)
@@ -35,7 +35,7 @@ void SharedMemoryServer::Start()
 
 		if (!data)
 		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Could not map view of file. Error: {}", Logger::GetLastError());
+			Logger::Error("Could not map view of file. Error: {}", GetLastError());
 
 			CloseHandle(mapFile);
 		}

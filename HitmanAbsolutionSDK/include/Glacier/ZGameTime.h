@@ -2,12 +2,13 @@
 
 #include <Common.h>
 
-class HitmanAbsolutionSDK_API ZGameTime
+class ZGameTime
 {
-public:
-    long long GetTicks() const;
-    double ToSeconds() const;
+  public:
+    double ToSeconds() const
+    {
+        return static_cast<double>(m_nTicks) / 1024.0 / 1024.0;
+    }
 
-private:
-    long long m_nTicks;
+    int64_t m_nTicks;
 };

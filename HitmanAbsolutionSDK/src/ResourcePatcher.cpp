@@ -2,30 +2,21 @@
 #include <format>
 #include <unordered_set>
 
-#include <Glacier/Templates/TSharedPointer.h>
-#include <Glacier/Resource/ZResourceLibraryInfo.h>
-#include <Glacier/Resource/ZResourcePending.h>
-#include <Glacier/Resource/ZResourceDataBuffer.h>
-#include <Glacier/Resource/ZResourceLibraryLoader.h>
-#include <Glacier/Resource/ZBufferBlock.h>
-#include <Glacier/Resource/IResourceInstaller.h>
+#include <Glacier/TSharedPointer.h>
+#include <Glacier/ZResource.h>
 
 #include <ResourcePatcher.h>
 #include <IO/BinaryReader.h>
 #include <SDK.h>
 #include <Hooks.h>
+#include <Globals.h>
 
 ResourcePatcher::ResourcePatcher()
 {
-    Hooks::ZHeaderLibraryInstaller_Install.CreateHook("ZHeaderLibraryInstaller::Install", 0x512940, ZHeaderLibraryInstaller_InstallHook);
-    Hooks::ZResourceLibraryLoader_ProcessBlock.CreateHook("ZResourceLibraryLoader::ProcessBlock", 0x1F150, ZResourceLibraryLoader_ProcessBlockHook);
-    Hooks::ZResourceLibraryLoader_AllocateEntry.CreateHook("ZResourceLibraryLoader::AllocateEntry", 0x156280, ZResourceLibraryLoader_AllocateEntryHook);
-    Hooks::ZResourceLibraryLoader_StartLoading.CreateHook("ZResourceLibraryLoader::StartLoading", 0x1E87B0, ZResourceLibraryLoader_StartLoadingHook);
-
-    Hooks::ZHeaderLibraryInstaller_Install.EnableHook();
-    Hooks::ZResourceLibraryLoader_ProcessBlock.EnableHook();
-    Hooks::ZResourceLibraryLoader_AllocateEntry.EnableHook();
-    Hooks::ZResourceLibraryLoader_StartLoading.EnableHook();
+    Hooks::ZHeaderLibraryInstaller_Install->AddDetour(this, &ResourcePatcher::ZHeaderLibraryInstaller_Install);
+    Hooks::ZResourceLibraryLoader_ProcessBlock->AddDetour(this, &ResourcePatcher::ZResourceLibraryLoader_ProcessBlock);
+    Hooks::ZResourceLibraryLoader_AllocateEntry->AddDetour(this, &ResourcePatcher::ZResourceLibraryLoader_AllocateEntry);
+    Hooks::ZResourceLibraryLoader_StartLoading->AddDetour(this, &ResourcePatcher::ZResourceLibraryLoader_StartLoading);
 }
 
 void ResourcePatcher::LoadPatchedResources()
@@ -35,9 +26,10 @@ void ResourcePatcher::LoadPatchedResources()
         return;
     }
 
-    const std::string currentHeaderLibraryResourceID = ZRuntimeResourceID::QueryResourceID(currentHeaderLibraryRuntimeResourceID).GetURI().ToCString();
+    const std::string currentHeaderLibraryResourceID = SDK::GetInstance().GetResourceID(currentHeaderLibraryRuntimeResourceID);
     const size_t index2 = currentHeaderLibraryResourceID.find_last_of("/");
-    const std::string headerLibraryFileName = currentHeaderLibraryResourceID.substr(index2 + 1, currentHeaderLibraryResourceID.find(".", index2) - index2 - 1);
+    const std::string headerLibraryFileName =
+        currentHeaderLibraryResourceID.substr(index2 + 1, currentHeaderLibraryResourceID.find(".", index2) - index2 - 1);
     const std::string patchesFolderPath = std::format("ModManager\\patches\\{}", headerLibraryFileName);
 
     if (!std::filesystem::is_directory(patchesFolderPath))
@@ -45,30 +37,30 @@ void ResourcePatcher::LoadPatchedResources()
         return;
     }
 
-    std::map<unsigned int, std::filesystem::path> patchFiles;
+    std::map<uint32_t, std::filesystem::path> patchFiles;
 
     for (const auto& entry : std::filesystem::directory_iterator(patchesFolderPath))
     {
         const std::string fileName = entry.path().filename().string();
-        const unsigned int patchNumber = std::strtoul(fileName.substr(5, fileName.find(".") - 5).c_str(), nullptr, 10);
+        const uint32_t patchNumber = std::strtoul(fileName.substr(5, fileName.find(".") - 5).c_str(), nullptr, 10);
 
         patchFiles.insert(std::make_pair(patchNumber, entry.path()));
     }
 
-    std::unordered_set<unsigned long long> addedResources;
+    std::unordered_set<uint64_t> addedResources;
 
     for (auto it = patchFiles.begin(); it != patchFiles.end(); ++it)
     {
         BinaryReader binaryReader = BinaryReader(it->second.string());
-        const unsigned int patchedResourceCount = binaryReader.Read<unsigned int>();
+        const uint32_t patchedResourceCount = binaryReader.Read<uint32_t>();
 
         auto iterator = patchedResources.insert(std::make_pair(currentHeaderLibraryRuntimeResourceID.GetID(), std::vector<PatchedResource>())).first;
 
-        for (unsigned int i = 0; i < patchedResourceCount; ++i)
+        for (uint32_t i = 0; i < patchedResourceCount; ++i)
         {
             PatchedResource patchedResource;
 
-            patchedResource.runtimeResourceID = binaryReader.Read<unsigned long long>();
+            patchedResource.runtimeResourceID = binaryReader.Read<uint64_t>();
 
             if (addedResources.contains(patchedResource.runtimeResourceID))
             {
@@ -77,8 +69,8 @@ void ResourcePatcher::LoadPatchedResources()
                 continue;
             }
 
-            patchedResource.resourceDataOffset = binaryReader.Read<unsigned int>();
-            patchedResource.resourceDataSize = binaryReader.Read<unsigned int>();
+            patchedResource.resourceDataOffset = binaryReader.Read<uint32_t>();
+            patchedResource.resourceDataSize = binaryReader.Read<uint32_t>();
             patchedResource.patchFileName = it->second.filename().string();
 
             iterator->second.push_back(patchedResource);
@@ -107,7 +99,7 @@ const ResourcePatcher::PatchedResource* ResourcePatcher::GetPatchedResource(cons
     return nullptr;
 }
 
-void ResourcePatcher::GetPatchedResource(const ZRuntimeResourceID& runtimeResourceID, void*& resourceData, unsigned int& resourceDataSize)
+void ResourcePatcher::GetPatchedResource(const ZRuntimeResourceID& runtimeResourceID, void*& resourceData, uint32_t& resourceDataSize)
 {
     const std::vector<PatchedResource>& patchedResources2 = patchedResources[currentHeaderLibraryRuntimeResourceID.GetID()];
 
@@ -115,9 +107,10 @@ void ResourcePatcher::GetPatchedResource(const ZRuntimeResourceID& runtimeResour
     {
         if (patchedResources2[i].runtimeResourceID == runtimeResourceID.GetID())
         {
-            const std::string currentHeaderLibraryResourceID = ZRuntimeResourceID::QueryResourceID(currentHeaderLibraryRuntimeResourceID).GetURI().ToCString();
+            const std::string currentHeaderLibraryResourceID = SDK::GetInstance().GetResourceID(currentHeaderLibraryRuntimeResourceID);
             const size_t index2 = currentHeaderLibraryResourceID.find_last_of("/");
-            const std::string headerLibraryFileName = currentHeaderLibraryResourceID.substr(index2 + 1, currentHeaderLibraryResourceID.find(".", index2) - index2 - 1);
+            const std::string headerLibraryFileName =
+                currentHeaderLibraryResourceID.substr(index2 + 1, currentHeaderLibraryResourceID.find(".", index2) - index2 - 1);
             const std::string patchFilePath = std::format("ModManager\\patches\\{}\\{}", headerLibraryFileName, patchedResources2[i].patchFileName);
             BinaryReader binaryReader = BinaryReader(patchFilePath);
 
@@ -156,56 +149,62 @@ const bool ResourcePatcher::IsResourcePatched(const ZRuntimeResourceID& runtimeR
     return false;
 }
 
-void ResourcePatcher::OnHeaderLibraryInstall(ZHeaderLibraryInstaller* headerLibraryInstaller, ZResourcePending& resourcePending)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    ResourcePatcher, bool, ZHeaderLibraryInstaller_Install, ZHeaderLibraryInstaller* p_HeaderLibraryInstaller, ZResourcePending& p_ResourcePending
+)
 {
-    SDK::GetInstance().GetResourcePatcher()->SetCurrentHeaderLibraryRuntimeResourceID(resourcePending.GetResource().GetResourceStub()->GetRuntimeResourceID());
+    SDK::GetInstance().GetResourcePatcher()->SetCurrentHeaderLibraryRuntimeResourceID(p_ResourcePending.m_pResource.m_pResourceStub->m_ridResource);
+
+    return { HookAction::Continue() };
 }
 
-bool ResourcePatcher::OnProcessBlock(ZResourceLibraryLoader* resourceLibraryLoader, ZBufferBlock* block)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    ResourcePatcher, bool, ZResourceLibraryLoader_ProcessBlock, ZResourceLibraryLoader* p_ResourceLibraryLoader, ZBufferBlock* p_BufferBlock
+)
 {
-    unsigned int nReadSize = block->GetReadSize();
-    unsigned char* pData = block->GetData();
+    uint32_t nReadSize = p_BufferBlock->nReadSize;
+    uint8_t* pData = p_BufferBlock->pData;
 
-    if (nReadSize < resourceLibraryLoader->GetEntryBytesLeft())
+    if (nReadSize < p_ResourceLibraryLoader->m_nEntryBytesLeft)
     {
         if (nReadSize)
         {
-            const unsigned int entryIndex = resourceLibraryLoader->GetEntryIndex();
-            const ZResourceLibraryInfo* libraryEntries = resourceLibraryLoader->GetLibraryEntries();
+            const uint32_t entryIndex = p_ResourceLibraryLoader->m_nEntryIndex;
+            const ZResourceLibraryInfo* libraryEntries = p_ResourceLibraryLoader->m_pLibraryEntries;
             const SResourceLibraryEntry& entry = libraryEntries->GetEntry(entryIndex);
 
-            if (!IsResourcePatched(entry.pStub->GetRuntimeResourceID()))
+            if (!IsResourcePatched(entry.pStub->m_ridResource))
             {
-                resourceLibraryLoader->GetCurrentData()->Insert(pData, nReadSize);
+                p_ResourceLibraryLoader->m_pCurrentData->Insert(pData, nReadSize);
             }
 
-            resourceLibraryLoader->SetEntryBytesLeft(resourceLibraryLoader->GetEntryBytesLeft() - nReadSize);
+            p_ResourceLibraryLoader->m_nEntryBytesLeft -= nReadSize;
         }
 
-        return true;
+        return { HookAction::Return(), true };
     }
 
     while (true)
     {
-        const unsigned int entryBytesLeft = resourceLibraryLoader->GetEntryBytesLeft();
-        unsigned int entryIndex = resourceLibraryLoader->GetEntryIndex();
-        ZResourceLibraryInfo* libraryEntries = resourceLibraryLoader->GetLibraryEntries();
+        const uint32_t entryBytesLeft = p_ResourceLibraryLoader->m_nEntryBytesLeft;
+        uint32_t entryIndex = p_ResourceLibraryLoader->m_nEntryIndex;
+        ZResourceLibraryInfo* libraryEntries = p_ResourceLibraryLoader->m_pLibraryEntries;
         const SResourceLibraryEntry& entry = libraryEntries->GetEntry(entryIndex);
 
-        if (IsResourcePatched(entry.pStub->GetRuntimeResourceID()))
+        if (IsResourcePatched(entry.pStub->m_ridResource))
         {
             void* resourceData = nullptr;
-            unsigned int resourceDataSize = 0;
+            uint32_t resourceDataSize = 0;
 
-            GetPatchedResource(entry.pStub->GetRuntimeResourceID(), resourceData, resourceDataSize);
+            GetPatchedResource(entry.pStub->m_ridResource, resourceData, resourceDataSize);
 
-            resourceLibraryLoader->GetCurrentData()->Insert(static_cast<unsigned char*>(resourceData), resourceDataSize);
+            p_ResourceLibraryLoader->m_pCurrentData->Insert(static_cast<uint8_t*>(resourceData), resourceDataSize);
 
             operator delete(resourceData);
         }
         else
         {
-            resourceLibraryLoader->GetCurrentData()->Insert(pData, entryBytesLeft);
+            p_ResourceLibraryLoader->m_pCurrentData->Insert(pData, entryBytesLeft);
         }
 
         pData += entryBytesLeft;
@@ -213,64 +212,67 @@ bool ResourcePatcher::OnProcessBlock(ZResourceLibraryLoader* resourceLibraryLoad
 
         if (libraryEntries->IsValid(entryIndex))
         {
-            libraryEntries->InstallResource(entryIndex, resourceLibraryLoader->GetCurrentData());
+            libraryEntries->InstallResource(entryIndex, p_ResourceLibraryLoader->m_pCurrentData);
 
-            if (resourceLibraryLoader->GetCurrentData().GetTarget())
+            if (p_ResourceLibraryLoader->m_pCurrentData.GetTarget())
             {
-                resourceLibraryLoader->GetCurrentData()->RemoveReference();
+                p_ResourceLibraryLoader->m_pCurrentData->RemoveReference();
             }
 
-            resourceLibraryLoader->GetCurrentData().SetTarget(nullptr);
+            p_ResourceLibraryLoader->m_pCurrentData.m_pObject = nullptr;
         }
 
         if (entry.pStub->GetResourceStatus() != RESOURCE_STATUS_VALID)
         {
-            if (resourceLibraryLoader->GetCurrentData().GetTarget())
+            if (p_ResourceLibraryLoader->m_pCurrentData.GetTarget())
             {
-                resourceLibraryLoader->GetCurrentData()->RemoveReference();
+                p_ResourceLibraryLoader->m_pCurrentData->RemoveReference();
             }
 
-            resourceLibraryLoader->GetCurrentData().SetTarget(nullptr);
+            p_ResourceLibraryLoader->m_pCurrentData.m_pObject = nullptr;
         }
 
-        unsigned int nextEntryIndex = ++entryIndex;
+        uint32_t nextEntryIndex = ++entryIndex;
 
-        resourceLibraryLoader->SetEntryIndex(nextEntryIndex);
+        p_ResourceLibraryLoader->m_nEntryIndex = nextEntryIndex;
 
-        if (nextEntryIndex >= libraryEntries->GetEntryCount())
+        if (nextEntryIndex >= libraryEntries->m_Entries.Size())
         {
-            return false;
+            return { HookAction::Return(), false };
         }
 
         const SResourceLibraryEntry& nextEntry = libraryEntries->GetEntry(nextEntryIndex);
         IResourceInstaller* resourceInstaller = nextEntry.pStub->GetResourceInstaller();
-        const ZRuntimeResourceID& runtimeResourceID = nextEntry.pStub->GetRuntimeResourceID();
+        const ZRuntimeResourceID& runtimeResourceID = nextEntry.pStub->m_ridResource;
 
-        resourceLibraryLoader->AllocateEntry(resourceInstaller, nextEntry.nDataSize, runtimeResourceID);
+        p_ResourceLibraryLoader->AllocateEntry(resourceInstaller, nextEntry.nDataSize, runtimeResourceID);
 
-        if (nReadSize < resourceLibraryLoader->GetEntryBytesLeft())
+        if (nReadSize < p_ResourceLibraryLoader->m_nEntryBytesLeft)
         {
             if (nReadSize)
             {
                 if (!IsResourcePatched(runtimeResourceID))
                 {
-                    resourceLibraryLoader->GetCurrentData()->Insert(pData, nReadSize);
+                    p_ResourceLibraryLoader->m_pCurrentData->Insert(pData, nReadSize);
                 }
 
-                resourceLibraryLoader->SetEntryBytesLeft(resourceLibraryLoader->GetEntryBytesLeft() - nReadSize);
+                p_ResourceLibraryLoader->m_nEntryBytesLeft -= nReadSize;
             }
 
-            return true;
+            return { HookAction::Return(), true };
         }
     }
 }
 
-void ResourcePatcher::OnAllocateEntry(ZResourceLibraryLoader* resourceLibraryLoader, IResourceInstaller* resourceInstaller, const unsigned int size, const ZRuntimeResourceID& runtimeResourceID)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    ResourcePatcher, void, ZResourceLibraryLoader_AllocateEntry, ZResourceLibraryLoader* p_ResourceLibraryLoader,
+    IResourceInstaller* p_ResourceInstaller, uint32_t p_Size, ZRuntimeResourceID p_ResourceID
+)
 {
-    if (resourceInstaller->SupportsAllocate())
+    if (p_ResourceInstaller->SupportsAllocate())
     {
-        unsigned int dataSize = 0;
-        const PatchedResource* patchedResource = GetPatchedResource(runtimeResourceID);
+        uint32_t dataSize = 0;
+        const PatchedResource* patchedResource = GetPatchedResource(p_ResourceID);
 
         if (patchedResource)
         {
@@ -278,70 +280,71 @@ void ResourcePatcher::OnAllocateEntry(ZResourceLibraryLoader* resourceLibraryLoa
         }
         else
         {
-            dataSize = size;
+            dataSize = p_Size;
         }
 
-        void* data = resourceInstaller->Allocate(dataSize);
+        void* data = p_ResourceInstaller->Allocate(dataSize);
         TSharedPointer<ZResourceDataBuffer> resourceDataBuffer = ZResourceDataBuffer::Create(data, dataSize);
 
-        if (resourceDataBuffer.GetTarget() != resourceLibraryLoader->GetCurrentData().GetTarget())
+        if (resourceDataBuffer.GetTarget() != p_ResourceLibraryLoader->m_pCurrentData.GetTarget())
         {
-            if (resourceLibraryLoader->GetCurrentData().GetTarget())
+            if (p_ResourceLibraryLoader->m_pCurrentData.GetTarget())
             {
-                resourceLibraryLoader->GetCurrentData()->RemoveReference();
+                p_ResourceLibraryLoader->m_pCurrentData->RemoveReference();
             }
 
-            resourceLibraryLoader->GetCurrentData().SetTarget(resourceDataBuffer.GetTarget());
+            p_ResourceLibraryLoader->m_pCurrentData.m_pObject = resourceDataBuffer.GetTarget();
 
-            if (resourceLibraryLoader->GetCurrentData().GetTarget())
+            if (p_ResourceLibraryLoader->m_pCurrentData.GetTarget())
             {
-                resourceLibraryLoader->GetCurrentData()->AddReference();
+                p_ResourceLibraryLoader->m_pCurrentData->AddReference();
             }
         }
     }
     else
     {
-        if (resourceLibraryLoader->GetCurrentData().GetTarget() != resourceLibraryLoader->GetFixedBuffer().GetTarget())
+        if (p_ResourceLibraryLoader->m_pCurrentData.GetTarget() != p_ResourceLibraryLoader->m_pFixedBuffer.GetTarget())
         {
-            if (resourceLibraryLoader->GetCurrentData().GetTarget())
+            if (p_ResourceLibraryLoader->m_pCurrentData.GetTarget())
             {
-                resourceLibraryLoader->GetCurrentData()->RemoveReference();
+                p_ResourceLibraryLoader->m_pCurrentData->RemoveReference();
             }
 
-            resourceLibraryLoader->GetCurrentData().SetTarget(resourceLibraryLoader->GetFixedBuffer().GetTarget());
+            p_ResourceLibraryLoader->m_pCurrentData.m_pObject = p_ResourceLibraryLoader->m_pFixedBuffer.GetTarget();
 
-            if (resourceLibraryLoader->GetCurrentData().GetTarget())
+            if (p_ResourceLibraryLoader->m_pCurrentData.GetTarget())
             {
-                resourceLibraryLoader->GetCurrentData()->AddReference();
+                p_ResourceLibraryLoader->m_pCurrentData->AddReference();
             }
         }
 
-        resourceLibraryLoader->GetCurrentData()->Clear();
+        p_ResourceLibraryLoader->m_pCurrentData->Clear();
     }
 
-    //Data size of original resource should passed here to avoid problem with reading of resource library
-    resourceLibraryLoader->SetEntryBytesLeft(size);
+    // Data size of original resource should passed here to avoid problem with reading of resource library
+    p_ResourceLibraryLoader->m_nEntryBytesLeft = p_Size;
+
+    return { HookAction::Return() };
 }
 
-void ResourcePatcher::OnStartLoading(ZResourceLibraryLoader* resourceLibraryLoader)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(ResourcePatcher, void, ZResourceLibraryLoader_StartLoading, ZResourceLibraryLoader* p_ResourceLibraryLoader)
 {
     LoadPatchedResources();
 
-    ZResourceLibraryInfo* libraryEntries = resourceLibraryLoader->GetLibraryEntries();
-    unsigned int entryIndex = 0;
-    unsigned int maxDataSize = 0;
+    uint32_t entryIndex = 0;
+    uint32_t maxDataSize = 0;
     auto patchedResourcesIterator = patchedResources.find(currentHeaderLibraryRuntimeResourceID.GetID());
     bool reallocateBuffer = false;
 
     if (patchedResourcesIterator != patchedResources.end())
     {
-        unsigned int maxDataSize2 = 0;
+        uint32_t maxDataSize2 = 0;
 
-        if (libraryEntries->GetEntryCount() > 0)
+        if (p_ResourceLibraryLoader->m_pLibraryEntries->m_Entries.Size() > 0)
         {
             do
             {
-                const SResourceLibraryEntry& entry = libraryEntries->GetEntry(entryIndex);
+                const SResourceLibraryEntry& entry = p_ResourceLibraryLoader->m_pLibraryEntries->GetEntry(entryIndex);
 
                 if (entry.nDataSize > maxDataSize2)
                 {
@@ -355,17 +358,17 @@ void ResourcePatcher::OnStartLoading(ZResourceLibraryLoader* resourceLibraryLoad
 
                 ++entryIndex;
             }
-            while (entryIndex < libraryEntries->GetEntryCount());
+            while (entryIndex < p_ResourceLibraryLoader->m_pLibraryEntries->m_Entries.Size());
         }
 
         maxDataSize = maxDataSize2;
 
-        const ZRuntimeResourceID& libraryRuntimeResourceID = resourceLibraryLoader->GetLibraryEntries()->GetLibraryStub()->GetRuntimeResourceID();
+        const ZRuntimeResourceID& libraryRuntimeResourceID = p_ResourceLibraryLoader->m_pLibraryEntries->m_pLibraryStub->m_ridResource;
         const std::vector<PatchedResource>& patchedResources = patchedResourcesIterator->second;
 
         for (size_t i = 0; i < patchedResources.size(); ++i)
         {
-            if (ZRuntimeResourceID(patchedResources[i].runtimeResourceID).GetIDLow() != libraryRuntimeResourceID.GetIDLow())
+            if (ZRuntimeResourceID(patchedResources[i].runtimeResourceID).m_IDLow != libraryRuntimeResourceID.m_IDLow)
             {
                 continue;
             }
@@ -386,52 +389,32 @@ void ResourcePatcher::OnStartLoading(ZResourceLibraryLoader* resourceLibraryLoad
 
     if (reallocateBuffer)
     {
-        IAllocator* normalAllocator = MemoryManager->GetNormalAllocator();
+        IAllocator* normalAllocator = (*Globals::MemoryManager)->m_pNormalAllocator;
 
-        //normalAllocator->Free(resourceLibraryLoader->GetFixedBuffer()->GetData());
+        // normalAllocator->Free(resourceLibraryLoader->GetFixedBuffer()->GetData());
 
         void* data = normalAllocator->Allocate(maxDataSize, 0);
         TSharedPointer<ZResourceDataBuffer> resourceDataBuffer = ZResourceDataBuffer::Create(data, maxDataSize);
 
-        if (resourceLibraryLoader->GetFixedBuffer().GetTarget() != resourceDataBuffer.GetTarget())
+        if (p_ResourceLibraryLoader->m_pFixedBuffer.GetTarget() != resourceDataBuffer.GetTarget())
         {
-            resourceDataBuffer->Insert(resourceLibraryLoader->GetFixedBuffer()->GetData(), resourceLibraryLoader->GetFixedBuffer()->GetSize());
+            resourceDataBuffer->Insert(
+                p_ResourceLibraryLoader->m_pFixedBuffer.GetTarget()->m_pData, p_ResourceLibraryLoader->m_pFixedBuffer.GetTarget()->m_nSize
+            );
 
-            if (resourceLibraryLoader->GetFixedBuffer().GetTarget())
+            if (p_ResourceLibraryLoader->m_pFixedBuffer.GetTarget())
             {
-                resourceLibraryLoader->GetFixedBuffer()->RemoveReference();
+                p_ResourceLibraryLoader->m_pFixedBuffer->RemoveReference();
             }
 
-            resourceLibraryLoader->GetFixedBuffer().SetTarget(resourceDataBuffer.GetTarget());
+            p_ResourceLibraryLoader->m_pFixedBuffer.m_pObject = resourceDataBuffer.GetTarget();
 
-            if (resourceLibraryLoader->GetFixedBuffer().GetTarget())
+            if (p_ResourceLibraryLoader->m_pFixedBuffer.GetTarget())
             {
-                resourceLibraryLoader->GetFixedBuffer()->AddReference();
+                p_ResourceLibraryLoader->m_pFixedBuffer->AddReference();
             }
         }
     }
-}
 
-bool __fastcall ZHeaderLibraryInstaller_InstallHook(ZHeaderLibraryInstaller* pThis, int edx, ZResourcePending& ResourcePending)
-{
-    SDK::GetInstance().GetResourcePatcher()->OnHeaderLibraryInstall(pThis, ResourcePending);
-
-    return Hooks::ZHeaderLibraryInstaller_Install.CallOriginalFunction(pThis, ResourcePending);
-}
-
-bool __fastcall ZResourceLibraryLoader_ProcessBlockHook(ZResourceLibraryLoader* pThis, int edx, ZBufferBlock* pBlock)
-{
-    return SDK::GetInstance().GetResourcePatcher()->OnProcessBlock(pThis, pBlock);
-}
-
-void __fastcall ZResourceLibraryLoader_AllocateEntryHook(ZResourceLibraryLoader* pThis, int edx, IResourceInstaller* pInstaller, unsigned int nSize, ZRuntimeResourceID ridResource)
-{
-    SDK::GetInstance().GetResourcePatcher()->OnAllocateEntry(pThis, pInstaller, nSize, ridResource);
-}
-
-void __fastcall ZResourceLibraryLoader_StartLoadingHook(ZResourceLibraryLoader* pThis, int edx)
-{
-    SDK::GetInstance().GetResourcePatcher()->OnStartLoading(pThis);
-
-    Hooks::ZResourceLibraryLoader_StartLoading.CallOriginalFunction(pThis);
+    return { HookAction::Continue() };
 }

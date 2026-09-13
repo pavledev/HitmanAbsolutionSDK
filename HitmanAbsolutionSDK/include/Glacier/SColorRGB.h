@@ -2,7 +2,7 @@
 
 struct SColorRGB
 {
-	float r;
-	float g;
-	float b;
+    float r;
+    float g;
+    float b;
 };

@@ -5,257 +5,258 @@
 #include <ini.h>
 
 #include "ModManager.h"
-#include "Logger.h"
+#include "Logging.h"
 #include "SDK.h"
-#include "ModInterface.h"
+#include "IModInterface.h"
+#include "UI/ModSelector.h"
 
 ModManager::ModManager()
 {
-	InitializeSRWLock(&srwLock);
+    InitializeSRWLock(&m_SrwLock);
 }
 
 ModManager::~ModManager()
 {
-	UnloadAllMods();
+    UnloadAllMods();
 }
 
 std::set<std::string> ModManager::GetActiveMods()
 {
-	ScopedSharedGuard scopedSharedGuard = ScopedSharedGuard(&srwLock);
-	std::set<std::string> mods;
+    ScopedSharedGuard scopedSharedGuard = ScopedSharedGuard(&m_SrwLock);
+    std::set<std::string> mods;
 
-	for (auto& loadedMod : loadedMods)
-	{
-		mods.insert(loadedMod.first);
-	}
+    for (auto& loadedMod : m_LoadedMods)
+    {
+        mods.insert(loadedMod.first);
+    }
 
-	return mods;
+    return mods;
 }
 
 std::unordered_map<std::string, ModManager::LoadedMod>& ModManager::GetLoadedMods()
 {
-	return loadedMods;
+    return m_LoadedMods;
 }
 
 void ModManager::FindAvailableMods()
 {
-	std::filesystem::path modsFolderPath = std::format("{}\\mods", std::filesystem::current_path().string());
+    std::filesystem::path modsFolderPath = std::format("{}\\mods", std::filesystem::current_path().string());
 
-	if (std::filesystem::exists(modsFolderPath))
-	{
-		availableMods.clear();
+    if (std::filesystem::exists(modsFolderPath))
+    {
+        m_AvailableMods.clear();
 
-		for (const auto& entry : std::filesystem::directory_iterator(modsFolderPath))
-		{
-			if (entry.path().extension() != ".dll")
-			{
-				continue;
-			}
+        for (const auto& entry : std::filesystem::directory_iterator(modsFolderPath))
+        {
+            if (entry.path().extension() != ".dll")
+            {
+                continue;
+            }
 
-			availableMods.insert(entry.path().filename().stem().string());
-		}
-	}
-	else
-	{
-		Logger::GetInstance().Log(Logger::Level::Warning, "mods directory not found!");
-	}
+            m_AvailableMods.insert(entry.path().filename().stem().string());
+        }
+    }
+    else
+    {
+        Logger::Warn("mods directory not found!");
+    }
 }
 
 void ModManager::LoadAllMods()
 {
-	FindAvailableMods();
+    FindAvailableMods();
 
-	std::filesystem::path iniFilePath = std::format("{}\\mods.ini", std::filesystem::current_path().string());
+    std::filesystem::path iniFilePath = std::format("{}\\mods.ini", std::filesystem::current_path().string());
 
-	if (std::filesystem::exists(iniFilePath))
-	{
-		mINI::INIFile iniFile = mINI::INIFile(iniFilePath.string());
-		mINI::INIStructure iniStructure;
+    if (std::filesystem::exists(iniFilePath))
+    {
+        mINI::INIFile iniFile = mINI::INIFile(iniFilePath.string());
+        mINI::INIStructure iniStructure;
 
-		iniFile.read(iniStructure);
+        iniFile.read(iniStructure);
 
-		for (auto& mod : iniStructure)
-		{
-			if (availableMods.contains(mod.first))
-			{
-				LoadMod(mod.first, false);
-			}
-		}
-	}
+        for (auto& mod : iniStructure)
+        {
+            if (m_AvailableMods.contains(mod.first))
+            {
+                LoadMod(mod.first, false);
+            }
+        }
+    }
 
-	SDK::GetInstance().GetModSelector()->UpdateAvailableMods(availableMods, GetActiveMods());
+    SDK::GetInstance().GetModSelector()->UpdateAvailableMods(m_AvailableMods, GetActiveMods());
 }
 
 void ModManager::UnloadAllMods()
 {
-	AcquireSRWLockShared(&srwLock);
+    AcquireSRWLockShared(&m_SrwLock);
 
-	std::vector<std::string> modNames;
+    std::vector<std::string> modNames;
 
-	for (auto& pair : loadedMods)
-	{
-		modNames.push_back(pair.first);
-	}
+    for (auto& pair : m_LoadedMods)
+    {
+        modNames.push_back(pair.first);
+    }
 
-	ReleaseSRWLockShared(&srwLock);
+    ReleaseSRWLockShared(&m_SrwLock);
 
-	for (std::string& modName : modNames)
-	{
-		UnloadMod(modName);
-	}
+    for (std::string& modName : modNames)
+    {
+        UnloadMod(modName);
+    }
 }
 
-void ModManager::LoadMod(const std::string& name, const bool liveLoad)
+void ModManager::LoadMod(const std::string& p_Name, const bool p_LiveLoad)
 {
-	ScopedExclusiveGuard scopedSharedGuard = ScopedExclusiveGuard(&srwLock);
+    ScopedExclusiveGuard scopedSharedGuard = ScopedExclusiveGuard(&m_SrwLock);
 
-	if (loadedMods.contains(name))
-	{
-		Logger::GetInstance().Log(Logger::Level::Info, "{} mod is already loaded.", name);
+    if (m_LoadedMods.contains(p_Name))
+    {
+        Logger::Info("{} mod is already loaded.", p_Name);
 
-		return;
-	}
+        return;
+    }
 
-	std::string modFilePath = std::format("{}\\mods\\{}.dll", std::filesystem::current_path().string(), name);
+    std::string modFilePath = std::format("{}\\mods\\{}.dll", std::filesystem::current_path().string(), p_Name);
 
-	if (!std::filesystem::exists(modFilePath))
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Couldn't find {} mod!", name);
+    if (!std::filesystem::exists(modFilePath))
+    {
+        Logger::Error("Couldn't find {} mod!", p_Name);
 
-		return;
-	}
+        return;
+    }
 
-	const HMODULE module = LoadLibraryA(modFilePath.c_str());
+    const HMODULE module = LoadLibraryA(modFilePath.c_str());
 
-	if (module)
-	{
-		Logger::GetInstance().Log(Logger::Level::Info, "Successfully loaded {} mod.", name);
-	}
-	else
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Failed to load {} mod. Error: {}", name, Logger::GetLastError());
+    if (module)
+    {
+        Logger::Info("Successfully loaded {} mod.", p_Name);
+    }
+    else
+    {
+        Logger::Error("Failed to load {} mod. Error: {}", p_Name, GetLastError());
 
-		return;
-	}
+        return;
+    }
 
-	const auto GetModInterfaceAddress = GetProcAddress(module, "GetModInterface");
+    const auto GetModInterfaceAddress = GetProcAddress(module, "GetModInterface");
 
-	if (!GetModInterfaceAddress)
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "Couldn't find mod interface! Make sure that the GetPluginInterface function is exported!");
-		FreeLibrary(module);
+    if (!GetModInterfaceAddress)
+    {
+        Logger::Error("Couldn't find mod interface! Make sure that the GetPluginInterface function is exported!");
+        FreeLibrary(module);
 
-		return;
-	}
+        return;
+    }
 
-	const auto GetModeInterface = reinterpret_cast<GetModInterface_t>(GetModInterfaceAddress);
+    const auto GetModeInterface = reinterpret_cast<GetModInterface_t>(GetModInterfaceAddress);
 
-	ModInterface* modInterface = GetModeInterface();
+    IModInterface* modInterface = GetModeInterface();
 
-	if (!modInterface)
-	{
-		Logger::GetInstance().Log(Logger::Level::Error, "GetModeInterface returned null!");
-		FreeLibrary(module);
+    if (!modInterface)
+    {
+        Logger::Error("GetModeInterface returned null!");
+        FreeLibrary(module);
 
-		return;
-	}
+        return;
+    }
 
-	LoadedMod mod;
-	mod.module = module;
-	mod.modInterface = modInterface;
+    LoadedMod mod;
+    mod.m_Module = module;
+    mod.m_ModInterface = modInterface;
 
-	loadedMods[name] = mod;
+    m_LoadedMods[p_Name] = mod;
 
-	SDK::GetInstance().OnModLoaded(name, modInterface, liveLoad);
+    SDK::GetInstance().OnModLoaded(p_Name, modInterface, p_LiveLoad);
 }
 
-void ModManager::UnloadMod(const std::string& name)
+void ModManager::UnloadMod(const std::string& p_Name)
 {
-	ScopedExclusiveGuard scopedSharedGuard = ScopedExclusiveGuard(&srwLock);
-	auto iterator = loadedMods.find(name);
+    ScopedExclusiveGuard scopedSharedGuard = ScopedExclusiveGuard(&m_SrwLock);
+    auto iterator = m_LoadedMods.find(p_Name);
 
-	if (iterator == loadedMods.end())
-	{
-		return;
-	}
+    if (iterator == m_LoadedMods.end())
+    {
+        return;
+    }
 
-	delete iterator->second.modInterface;
-	FreeLibrary(iterator->second.module);
+    delete iterator->second.m_ModInterface;
+    FreeLibrary(iterator->second.m_Module);
 
-	loadedMods.erase(iterator);
+    m_LoadedMods.erase(iterator);
 }
 
-void ModManager::SetEnabledMods(const std::set<std::string>& mods)
+void ModManager::SetEnabledMods(const std::set<std::string>& p_Mods)
 {
-	std::vector<std::string> modsToUnload;
+    std::vector<std::string> modsToUnload;
 
-	AcquireSRWLockShared(&srwLock);
+    AcquireSRWLockShared(&m_SrwLock);
 
-	for (auto& pair : loadedMods)
-	{
-		if (!mods.contains(pair.first))
-		{
-			modsToUnload.push_back(pair.first);
-		}
-	}
+    for (auto& pair : m_LoadedMods)
+    {
+        if (!p_Mods.contains(pair.first))
+        {
+            modsToUnload.push_back(pair.first);
+        }
+    }
 
-	ReleaseSRWLockShared(&srwLock);
+    ReleaseSRWLockShared(&m_SrwLock);
 
-	for (auto& mod : modsToUnload)
-	{
-		UnloadMod(mod);
-	}
+    for (auto& mod : modsToUnload)
+    {
+        UnloadMod(mod);
+    }
 
-	std::vector<std::string> modsToLoad;
+    std::vector<std::string> modsToLoad;
 
-	AcquireSRWLockShared(&srwLock);
+    AcquireSRWLockShared(&m_SrwLock);
 
-	for (auto& mod : mods)
-	{
-		if (loadedMods.contains(mod))
-		{
-			continue;
-		}
+    for (auto& mod : p_Mods)
+    {
+        if (m_LoadedMods.contains(mod))
+        {
+            continue;
+        }
 
-		modsToLoad.push_back(mod);
-	}
+        modsToLoad.push_back(mod);
+    }
 
-	ReleaseSRWLockShared(&srwLock);
+    ReleaseSRWLockShared(&m_SrwLock);
 
-	for (auto& mod : modsToLoad)
-	{
-		LoadMod(mod, true);
-	}
+    for (auto& mod : modsToLoad)
+    {
+        LoadMod(mod, true);
+    }
 
-	std::filesystem::path iniFilePath = std::format("{}\\mods.ini", std::filesystem::current_path().string());
-	mINI::INIFile iniFile = mINI::INIFile(iniFilePath.string());
-	mINI::INIStructure iniStructure;
+    std::filesystem::path iniFilePath = std::format("{}\\mods.ini", std::filesystem::current_path().string());
+    mINI::INIFile iniFile = mINI::INIFile(iniFilePath.string());
+    mINI::INIStructure iniStructure;
 
-	if (std::filesystem::exists(iniFilePath))
-	{
-		mINI::INIStructure oldIni;
+    if (std::filesystem::exists(iniFilePath))
+    {
+        mINI::INIStructure oldIni;
 
-		iniFile.read(oldIni);
-	}
+        iniFile.read(oldIni);
+    }
 
-	for (auto& mod : mods)
-	{
-		mINI::INIMap<std::string> map;
+    for (auto& mod : p_Mods)
+    {
+        mINI::INIMap<std::string> map;
 
-		iniStructure.set(mod, map);
-	}
+        iniStructure.set(mod, map);
+    }
 
-	iniFile.generate(iniStructure);
+    iniFile.generate(iniStructure);
 
-	SDK::GetInstance().GetModSelector()->UpdateAvailableMods(availableMods, GetActiveMods());
+    SDK::GetInstance().GetModSelector()->UpdateAvailableMods(m_AvailableMods, GetActiveMods());
 }
 
 void ModManager::LockRead()
 {
-	AcquireSRWLockShared(&srwLock);
+    AcquireSRWLockShared(&m_SrwLock);
 }
 
 void ModManager::UnlockRead()
 {
-	ReleaseSRWLockShared(&srwLock);
+    ReleaseSRWLockShared(&m_SrwLock);
 }

@@ -1,248 +1,389 @@
 #pragma once
 
-#include <string>
+#include <array>
+#include <string_view>
 
 #include "Common.h"
+#include "Utils/StringUtils.h"
 
-class HitmanAbsolutionSDK_API Hash
+namespace hash
 {
-public:
+    static constexpr uint32_t g_Crc32Table[] = {
+        0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e,
+        0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb,
+        0xf4d4b551, 0x83d385c7, 0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9, 0xfa0f3d63, 0x8d080df5, 0x3b6e20c8,
+        0x4c69105e, 0xd56041e4, 0xa2677172, 0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b, 0x35b5a8fa, 0x42b2986c, 0xdbbbc9d6, 0xacbcf940,
+        0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59, 0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423, 0xcfba9599,
+        0xb8bda50f, 0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924, 0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d, 0x76dc4190, 0x01db7106,
+        0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433, 0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb,
+        0x086d3d2d, 0x91646c97, 0xe6635c01, 0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e, 0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457,
+        0x65b0d9c6, 0x12b7e950, 0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65, 0x4db26158, 0x3ab551ce, 0xa3bc0074,
+        0xd4bb30e2, 0x4adfa541, 0x3dd895d7, 0xa4d1c46d, 0xd3d6f4fb, 0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0, 0x44042d73, 0x33031de5,
+        0xaa0a4c5f, 0xdd0d7cc9, 0x5005713c, 0x270241aa, 0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f, 0x5edef90e,
+        0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81, 0xb7bd5c3b, 0xc0ba6cad, 0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a,
+        0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683, 0xe3630b12, 0x94643b84, 0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27,
+        0x7d079eb1, 0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb, 0x196c3671, 0x6e6b06e7, 0xfed41b76, 0x89d32be0,
+        0x10da7a5a, 0x67dd4acc, 0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5, 0xd6d6a3e8, 0xa1d1937e, 0x38d8c2c4, 0x4fdff252, 0xd1bb67f1,
+        0xa6bc5767, 0x3fb506dd, 0x48b2364b, 0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55, 0x316e8eef, 0x4669be79,
+        0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236, 0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f, 0xc5ba3bbe, 0xb2bd0b28, 0x2bb45a92,
+        0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d, 0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f,
+        0x72076785, 0x05005713, 0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38, 0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21, 0x86d3d2d4,
+        0xf1d4e242, 0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777, 0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c,
+        0x8f659eff, 0xf862ae69, 0x616bffd3, 0x166ccf45, 0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2, 0xa7672661, 0xd06016f7, 0x4969474d,
+        0x3e6e77db, 0xaed16a4a, 0xd9d65adc, 0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9, 0xbdbdf21c, 0xcabac28a,
+        0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693, 0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37,
+        0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d,
+    };
+
+    constexpr uint32_t Crc32(const char* p_Data, size_t p_Length)
+    {
+        uint32_t hash = 0xFFFFFFFF;
+
+        while (p_Length--)
+        {
+            hash = g_Crc32Table[static_cast<uint8_t>(*p_Data) ^ (hash & 0xFF)] ^ (hash >> 8);
+            p_Data++;
+        }
+
+        return hash ^ 0xFFFFFFFF;
+    }
+
+    constexpr uint32_t Crc32(const char* p_Data)
+    {
+        uint32_t hash = 0xFFFFFFFF;
+
+        while (*p_Data)
+        {
+            hash = g_Crc32Table[static_cast<uint8_t>(*p_Data) ^ (hash & 0xFF)] ^ (hash >> 8);
+            p_Data++;
+        }
+
+        return hash ^ 0xFFFFFFFF;
+    }
+
+    constexpr uint32_t Fnv1a(const char* p_Data, size_t p_Length)
+    {
+        uint32_t hash = 0x811c9dc5;
+
+        while (p_Length--)
+        {
+            hash = (hash ^ static_cast<uint8_t>(*p_Data)) * 0x1000193;
+            p_Data++;
+        }
+
+        return hash;
+    }
+
+    constexpr uint32_t Fnv1a(const char* p_Data)
+    {
+        uint32_t hash = 0x811c9dc5;
+
+        while (*p_Data)
+        {
+            hash = (hash ^ static_cast<uint8_t>(*p_Data)) * 0x1000193;
+            p_Data++;
+        }
+
+        return hash;
+    }
+
+    constexpr uint32_t Fnv1aLower(const char* p_Data, size_t p_Length)
+    {
+        uint32_t hash = 0x811c9dc5;
+
+        while (p_Length--)
+        {
+            hash = (hash ^ static_cast<uint8_t>(::tolower(*p_Data))) * 0x1000193;
+            p_Data++;
+        }
+
+        return hash;
+    }
+
+    constexpr uint32_t Fnv1aLower(const char* p_Data)
+    {
+        uint32_t hash = 0x811c9dc5;
+
+        while (*p_Data)
+        {
+            hash = (hash ^ static_cast<uint8_t>(::tolower(*p_Data))) * 0x1000193;
+            p_Data++;
+        }
+
+        return hash;
+    }
+
+    constexpr uint64_t Fnv1a64(const char* p_Data, size_t p_Length)
+    {
+        uint64_t hash = 0x811c9dc5;
+
+        while (p_Length--)
+        {
+            hash = (hash ^ static_cast<uint8_t>(*p_Data)) * 0x1000193;
+            p_Data++;
+        }
+
+        return hash;
+    }
+
+    constexpr uint64_t Fnv1a64(const char* p_Data)
+    {
+        uint64_t hash = 0x811c9dc5;
+
+        while (*p_Data)
+        {
+            hash = (hash ^ static_cast<uint8_t>(*p_Data)) * 0x1000193;
+            p_Data++;
+        }
+
+        return hash;
+    }
+
+    constexpr uint64_t Fnv1a64Lower(const char* p_Data, size_t p_Length)
+    {
+        uint64_t hash = 0x811c9dc5;
+
+        while (p_Length--)
+        {
+            hash = (hash ^ static_cast<uint8_t>(::tolower(*p_Data))) * 0x1000193;
+            p_Data++;
+        }
+
+        return hash;
+    }
+
+    constexpr uint64_t Fnv1a64Lower(const char* p_Data)
+    {
+        uint64_t hash = 0x811c9dc5;
+
+        while (*p_Data)
+        {
+            hash = (hash ^ static_cast<uint8_t>(::tolower(*p_Data))) * 0x1000193;
+            p_Data++;
+        }
+
+        return hash;
+    }
+
+    constexpr std::array<uint32_t, 64> MD5_s = { {
+        7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9,  14, 20, 5, 9,  14, 20, 5, 9,  14, 20, 5, 9,  14, 20,
+        4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
+    } };
+
+    constexpr std::array<uint32_t, 64> MD5_K = { {
+        0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501, 0x698098d8, 0x8b44f7af, 0xffff5bb1,
+        0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821, 0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa, 0xd62f105d, 0x02441453,
+        0xd8a1e681, 0xe7d3fbc8, 0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed, 0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a, 0xfffa3942,
+        0x8771f681, 0x6d9d6122, 0xfde5380c, 0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70, 0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05,
+        0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665, 0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 0x655b59c3, 0x8f0ccc92, 0xffeff47d,
+        0x85845dd1, 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
+    } };
+
     struct MD5Hash
     {
-        unsigned int a;
-        unsigned int b;
-        unsigned int c;
-        unsigned int d;
+        uint32_t m_A;
+        uint32_t m_B;
+        uint32_t m_C;
+        uint32_t m_D;
     };
 
-    static MD5Hash MD5(const std::string& message);
-    static std::string ConvertMD5ToString(const MD5Hash& md5Hash);
-    static unsigned long long GetMD5(const std::string& message);
-
-    static constexpr unsigned int Crc32(const char* data)
+    template<std::size_t N> constexpr MD5Hash MD5(std::string_view p_Str)
     {
-        unsigned int hash = 0xFFFFFFFF;
+        uint32_t a0 = 0x67452301;
+        uint32_t b0 = 0xefcdab89;
+        uint32_t c0 = 0x98badcfe;
+        uint32_t d0 = 0x10325476;
 
-        while (*data)
+        constexpr size_t groupCount = ((N + 8) / 64) + 1;
+        constexpr size_t dataSize = groupCount * 64;
+        std::array<uint8_t, dataSize> data{};
+        data.fill(0x00);
+
+        for (size_t i = 0; i < N; ++i)
         {
-            hash = crc32Table[*data ^ (hash & 0xFF)] ^ (hash >> 8);
-            data++;
+            data[i] = p_Str[i];
         }
 
-        return hash ^ 0xFFFFFFFF;
-    }
+        // Add a single 1 bit.
+        data[N] = 0x80;
 
-    static constexpr unsigned int Crc32(const char* data, size_t length)
-    {
-        unsigned int hash = 0xFFFFFFFF;
+        constexpr uint64_t lengthInBits = N * 8;
 
-        while (length--)
+        // Add length in bits to end.
+        data[dataSize - 8] = static_cast<uint8_t>(lengthInBits);
+        data[dataSize - 7] = static_cast<uint8_t>(lengthInBits >> 8);
+        data[dataSize - 6] = static_cast<uint8_t>(lengthInBits >> 16);
+        data[dataSize - 5] = static_cast<uint8_t>(lengthInBits >> 24);
+        data[dataSize - 4] = static_cast<uint8_t>(lengthInBits >> 32);
+        data[dataSize - 3] = static_cast<uint8_t>(lengthInBits >> 40);
+        data[dataSize - 2] = static_cast<uint8_t>(lengthInBits >> 48);
+        data[dataSize - 1] = static_cast<uint8_t>(lengthInBits >> 56);
+
+        for (size_t group = 0; group < groupCount; ++group)
         {
-            hash = crc32Table[*data ^ (hash & 0xFF)] ^ (hash >> 8);
-            data++;
+            std::array<uint32_t, 16> M{};
+
+            for (size_t j = 0; j < 16; ++j)
+            {
+                M[j] = data[(group * 64) + (j * 4)] | data[(group * 64) + (j * 4) + 1] << 8 | data[(group * 64) + (j * 4) + 2] << 16
+                       | data[(group * 64) + (j * 4) + 3] << 24;
+            }
+
+            uint32_t A = a0;
+            uint32_t B = b0;
+            uint32_t C = c0;
+            uint32_t D = d0;
+
+            for (uint32_t i = 0; i < 64; ++i)
+            {
+                uint32_t F, g;
+
+                if (i <= 15)
+                {
+                    F = (B & C) | (~B & D);
+                    g = i;
+                }
+                else if (i <= 31)
+                {
+                    F = (D & B) | (~D & C);
+                    g = ((i * 5) + 1) % 16;
+                }
+                else if (i <= 47)
+                {
+                    F = B ^ C ^ D;
+                    g = ((i * 3) + 5) % 16;
+                }
+                else
+                {
+                    F = C ^ (B | ~D);
+                    g = (i * 7) % 16;
+                }
+
+                F += (A + MD5_K[i] + M[g]);
+                A = D;
+                D = C;
+                C = B;
+                B += (F << MD5_s[i]) | (F >> (32 - MD5_s[i]));
+            }
+
+            a0 += A;
+            b0 += B;
+            c0 += C;
+            d0 += D;
         }
 
-        return hash ^ 0xFFFFFFFF;
+        return MD5Hash{ a0, b0, c0, d0 };
     }
 
-    static constexpr unsigned int Fnv1a(const char* data)
+    constexpr MD5Hash MD5(std::string_view p_Str)
     {
-        unsigned int hash = 0x811C9DC5;
+        uint32_t a0 = 0x67452301;
+        uint32_t b0 = 0xefcdab89;
+        uint32_t c0 = 0x98badcfe;
+        uint32_t d0 = 0x10325476;
 
-        while (*data)
+        size_t length = p_Str.length();
+        size_t groupCount = ((length + 8) / 64) + 1;
+        size_t dataSize = groupCount * 64;
+        std::vector<uint8_t> data(dataSize);
+
+        for (size_t i = 0; i < length; ++i)
         {
-            hash = (hash ^ *data) * 0x1000193;
-            data++;
+            data[i] = p_Str[i];
         }
 
-        return hash;
-    }
+        // Add a single 1 bit.
+        data[length] = 0x80;
 
-    static unsigned int Fnv1a(const char* data, size_t length)
-    {
-        unsigned int hash = 0x811C9DC5;
+        uint64_t lengthInBits = length * 8;
 
-        while (length--)
+        // Add length in bits to end.
+        data[dataSize - 8] = static_cast<uint8_t>(lengthInBits);
+        data[dataSize - 7] = static_cast<uint8_t>(lengthInBits >> 8);
+        data[dataSize - 6] = static_cast<uint8_t>(lengthInBits >> 16);
+        data[dataSize - 5] = static_cast<uint8_t>(lengthInBits >> 24);
+        data[dataSize - 4] = static_cast<uint8_t>(lengthInBits >> 32);
+        data[dataSize - 3] = static_cast<uint8_t>(lengthInBits >> 40);
+        data[dataSize - 2] = static_cast<uint8_t>(lengthInBits >> 48);
+        data[dataSize - 1] = static_cast<uint8_t>(lengthInBits >> 56);
+
+        for (size_t group = 0; group < groupCount; ++group)
         {
-            hash = (hash ^ *data) * 0x1000193;
-            data++;
+            std::array<uint32_t, 16> M{};
+
+            for (size_t j = 0; j < 16; ++j)
+            {
+                M[j] = data[(group * 64) + (j * 4)] | data[(group * 64) + (j * 4) + 1] << 8 | data[(group * 64) + (j * 4) + 2] << 16
+                       | data[(group * 64) + (j * 4) + 3] << 24;
+            }
+
+            uint32_t A = a0;
+            uint32_t B = b0;
+            uint32_t C = c0;
+            uint32_t D = d0;
+
+            for (uint32_t i = 0; i < 64; ++i)
+            {
+                uint32_t F, g;
+
+                if (i <= 15)
+                {
+                    F = (B & C) | (~B & D);
+                    g = i;
+                }
+                else if (i <= 31)
+                {
+                    F = (D & B) | (~D & C);
+                    g = ((i * 5) + 1) % 16;
+                }
+                else if (i <= 47)
+                {
+                    F = B ^ C ^ D;
+                    g = ((i * 3) + 5) % 16;
+                }
+                else
+                {
+                    F = C ^ (B | ~D);
+                    g = (i * 7) % 16;
+                }
+
+                F += (A + MD5_K[i] + M[g]);
+                A = D;
+                D = C;
+                C = B;
+                B += (F << MD5_s[i]) | (F >> (32 - MD5_s[i]));
+            }
+
+            a0 += A;
+            b0 += B;
+            c0 += C;
+            d0 += D;
         }
 
-        return hash;
+        return MD5Hash{ a0, b0, c0, d0 };
     }
 
-    static constexpr unsigned int Fnv1aLower(const char* data)
+    inline std::string MD5ToString(const MD5Hash& p_MD5Hash)
     {
-        unsigned int hash = 0x811C9DC5;
+        std::stringstream stream;
+        const auto* bytes = reinterpret_cast<const uint8_t*>(&p_MD5Hash);
 
-        while (*data)
+        for (size_t i = 0; i < sizeof(MD5Hash); ++i)
         {
-            hash = (hash ^ tolower(*data)) * 0x1000193;
-            data++;
+            stream << std::hex << std::setw(2) << std::setfill('0') << static_cast<uint32_t>(bytes[i]);
         }
 
-        return hash;
+        return util::ToUpperCase(stream.str());
     }
 
-    static unsigned int Fnv1aLower(const char* data, size_t length)
+    constexpr uint64_t GetMD5Hash64(const std::string_view p_Message)
     {
-        unsigned int hash = 0x811C9DC5;
+        const MD5Hash md5Hash = MD5(p_Message);
 
-        while (length--)
-        {
-            hash = (hash ^ tolower(*data)) * 0x1000193;
-            data++;
-        }
+        const uint32_t high = ((md5Hash.m_A >> 24) & 0x000000FF) | ((md5Hash.m_A >> 8) & 0x0000FF00) | ((md5Hash.m_A << 8) & 0x00FF0000);
+        const uint32_t low = ((md5Hash.m_B >> 24) & 0x000000FF) | ((md5Hash.m_B >> 8) & 0x0000FF00) | ((md5Hash.m_B << 8) & 0x00FF0000)
+                             | ((md5Hash.m_B << 24) & 0xFF000000);
 
-        return hash;
+        return (static_cast<uint64_t>(high) << 32) | low;
     }
-
-    static constexpr unsigned long long Fnv1a64(const char* data)
-    {
-        unsigned long long hash = 0x811C9DC5;
-
-        while (*data)
-        {
-            hash = (hash ^ *data) * 0x1000193;
-            data++;
-        }
-
-        return hash;
-    }
-
-    static constexpr unsigned long long Fnv1a64(const char* data, size_t length)
-    {
-        unsigned long long hash = 0x811C9DC5;
-
-        while (length--)
-        {
-            hash = (hash ^ *data) * 0x1000193;
-            data++;
-        }
-
-        return hash;
-    }
-
-    static constexpr unsigned long long Fnv1a64Lower(const char* data)
-    {
-        unsigned long long hash = 0x811C9DC5;
-
-        while (*data)
-        {
-            hash = (hash ^ tolower(*data)) * 0x1000193;
-            data++;
-        }
-
-        return hash;
-    }
-
-    static constexpr unsigned long long Fnv1a64Lower(const char* data, size_t length)
-    {
-        unsigned long long hash = 0x811C9DC5;
-
-        while (length--)
-        {
-            hash = (hash ^ tolower(*data)) * 0x1000193;
-            data++;
-        }
-
-        return hash;
-    }
-
-private:
-    static constexpr unsigned int LeftRotate(unsigned int x, int c);
-
-    static constexpr const unsigned int shiftAmounts[64] = {
-        7, 12, 17, 22,
-        7, 12, 17, 22,
-        7, 12, 17, 22,
-        7, 12, 17, 22,
-        5,  9, 14, 20,
-        5,  9, 14, 20,
-        5,  9, 14, 20,
-        5,  9, 14, 20,
-        4, 11, 16, 23,
-        4, 11, 16, 23,
-        4, 11, 16, 23,
-        4, 11, 16, 23,
-        6, 10, 15, 21,
-        6, 10, 15, 21,
-        6, 10, 15, 21,
-        6, 10, 15, 21
-    };
-
-    static constexpr const unsigned int partsOfSines[64] = {
-        0xD76AA478, 0xE8C7B756, 0x242070DB, 0xC1BDCEEE,
-        0xF57C0FAF, 0x4787C62A, 0xA8304613, 0xFD469501,
-        0x698098D8, 0x8B44F7AF, 0xFFFF5BB1, 0x895CD7BE,
-        0x6B901122, 0xFD987193, 0xA679438E, 0x49B40821,
-        0xF61E2562, 0xC040B340, 0x265E5A51, 0xE9B6C7AA,
-        0xD62F105D, 0x02441453, 0xD8A1E681, 0xE7D3FBC8,
-        0x21E1CDE6, 0xC33707D6, 0xF4D50D87, 0x455A14ED,
-        0xA9E3E905, 0xFCEFA3F8, 0x676F02D9, 0x8D2A4C8A,
-        0xFFFA3942, 0x8771F681, 0x6D9D6122, 0xFDE5380C,
-        0xA4BEEA44, 0x4BDECFA9, 0xF6BB4B60, 0xBEBFBC70,
-        0x289B7EC6, 0xEAA127FA, 0xD4EF3085, 0x04881D05,
-        0xD9D4D039, 0xE6DB99E5, 0x1FA27CF8, 0xC4AC5665,
-        0xF4292244, 0x432AFF97, 0xAB9423A7, 0xFC93A039,
-        0x655B59C3, 0x8F0CCC92, 0xFFEFF47D, 0x85845DD1,
-        0x6FA87E4F, 0xFE2CE6E0, 0xA3014314, 0x4E0811A1,
-        0xF7537E82, 0xBD3AF235, 0x2AD7D2BB, 0xEB86D391
-    };
-
-    static constexpr const unsigned int crc32Table[256] =
-    {
-        0x00000000U, 0x77073096U, 0xEE0E612CU, 0x990951BAU, 0x076DC419U,
-        0x706AF48FU, 0xE963A535U, 0x9E6495A3U, 0x0EDB8832U, 0x79DCB8A4U,
-        0xE0D5E91EU, 0x97D2D988U, 0x09B64C2BU, 0x7EB17CBDU, 0xE7B82D07U,
-        0x90BF1D91U, 0x1DB71064U, 0x6AB020F2U, 0xF3B97148U, 0x84BE41DEU,
-        0x1ADAD47DU, 0x6DDDE4EBU, 0xF4D4B551U, 0x83D385C7U, 0x136C9856U,
-        0x646BA8C0U, 0xFD62F97AU, 0x8A65C9ECU, 0x14015C4FU, 0x63066CD9U,
-        0xFA0F3D63U, 0x8D080DF5U, 0x3B6E20C8U, 0x4C69105EU, 0xD56041E4U,
-        0xA2677172U, 0x3C03E4D1U, 0x4B04D447U, 0xD20D85FDU, 0xA50AB56BU,
-        0x35B5A8FAU, 0x42B2986CU, 0xDBBBC9D6U, 0xACBCF940U, 0x32D86CE3U,
-        0x45DF5C75U, 0xDCD60DCFU, 0xABD13D59U, 0x26D930ACU, 0x51DE003AU,
-        0xC8D75180U, 0xBFD06116U, 0x21B4F4B5U, 0x56B3C423U, 0xCFBA9599U,
-        0xB8BDA50FU, 0x2802B89EU, 0x5F058808U, 0xC60CD9B2U, 0xB10BE924U,
-        0x2F6F7C87U, 0x58684C11U, 0xC1611DABU, 0xB6662D3DU, 0x76DC4190U,
-        0x01DB7106U, 0x98D220BCU, 0xEFD5102AU, 0x71B18589U, 0x06B6B51FU,
-        0x9FBFE4A5U, 0xE8B8D433U, 0x7807C9A2U, 0x0F00F934U, 0x9609A88EU,
-        0xE10E9818U, 0x7F6A0DBBU, 0x086D3D2DU, 0x91646C97U, 0xE6635C01U,
-        0x6B6B51F4U, 0x1C6C6162U, 0x856530D8U, 0xF262004EU, 0x6C0695EDU,
-        0x1B01A57BU, 0x8208F4C1U, 0xF50FC457U, 0x65B0D9C6U, 0x12B7E950U,
-        0x8BBEB8EAU, 0xFCB9887CU, 0x62DD1DDFU, 0x15DA2D49U, 0x8CD37CF3U,
-        0xFBD44C65U, 0x4DB26158U, 0x3AB551CEU, 0xA3BC0074U, 0xD4BB30E2U,
-        0x4ADFA541U, 0x3DD895D7U, 0xA4D1C46DU, 0xD3D6F4FBU, 0x4369E96AU,
-        0x346ED9FCU, 0xAD678846U, 0xDA60B8D0U, 0x44042D73U, 0x33031DE5U,
-        0xAA0A4C5FU, 0xDD0D7CC9U, 0x5005713CU, 0x270241AAU, 0xBE0B1010U,
-        0xC90C2086U, 0x5768B525U, 0x206F85B3U, 0xB966D409U, 0xCE61E49FU,
-        0x5EDEF90EU, 0x29D9C998U, 0xB0D09822U, 0xC7D7A8B4U, 0x59B33D17U,
-        0x2EB40D81U, 0xB7BD5C3BU, 0xC0BA6CADU, 0xEDB88320U, 0x9ABFB3B6U,
-        0x03B6E20CU, 0x74B1D29AU, 0xEAD54739U, 0x9DD277AFU, 0x04DB2615U,
-        0x73DC1683U, 0xE3630B12U, 0x94643B84U, 0x0D6D6A3EU, 0x7A6A5AA8U,
-        0xE40ECF0BU, 0x9309FF9DU, 0x0A00AE27U, 0x7D079EB1U, 0xF00F9344U,
-        0x8708A3D2U, 0x1E01F268U, 0x6906C2FEU, 0xF762575DU, 0x806567CBU,
-        0x196C3671U, 0x6E6B06E7U, 0xFED41B76U, 0x89D32BE0U, 0x10DA7A5AU,
-        0x67DD4ACCU, 0xF9B9DF6FU, 0x8EBEEFF9U, 0x17B7BE43U, 0x60B08ED5U,
-        0xD6D6A3E8U, 0xA1D1937EU, 0x38D8C2C4U, 0x4FDFF252U, 0xD1BB67F1U,
-        0xA6BC5767U, 0x3FB506DDU, 0x48B2364BU, 0xD80D2BDAU, 0xAF0A1B4CU,
-        0x36034AF6U, 0x41047A60U, 0xDF60EFC3U, 0xA867DF55U, 0x316E8EEFU,
-        0x4669BE79U, 0xCB61B38CU, 0xBC66831AU, 0x256FD2A0U, 0x5268E236U,
-        0xCC0C7795U, 0xBB0B4703U, 0x220216B9U, 0x5505262FU, 0xC5BA3BBEU,
-        0xB2BD0B28U, 0x2BB45A92U, 0x5CB36A04U, 0xC2D7FFA7U, 0xB5D0CF31U,
-        0x2CD99E8BU, 0x5BDEAE1DU, 0x9B64C2B0U, 0xEC63F226U, 0x756AA39CU,
-        0x026D930AU, 0x9C0906A9U, 0xEB0E363FU, 0x72076785U, 0x05005713U,
-        0x95BF4A82U, 0xE2B87A14U, 0x7BB12BAEU, 0x0CB61B38U, 0x92D28E9BU,
-        0xE5D5BE0DU, 0x7CDCEFB7U, 0x0BDBDF21U, 0x86D3D2D4U, 0xF1D4E242U,
-        0x68DDB3F8U, 0x1FDA836EU, 0x81BE16CDU, 0xF6B9265BU, 0x6FB077E1U,
-        0x18B74777U, 0x88085AE6U, 0xFF0F6A70U, 0x66063BCAU, 0x11010B5CU,
-        0x8F659EFFU, 0xF862AE69U, 0x616BFFD3U, 0x166CCF45U, 0xA00AE278U,
-        0xD70DD2EEU, 0x4E048354U, 0x3903B3C2U, 0xA7672661U, 0xD06016F7U,
-        0x4969474DU, 0x3E6E77DBU, 0xAED16A4AU, 0xD9D65ADCU, 0x40DF0B66U,
-        0x37D83BF0U, 0xA9BCAE53U, 0xDEBB9EC5U, 0x47B2CF7FU, 0x30B5FFE9U,
-        0xBDBDF21CU, 0xCABAC28AU, 0x53B39330U, 0x24B4A3A6U, 0xBAD03605U,
-        0xCDD70693U, 0x54DE5729U, 0x23D967BFU, 0xB3667A2EU, 0xC4614AB8U,
-        0x5D681B02U, 0x2A6F2B94U, 0xB40BBE37U, 0xC30C8EA1U, 0x5A05DF1BU,
-        0x2D02EF8DU
-    };
 };

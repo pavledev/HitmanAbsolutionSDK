@@ -5,15 +5,16 @@
 
 #include <IconsMaterialDesign.h>
 
-#include <Glacier/Actor/ZActorManager.h>
-#include <Glacier/Player/ZHitman5.h>
+#include <Glacier/ZActor.h>
+#include <Glacier/ZHitman5.h>
 #include <Glacier/ZLevelManager.h>
 #include <Glacier/ZGameLoopManager.h>
+#include <Glacier/ZDynamicResourceLibrary.h>
 
 #include <Actors.h>
-#include <Utility/ResourceUtility.h>
-#include <Utility/MemoryUtility.h>
+#include <Utils/ResourceUtils.h>
 #include <Hooks.h>
+#include <Renderer/DirectXRenderer.h>
 
 Actors::Actors()
 {
@@ -29,26 +30,19 @@ Actors::~Actors()
 {
     const ZMemberDelegate<Actors, void(const SGameUpdateEvent&)> delegate(this, &Actors::OnFrameUpdate);
 
-    GameLoopManager->UnregisterForFrameUpdate(delegate);
+    Globals::GameLoopManager->UnregisterForFrameUpdate(delegate);
 
-    for (size_t i = 0; i < dynamicResourceLibraries.size(); ++i)
+    /*for (size_t i = 0; i < dynamicResourceLibraries.size(); ++i)
     {
-        FreeObject(dynamicResourceLibraries[i]);
-    }
-}
-
-void Actors::Initialize()
-{
-    ModInterface::Initialize();
-
-    godMode = reinterpret_cast<int*>(BaseAddress + 0xD4D91C);
+        util::FreeObject(dynamicResourceLibraries[i]);
+    }*/
 }
 
 void Actors::OnEngineInitialized()
 {
     const ZMemberDelegate<Actors, void(const SGameUpdateEvent&)> delegate(this, &Actors::OnFrameUpdate);
 
-    GameLoopManager->RegisterForFrameUpdate(delegate, 1);
+    Globals::GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 }
 
 void Actors::OnDrawMenu()
@@ -86,7 +80,7 @@ void Actors::OnDrawUI(const bool hasFocus)
 
         if (ImGui::Checkbox("God mode", &isGodModeEnabled))
         {
-            *godMode = static_cast<int>(isGodModeEnabled);
+            *Globals::GodMode = static_cast<int32_t>(isGodModeEnabled);
         }
 
         static char actorName[256]{ "" };
@@ -96,14 +90,12 @@ void Actors::OnDrawUI(const bool hasFocus)
         ImGui::SameLine();
         ImGui::InputText("##ActorName", actorName, sizeof(actorName));
 
-        TArrayRef<TEntityRef<ZActor>> actors = ActorManager->GetAliveActors();
-
-        for (size_t i = 0; i < actors.Size(); ++i)
+        for (size_t i = 0; i < Globals::ActorManager->m_aliveActors.Size(); ++i)
         {
-            ZActor* actor = actors[i].GetRawPointer();
-            const ZString& actorName2 = actor->GetActorName();
+            ZActor* actor = Globals::ActorManager->m_aliveActors[i].m_pInterfaceRef;
+            const ZString& actorName2 = actor->m_sActorName;
 
-            if (!StringUtility::Contains(actorName2.ToCString(), actorName, false))
+            if (!util::Contains(actorName2.ToCString(), actorName, false))
             {
                 continue;
             }
@@ -123,7 +115,7 @@ void Actors::OnDrawUI(const bool hasFocus)
 
         if (selectedActorIndex != -1)
         {
-            ZActor* actor = actors[selectedActorIndex].GetRawPointer();
+            ZActor* actor = Globals::ActorManager->m_aliveActors[selectedActorIndex].m_pInterfaceRef;
             static char resourceID[512]{ "" };
 
             ImGui::AlignTextToFramePadding();
@@ -140,12 +132,12 @@ void Actors::OnDrawUI(const bool hasFocus)
 
             if (ImGui::Button("Teleport actor to hitman"))
             {
-                ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+                ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
                 if (hitman)
                 {
-                    ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntity().GetRawPointer();
-                    ZSpatialEntity* actorSpatialEntity = actor->GetSpatialEntity().GetRawPointer();
+                    ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntity().m_pInterfaceRef;
+                    ZSpatialEntity* actorSpatialEntity = actor->GetSpatialEntity().m_pInterfaceRef;
 
                     actorSpatialEntity->SetWorldPosition(hitmanSpatialEntity->GetWorldPosition());
                 }
@@ -153,12 +145,12 @@ void Actors::OnDrawUI(const bool hasFocus)
 
             if (ImGui::Button("Teleport hitman to actor"))
             {
-                ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+                ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
                 if (hitman)
                 {
-                    ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntity().GetRawPointer();
-                    ZSpatialEntity* actorSpatialEntity = actor->GetSpatialEntity().GetRawPointer();
+                    ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntity().m_pInterfaceRef;
+                    ZSpatialEntity* actorSpatialEntity = actor->GetSpatialEntity().m_pInterfaceRef;
 
                     hitmanSpatialEntity->SetWorldPosition(actorSpatialEntity->GetWorldPosition());
                 }
@@ -179,7 +171,8 @@ void Actors::OnDrawUI(const bool hasFocus)
             ImGui::SameLine();
 
             static char actorWeaponName[50]{ "" };
-            const bool isInputTextEnterPressed = ImGui::InputText("##WeaponName", actorWeaponName, sizeof(actorWeaponName), ImGuiInputTextFlags_EnterReturnsTrue);
+            const bool isInputTextEnterPressed =
+                ImGui::InputText("##WeaponName", actorWeaponName, sizeof(actorWeaponName), ImGuiInputTextFlags_EnterReturnsTrue);
             const bool isInputTextActive = ImGui::IsItemActive();
 
             if (ImGui::IsItemActivated())
@@ -190,11 +183,13 @@ void Actors::OnDrawUI(const bool hasFocus)
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
             ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
 
-            if (ImGui::BeginPopup("##Popup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
+            if (ImGui::BeginPopup(
+                    "##Popup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow
+                ))
             {
                 for (size_t i = 0; i < fireArmKitEntities.size(); ++i)
                 {
-                    if (!StringUtility::Contains(fireArmKitEntities[i].title, actorWeaponName, false))
+                    if (!util::Contains(fireArmKitEntities[i].title, actorWeaponName, false))
                     {
                         continue;
                     }
@@ -222,14 +217,14 @@ void Actors::OnDrawUI(const bool hasFocus)
 
         if (ImGui::Button("Teleport all actors to hitman"))
         {
-            for (unsigned int i = 0; i < actors.Size(); i++)
+            for (unsigned int i = 0; i < Globals::ActorManager->m_aliveActors.Size(); i++)
             {
-                ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+                ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
                 if (hitman)
                 {
-                    ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntity().GetRawPointer();
-                    ZSpatialEntity* actorSpatialEntity = actors[i]->GetSpatialEntity().GetRawPointer();
+                    ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntityPtr();
+                    ZSpatialEntity* actorSpatialEntity = Globals::ActorManager->m_aliveActors[i].m_pInterfaceRef->GetSpatialEntityPtr();
 
                     hitmanSpatialEntity->SetWorldPosition(actorSpatialEntity->GetWorldPosition());
                 }
@@ -238,9 +233,9 @@ void Actors::OnDrawUI(const bool hasFocus)
 
         if (ImGui::Button("Kill all actors"))
         {
-            for (unsigned int i = 0; i < actors.Size(); i++)
+            for (unsigned int i = 0; i < Globals::ActorManager->m_aliveActors.Size(); i++)
             {
-                actors[i].GetRawPointer()->KillActor(EActorDeathType::eADT_UNDEFINED, true);
+                Globals::ActorManager->m_aliveActors[i].m_pInterfaceRef->KillActor(EActorDeathType::eADT_UNDEFINED, true);
             }
         }
     }
@@ -256,17 +251,16 @@ void Actors::OnDraw3D()
 
     if (renderActorNames)
     {
-        TArrayRef<TEntityRef<ZActor>> actors = ActorManager->GetAliveActors();
-
-        for (size_t i = 0; i < actors.Size(); ++i)
+        for (size_t i = 0; i < Globals::ActorManager->m_aliveActors.Size(); ++i)
         {
-            ZActor* actor = actors[i].GetRawPointer();
-            float4 worldPosition = actor->GetWorldPosition();
+            float4 worldPosition = Globals::ActorManager->m_aliveActors[i].m_pInterfaceRef->GetWorldPosition();
             SVector2 screenPosition;
 
             if (sdk.GetDirectXRenderer()->WorldToScreen(SVector3(worldPosition.x, worldPosition.y, worldPosition.z + 2.05f), screenPosition))
             {
-                sdk.GetDirectXRenderer()->DrawText2D(actor->GetActorName(), screenPosition, SVector4(1.f, 0.f, 0.f, 1.f), 0.f, 0.5f);
+                sdk.GetDirectXRenderer()->DrawText2D(
+                    Globals::ActorManager->m_aliveActors[i].m_pInterfaceRef->m_sActorName, screenPosition, SVector4(1.f, 0.f, 0.f, 1.f), 0.f, 0.5f
+                );
             }
         }
     }
@@ -284,9 +278,10 @@ void Actors::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
 
 void Actors::EquipModel(ZActor* actor, const std::string& resourceID)
 {
-    ZDynamicResourceLibrary* dynamicResourceLibrary;
+    /*ZDynamicResourceLibrary* dynamicResourceLibrary;
     ZRuntimeResourceID sourceResourceRuntimeResourceID;
-    bool isDynamicResourceLibraryInstalled = ResourceUtility::CreateAndInstallDynamicResourceLibrary(dynamicResourceLibrary, resourceID, sourceResourceRuntimeResourceID);
+    bool isDynamicResourceLibraryInstalled =
+        util::CreateAndInstallDynamicResourceLibrary(dynamicResourceLibrary, resourceID, sourceResourceRuntimeResourceID);
 
     if (isDynamicResourceLibraryInstalled)
     {
@@ -299,25 +294,24 @@ void Actors::EquipModel(ZActor* actor, const std::string& resourceID)
         }
 
         dynamicResourceLibraries.push_back(dynamicResourceLibrary);
-    }
+    }*/
 }
 
 void Actors::SpawnWeapon(const ZRuntimeResourceID& runtimeResourceID)
 {
     ZDynamicResourceLibrary* dynamicResourceLibrary;
     ZRuntimeResourceID sourceResourceRuntimeResourceID;
-    bool isDynamicResourceLibraryInstalled = ResourceUtility::InstallDynamicResourceLibrary(dynamicResourceLibrary, runtimeResourceID, sourceResourceRuntimeResourceID);
+    bool isDynamicResourceLibraryInstalled =
+        util::InstallDynamicResourceLibrary(runtimeResourceID, dynamicResourceLibrary, sourceResourceRuntimeResourceID);
 
     if (isDynamicResourceLibraryInstalled)
     {
         ZEntityRef entityRef = dynamicResourceLibrary->GetEntity(0);
-        TArrayRef<TEntityRef<ZActor>> actors = ActorManager->GetAliveActors();
-        ZActor* actor = actors[selectedActorIndex].GetRawPointer();
-        TArray<TEntityRef<IHM5Item>>& runtimeInventory = actor->GetRuntimeInventory();
+        ZActor* actor = Globals::ActorManager->m_aliveActors[selectedActorIndex].m_pInterfaceRef;
 
         if (actor)
         {
-            runtimeInventory[0] = entityRef;
+            actor->m_runtimeInventory[0] = entityRef;
         }
 
         dynamicResourceLibraries.push_back(dynamicResourceLibrary);

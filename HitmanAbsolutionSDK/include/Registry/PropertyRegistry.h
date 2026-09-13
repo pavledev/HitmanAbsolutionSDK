@@ -5,17 +5,17 @@
 
 #include "Common.h"
 
-class HitmanAbsolutionSDK_API PropertyRegistry
+class PropertyRegistry
 {
-public:
-	static PropertyRegistry& GetInstance();
-	void Load();
-	const std::string& GetPropertyName(const unsigned int propertyID) const;
+  public:
+    static PropertyRegistry& GetInstance();
+    void Load();
+    const std::string& GetPropertyName(uint32_t p_PropertyID) const;
 
-private:
-	PropertyRegistry() = default;
-	PropertyRegistry(const PropertyRegistry& other) = delete;
-	PropertyRegistry& operator=(const PropertyRegistry& other) = delete;
+  private:
+    PropertyRegistry() = default;
+    PropertyRegistry(const PropertyRegistry& other) = delete;
+    PropertyRegistry& operator=(const PropertyRegistry& other) = delete;
 
-	std::unordered_map<unsigned int, std::string> properties;
+    std::unordered_map<uint32_t, std::string> m_Properties;
 };

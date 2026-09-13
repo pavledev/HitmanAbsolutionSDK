@@ -1,8 +1,10 @@
 #pragma once
 
+#include <Common.h>
+
 class ZMutex
 {
-private:
-	unsigned int m_impl[6];
-	unsigned int m_nUniqueID;
+  public:
+    uint32_t m_impl[6];
+    uint32_t m_nUniqueID;
 };

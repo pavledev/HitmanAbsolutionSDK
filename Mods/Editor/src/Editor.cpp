@@ -1,29 +1,18 @@
+#include "Editor.h"
+
 #include <IconsMaterialDesign.h>
 
-#include <Glacier/Module/ZHitman5Module.h>
-#include <Glacier/Entity/ZTemplateEntityBlueprintFactory.h>
-#include <Glacier/Serializer/ZBinaryDeserializer.h>
-#include <Glacier/Entity/STemplateEntityBlueprint.h>
-#include <Glacier/Resource/ZResourceManager.h>
-#include <Glacier/Physics/ZCollisionManager.h>
-#include <Glacier/Render/ZSpatialEntity.h>
+#include <Glacier/ZModule.h>
+#include <Glacier/ZRender.h>
 #include <Glacier/ZLevelManager.h>
-#include <Glacier/Resource/ZResourcePending.h>
-#include <Glacier/Resource/ZResourceReader.h>
 #include <Glacier/ZCurve.h>
-#include <Glacier/Entity/ZAspectEntityBlueprintFactory.h>
-#include <Glacier/Engine/ZApplicationEngineWin32.h>
-#include <Glacier/Render/ZRenderManager.h>
-#include <Glacier/UI/ZScaleformManager.h>
+#include <Glacier/ZApplication.h>
+#include <Glacier/ZScaleform.h>
 
-#include <Editor.h>
-#include <Utility/ResourceUtility.h>
-#include <Utility/MemoryUtility.h>
 #include <Hooks.h>
-#include <Registry/EnumRegistry.h>
-#include <Registry/PropertyRegistry.h>
-#include <Utility/Builders.h>
-#include <Utility/Widgets.h>
+#include "Utility/Builders.h"
+#include "Utility/Widgets.h"
+#include <Renderer/DirectXRenderer.h>
 
 Editor::EntityTreeNode::EntityTreeNode()
 {
@@ -34,9 +23,17 @@ Editor::EntityTreeNode::EntityTreeNode()
     entityTypeResourceIndex = -1;
 }
 
-Editor::EntityTreeNode::EntityTreeNode(const unsigned int entityIndex, const char* entityName, const ZEntityRef entityRef, const ZRuntimeResourceID& tbluRuntimeResourceID, const int entityTypeResourceIndex) : entityIndex(entityIndex), entityName(entityName), entityRef(entityRef), tbluRuntimeResourceID(tbluRuntimeResourceID), entityTypeResourceIndex(entityTypeResourceIndex), hasChildren(true)
-{
-}
+Editor::EntityTreeNode::EntityTreeNode(
+    const unsigned int entityIndex, const char* entityName, const ZEntityRef entityRef, const ZRuntimeResourceID& tbluRuntimeResourceID,
+    const int entityTypeResourceIndex
+)
+    : entityIndex(entityIndex)
+    , entityName(entityName)
+    , entityRef(entityRef)
+    , tbluRuntimeResourceID(tbluRuntimeResourceID)
+    , entityTypeResourceIndex(entityTypeResourceIndex)
+    , hasChildren(true)
+{}
 
 const bool Editor::EntityTreeNode::IsParent(std::shared_ptr<EntityTreeNode> entityTreeNode) const
 {
@@ -55,17 +52,13 @@ const bool Editor::EntityTreeNode::IsParent(std::shared_ptr<EntityTreeNode> enti
     return false;
 }
 
-Editor::Pin::Pin(int id, const char* name, PinType type) : id(id), node(nullptr), name(name), type(type), kind(PinKind::Input)
-{
-}
+Editor::Pin::Pin(int id, const char* name, PinType type) : id(id), node(nullptr), name(name), type(type), kind(PinKind::Input) {}
 
-Editor::BlueprintNode::BlueprintNode(int id, const char* name, ImColor color) : id(id), name(name), color(color), size(0, 0)
-{
-}
+Editor::BlueprintNode::BlueprintNode(int id, const char* name, ImColor color) : id(id), name(name), color(color), size(0, 0) {}
 
-Editor::Link::Link(ax::NodeEditor::LinkId id, ax::NodeEditor::PinId startPinId, ax::NodeEditor::PinId endPinId) : id(id), startPinID(startPinId), endPinID(endPinId), color(255, 255, 255)
-{
-}
+Editor::Link::Link(ax::NodeEditor::LinkId id, ax::NodeEditor::PinId startPinId, ax::NodeEditor::PinId endPinId)
+    : id(id), startPinID(startPinId), endPinID(endPinId), color(255, 255, 255)
+{}
 
 Editor::Editor() : snapValue{ 1.0f, 1.0f, 1.0f }
 {
@@ -90,10 +83,6 @@ Editor::Editor() : snapValue{ 1.0f, 1.0f, 1.0f }
 
 Editor::~Editor()
 {
-    Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.RemoveHook();
-    Hooks::ZEntitySceneContext_CreateScene.RemoveHook();
-    Hooks::ZEntitySceneContext_ClearScene.RemoveHook();
-
     if (headerBackgroundTexture)
     {
         headerBackgroundTexture->Release();
@@ -118,22 +107,20 @@ Editor::~Editor()
 
 void Editor::Initialize()
 {
-    ModInterface::Initialize();
-
-    Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.CreateHook("ZTemplateEntityBlueprintFactory::ZTemplateEntityBlueprintFactory", 0xFFBF0, ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactoryHook);
-    Hooks::ZEntitySceneContext_CreateScene.CreateHook("ZEntitySceneContext::CreateScene", 0x4479E0, ZEntitySceneContext_CreateSceneHook);
-    Hooks::ZEntitySceneContext_ClearScene.CreateHook("ZEntitySceneContext::ClearScene", 0x265A80, ZEntitySceneContext_ClearSceneHook);
-
-    Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.EnableHook();
-    Hooks::ZEntitySceneContext_CreateScene.EnableHook();
-    Hooks::ZEntitySceneContext_ClearScene.EnableHook();
+    /*Hooks::ZEntitySceneContext_CreateScene->AddDetour(this, &Editor::ZEntitySceneContext_CreateScene);
+    Hooks::ZEntitySceneContext_ClearScene->AddDetour(this, &Editor::ZEntitySceneContext_ClearScene);
+    Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory->AddDetour(this,
+    &Editor::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory);*/
 }
 
 void Editor::OnEngineInitialized()
 {
     std::shared_ptr<DirectXRenderer> directXRenderer = SDK::GetInstance().GetDirectXRenderer();
 
-    directXRenderer->LoadTextureFromFile("assets/images/BlueprintBackground.png", &headerBackgroundTexture, &headerBackgroundTextureView, headerBackgroundTextureWidth, headerBackgroundTextureHeight);
+    directXRenderer->LoadTextureFromFile(
+        "assets/images/BlueprintBackground.png", &headerBackgroundTexture, &headerBackgroundTextureView, headerBackgroundTextureWidth,
+        headerBackgroundTextureHeight
+    );
 }
 
 void Editor::OnDrawMenu()
@@ -154,113 +141,9 @@ void Editor::OnDrawUI(const bool hasFocus)
 
 void Editor::OnDraw3D()
 {
-    if (selectedentityTreeNode && selectedentityTreeNode->entityRef.GetEntityTypePtrPtr())
+    if (selectedentityTreeNode && selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)
     {
         RenderEntityAABB();
-    }
-}
-
-void Editor::OnTemplateEntityBlueprintFactoryCreate(STemplateEntityBlueprint* templateEntityBlueprint, ZResourcePending& resourcePending)
-{
-    const unsigned int resourceDataSize = resourcePending.GetResourceReader().GetTarget()->GetResourceDataSize();
-    const ZRuntimeResourceID& tbluRuntimeResourceID = resourcePending.GetResource().GetResourceStub()->GetRuntimeResourceID();
-
-    if (templateEntityBlueprints.contains(tbluRuntimeResourceID))
-    {
-        return;
-    }
-
-    templateEntityBlueprints.insert(std::make_pair(tbluRuntimeResourceID, STemplateEntityBlueprint()));
-
-    STemplateEntityBlueprint& templateEntityBlueprint2 = templateEntityBlueprints[tbluRuntimeResourceID];
-
-    templateEntityBlueprint2.entityTemplates.Resize(templateEntityBlueprint->entityTemplates.Size());
-    templateEntityBlueprint2.pinConnections.Resize(templateEntityBlueprint->pinConnections.Size());
-    templateEntityBlueprint2.inputPinForwardings.Resize(templateEntityBlueprint->inputPinForwardings.Size());
-    templateEntityBlueprint2.outputPinForwardings.Resize(templateEntityBlueprint->outputPinForwardings.Size());
-
-    templateEntityBlueprint2.rootEntityIndex = templateEntityBlueprint->rootEntityIndex;
-
-    for (size_t i = 0; i < templateEntityBlueprint2.entityTemplates.Size(); ++i)
-    {
-        ZString entityName;
-
-        entityName.Allocate(templateEntityBlueprint->entityTemplates[i].entityName.ToCString(), templateEntityBlueprint->entityTemplates[i].entityName.Length());
-
-        templateEntityBlueprint2.entityTemplates[i].parentIndex = templateEntityBlueprint->entityTemplates[i].parentIndex;
-        templateEntityBlueprint2.entityTemplates[i].entityTypeResourceIndex = templateEntityBlueprint->entityTemplates[i].entityTypeResourceIndex;
-        templateEntityBlueprint2.entityTemplates[i].entityName = entityName;
-    }
-
-    for (size_t i = 0; i < templateEntityBlueprint2.pinConnections.Size(); ++i)
-    {
-        ZString fromPinName, toPinName;
-
-        fromPinName.Allocate(templateEntityBlueprint->pinConnections[i].fromPinName.ToCString(), templateEntityBlueprint->pinConnections[i].fromPinName.Length());
-        toPinName.Allocate(templateEntityBlueprint->pinConnections[i].toPinName.ToCString(), templateEntityBlueprint->pinConnections[i].toPinName.Length());
-
-        templateEntityBlueprint2.pinConnections[i].fromID = templateEntityBlueprint->pinConnections[i].fromID;
-        templateEntityBlueprint2.pinConnections[i].toID = templateEntityBlueprint->pinConnections[i].toID;
-        templateEntityBlueprint2.pinConnections[i].fromPinName = fromPinName;
-        templateEntityBlueprint2.pinConnections[i].toPinName = toPinName;
-    }
-
-    for (size_t i = 0; i < templateEntityBlueprint2.inputPinForwardings.Size(); ++i)
-    {
-        ZString fromPinName, toPinName;
-
-        fromPinName.Allocate(templateEntityBlueprint->inputPinForwardings[i].fromPinName.ToCString(), templateEntityBlueprint->inputPinForwardings[i].fromPinName.Length());
-        toPinName.Allocate(templateEntityBlueprint->inputPinForwardings[i].toPinName.ToCString(), templateEntityBlueprint->inputPinForwardings[i].toPinName.Length());
-
-        templateEntityBlueprint2.inputPinForwardings[i].fromID = templateEntityBlueprint->inputPinForwardings[i].fromID;
-        templateEntityBlueprint2.inputPinForwardings[i].toID = templateEntityBlueprint->inputPinForwardings[i].toID;
-        templateEntityBlueprint2.inputPinForwardings[i].fromPinName = fromPinName;
-        templateEntityBlueprint2.inputPinForwardings[i].toPinName = toPinName;
-    }
-
-    for (size_t i = 0; i < templateEntityBlueprint2.outputPinForwardings.Size(); ++i)
-    {
-        ZString fromPinName, toPinName;
-
-        fromPinName.Allocate(templateEntityBlueprint->outputPinForwardings[i].fromPinName.ToCString(), templateEntityBlueprint->outputPinForwardings[i].fromPinName.Length());
-        toPinName.Allocate(templateEntityBlueprint->outputPinForwardings[i].toPinName.ToCString(), templateEntityBlueprint->outputPinForwardings[i].toPinName.Length());
-
-        templateEntityBlueprint2.outputPinForwardings[i].fromID = templateEntityBlueprint->outputPinForwardings[i].fromID;
-        templateEntityBlueprint2.outputPinForwardings[i].toID = templateEntityBlueprint->outputPinForwardings[i].toID;
-        templateEntityBlueprint2.outputPinForwardings[i].fromPinName = fromPinName;
-        templateEntityBlueprint2.outputPinForwardings[i].toPinName = toPinName;
-    }
-}
-
-void Editor::OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState)
-{
-    rootNode = std::make_shared<EntityTreeNode>();
-
-    rootNode->entityName = "Scene";
-}
-
-void Editor::OnClearScene(ZEntitySceneContext* entitySceneContext, const bool fullyUnloadScene)
-{
-    rootNode.reset();
-    selectedentityTreeNode.reset();
-    filteredTreeRootNode.reset();
-    filteredProperties.clear();
-
-    if (fullyUnloadScene)
-    {
-        for (auto it = templateEntityBlueprints.begin(); it != templateEntityBlueprints.end();)
-        {
-            const ZRuntimeResourceID runtimeResourceID = it->first;
-
-            if (runtimeResourceID.IsLibraryResource())
-            {
-                templateEntityBlueprints.erase(it++);
-            }
-            else
-            {
-                ++it;
-            }
-        }
     }
 }
 
@@ -287,26 +170,30 @@ void Editor::RenderEntityTree(const bool hasFocus)
 
     ImGui::PushFont(SDK::GetInstance().GetRegularFont());
 
-    if (!rootNode->entityRef.GetEntityTypePtrPtr())
+    if (!rootNode->entityRef.m_pEntityTypePtrPtr)
     {
-        ZEntitySceneContext* entitySceneContext = Hitman5Module->GetSceneContext();
-        TResourcePtr<IEntityBlueprintFactory>& sceneBlueprintResource = entitySceneContext->GetSceneBlueprintResource();
-        ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory = static_cast<ZTemplateEntityBlueprintFactory*>(sceneBlueprintResource.GetRawPointer());
+        ZEntitySceneContext* entitySceneContext = Globals::Hitman5Module->m_pSceneContext;
+        TResourcePtr<IEntityBlueprintFactory>& sceneBlueprintResource = entitySceneContext->m_sceneBlueprintResource;
+        ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory =
+            static_cast<ZTemplateEntityBlueprintFactory*>(sceneBlueprintResource.GetRawPointer());
 
-        rootNode->entityIndex = templateEntityBlueprintFactory->GetRootEntityIndex();
+        rootNode->entityIndex = templateEntityBlueprintFactory->m_rootEntityIndex;
         rootNode->entityIndexInReferencedTEMP = -1;
-        rootNode->entityRef = entitySceneContext->GetLoadedScene();
+        rootNode->entityRef = entitySceneContext->m_pLoadedScene;
     }
 
     if (rootNode->children.size() == 0)
     {
         if (ImGui::Button("Generate Entity Tree"))
         {
-            ZEntitySceneContext* entitySceneContext = Hitman5Module->GetSceneContext();
-            TResourcePtr<IEntityBlueprintFactory>& sceneBlueprintResource = entitySceneContext->GetSceneBlueprintResource();
-            ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory = static_cast<ZTemplateEntityBlueprintFactory*>(sceneBlueprintResource.GetRawPointer());
+            ZEntitySceneContext* entitySceneContext = Globals::Hitman5Module->m_pSceneContext;
+            TResourcePtr<IEntityBlueprintFactory>& sceneBlueprintResource = entitySceneContext->m_sceneBlueprintResource;
+            ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory =
+                static_cast<ZTemplateEntityBlueprintFactory*>(sceneBlueprintResource.GetRawPointer());
 
-            AddChildren(rootNode, rootNode->entityRef.GetEntityTypePtrPtr(), templateEntityBlueprintFactory, templateEntityBlueprintFactory->GetRootEntityIndex());
+            AddChildren(
+                rootNode, rootNode->entityRef.m_pEntityTypePtrPtr, templateEntityBlueprintFactory, templateEntityBlueprintFactory->m_rootEntityIndex
+            );
         }
     }
     else
@@ -437,11 +324,8 @@ void Editor::RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode, co
 
 void Editor::RenderEntityProperties(const bool hasFocus)
 {
-    if (!hasFocus ||
-        !isOpen ||
-        !selectedentityTreeNode ||
-        !selectedentityTreeNode->entityRef.GetEntityTypePtrPtr() ||
-        !selectedentityTreeNode->entityRef.GetProperties())
+    if (!hasFocus || !isOpen || !selectedentityTreeNode || !selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr
+        || !(*selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)->m_pPropertyData)
     {
         return;
     }
@@ -488,12 +372,12 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 
             std::transform(propertyName2.begin(), propertyName2.end(), propertyName2.begin(), tolower);
 
-            TArray<SPropertyData>* properties = selectedentityTreeNode->entityRef.GetProperties();
+            TArray<SPropertyData>* properties = (*selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)->m_pPropertyData;
 
             for (size_t i = 0; i < properties->Size(); ++i)
             {
                 SPropertyData* propertyData = &(*properties)[i];
-                const std::string& propertyName3 = PropertyRegistry::GetInstance().GetPropertyName(propertyData->m_nPropertyID);
+                const std::string& propertyName3 = SDK::GetInstance().GetPropertyName(propertyData->m_nPropertyID);
                 std::string propertyName4 = propertyName3;
 
                 std::transform(propertyName4.begin(), propertyName4.end(), propertyName4.begin(), tolower);
@@ -510,7 +394,7 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 
     if (ImGui::Button("Teleport Hitman To Entity"))
     {
-        ZSpatialEntity* hitmanSpatialEntity = LevelManager->GetHitman().GetRawPointer()->GetSpatialEntity().GetRawPointer();
+        ZSpatialEntity* hitmanSpatialEntity = Globals::LevelManager->m_rHitman.m_pInterfaceRef->GetSpatialEntity().m_pInterfaceRef;
         ZSpatialEntity* spatialEntity = selectedentityTreeNode->entityRef.QueryInterfacePtr<ZSpatialEntity>();
 
         hitmanSpatialEntity->SetWorldPosition(spatialEntity->GetWorldPosition());
@@ -518,7 +402,7 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 
     if (ImGui::Button("Teleport Free Camera To Entity"))
     {
-        ZCameraEntity* activeCamera = ZApplicationEngineWin32::GetInstance()->GetActiveCamera();
+        ZCameraEntity* activeCamera = (*Globals::ApplicationEngineWin32)->GetActiveCamera();
         const float aspectRatio = activeCamera->GetAspectWByH();
         const float verticalFov = activeCamera->GetFov();
         const float horizontalFOV = 2 * std::atan(std::tan(verticalFov / 2.0f) * aspectRatio);
@@ -542,7 +426,8 @@ void Editor::RenderEntityProperties(const bool hasFocus)
         const float4 targetPosition = spatialEntity->GetWorldPosition();
 
         const DirectX::SimpleMath::Vector3 cameraPosition2 = DirectX::SimpleMath::Vector3(cameraPosition.x, cameraPosition.y, cameraPosition.z);
-        const DirectX::SimpleMath::Vector3 targetPosition2 = DirectX::SimpleMath::Vector3(targetPosition.x, targetPosition.y, targetPosition.z) + boundingSphere.Center;
+        const DirectX::SimpleMath::Vector3 targetPosition2 =
+            DirectX::SimpleMath::Vector3(targetPosition.x, targetPosition.y, targetPosition.z) + boundingSphere.Center;
         DirectX::SimpleMath::Vector3 targetDirection = targetPosition2 - cameraPosition2;
 
         targetDirection.Normalize();
@@ -593,12 +478,12 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 
     ImGui::Separator();
 
-    TArray<SPropertyData>* properties = selectedentityTreeNode->entityRef.GetProperties();
+    TArray<SPropertyData>* properties = (*selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)->m_pPropertyData;
 
     for (size_t i = 0; i < properties->Size(); ++i)
     {
         SPropertyData* propertyData = &(*properties)[i];
-        const std::string& propertyName3 = PropertyRegistry::GetInstance().GetPropertyName(propertyData->m_nPropertyID);
+        const std::string& propertyName3 = SDK::GetInstance().GetPropertyName(propertyData->m_nPropertyID);
 
         if (!filteredProperties.empty() && !filteredProperties.contains(i))
         {
@@ -608,7 +493,7 @@ void Editor::RenderEntityProperties(const bool hasFocus)
         ZVariant variant = selectedentityTreeNode->entityRef.GetProperty(propertyData->m_nPropertyID);
         const IType* typeInfo = propertyData->m_pInfo->m_Type->pTypeInfo;
 
-        const std::string typeName = typeInfo->GetTypeName();
+        const std::string typeName = typeInfo->pszTypeName;
         const std::string inputID = std::format("##Property{}", i);
 
         ImGui::AlignTextToFramePadding();
@@ -619,83 +504,83 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 
         if (typeName == "bool")
         {
-            BoolProperty(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            BoolProperty(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "uint8")
         {
-            Uint8Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            Uint8Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "int8")
         {
-            Int8Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            Int8Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "uint16")
         {
-            Uint16Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            Uint16Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "int16")
         {
-            Int16Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            Int16Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "uint32")
         {
-            Uint32Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            Uint32Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "int32")
         {
-            Int32Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            Int32Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "uint64")
         {
-            Uint64Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            Uint64Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "int64")
         {
-            Int64Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            Int64Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "float32")
         {
-            Float32Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            Float32Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "float64")
         {
-            Float64Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            Float64Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "ZString")
         {
-            StringProperty(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            StringProperty(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "SVector2")
         {
-            SVector2Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            SVector2Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "SVector3")
         {
-            SVector3Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            SVector3Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "SVector4")
         {
-            SVector4Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            SVector4Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "SMatrix43")
         {
-            SMatrix43Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            SMatrix43Property(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else if (typeName == "ZEntityRef")
         {
-            EntityRefProperty(variant.GetData());
+            EntityRefProperty(variant.m_pData);
         }
         else if (typeInfo->IsEnum())
         {
-            EnumProperty(inputID, selectedentityTreeNode->entityRef, propertyData, variant.GetData());
+            EnumProperty(inputID, selectedentityTreeNode->entityRef, propertyData, variant.m_pData);
         }
         else if (typeInfo->IsTResourcePtr())
         {
-            ResourceProperty(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.GetData());
+            ResourceProperty(inputID, selectedentityTreeNode->entityRef, propertyData->m_nPropertyID, variant.m_pData);
         }
         else
         {
-            UnsupportedProperty(inputID, selectedentityTreeNode->entityRef, propertyData, variant.GetData());
+            UnsupportedProperty(inputID, selectedentityTreeNode->entityRef, propertyData, variant.m_pData);
         }
     }
 
@@ -706,7 +591,7 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 
 void Editor::RenderGizmo(const bool hasFocus)
 {
-    if (ScaleformManager->IsInMainMenu())
+    if (Globals::ScaleformManager->m_bIsInMainMenu)
     {
         return;
     }
@@ -761,20 +646,22 @@ void Editor::RenderGizmo(const bool hasFocus)
 
     ImGuizmo::Enable(hasFocus);
 
-    if (selectedentityTreeNode && selectedentityTreeNode->entityRef.GetEntityTypePtrPtr())
+    if (selectedentityTreeNode && selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)
     {
         ZSpatialEntity* spatialEntity = selectedentityTreeNode->entityRef.QueryInterfacePtr<ZSpatialEntity>();
 
         if (spatialEntity)
         {
-            ZCameraEntity* activeCamera = ZApplicationEngineWin32::GetInstance()->GetActiveCamera();
+            ZCameraEntity* activeCamera = (*Globals::ApplicationEngineWin32)->GetActiveCamera();
             SMatrix modelMatrix = spatialEntity->GetObjectToWorldMatrix();
             SMatrix viewMatrix = activeCamera->GetViewMatrix();
             const SMatrix projectionMatrix = activeCamera->GetProjectionMatrix();
 
             ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 
-            if (ImGuizmo::Manipulate(&viewMatrix.XAxis.x, &projectionMatrix.XAxis.x, gizmoMode, gizmoSpace, &modelMatrix.XAxis.x, NULL, useSnap ? &snapValue[0] : NULL))
+            if (ImGuizmo::Manipulate(
+                    &viewMatrix.XAxis.x, &projectionMatrix.XAxis.x, gizmoMode, gizmoSpace, &modelMatrix.XAxis.x, NULL, useSnap ? &snapValue[0] : NULL
+                ))
             {
                 OnEntityTransformChange(selectedentityTreeNode, modelMatrix, false);
             }
@@ -796,17 +683,16 @@ void Editor::RenderEntityAABB()
 
     spatialEntity->CalculateBounds(min, max, 1, 0);
 
-    SDK::GetInstance().GetDirectXRenderer()->DrawOBB3D(SVector3(min.x, min.y, min.z), SVector3(max.x, max.y, max.z), transform, SVector4(0.f, 0.f, 1.f, 1.f));
+    SDK::GetInstance().GetDirectXRenderer()->DrawOBB3D(
+        SVector3(min.x, min.y, min.z), SVector3(max.x, max.y, max.z), transform, SVector4(0.f, 0.f, 1.f, 1.f)
+    );
 }
 
 void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
 {
-    if (!hasFocus ||
-        !isOpen ||
-        !selectedentityTreeNode ||
-        !selectedentityTreeNode->entityRef.GetEntityTypePtrPtr() ||
-        !selectedentityTreeNode->entityRef.GetInputPins() ||
-        !selectedentityTreeNode->entityRef.GetOutputPins())
+    if (!hasFocus || !isOpen || !selectedentityTreeNode || !selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr
+        || !(*selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)->m_pInputPins
+        || !(*selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)->m_pOutputPins)
     {
         return;
     }
@@ -839,12 +725,13 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
 
         if (selectedentityTreeNode->entityIndexInReferencedTEMP != -1)
         {
-            ZResourcePtr tbluResourcePtr = ResourceManager->GetResourcePtr(selectedentityTreeNode->tbluRuntimeResourceID, 0);
-            ZResourcePtr referenceResourcePtr = tbluResourcePtr.GetResourceStub()->GetInstallDependency(selectedentityTreeNode->entityTypeResourceIndex);
+            ZResourcePtr tbluResourcePtr = Globals::ResourceManager->GetResourcePtr(selectedentityTreeNode->tbluRuntimeResourceID, 0);
+            ZResourcePtr referenceResourcePtr =
+                tbluResourcePtr.m_pResourceStub->GetInstallDependency(selectedentityTreeNode->entityTypeResourceIndex);
 
-            if (referenceResourcePtr.GetResourceStub()->GetResourceTag() == 'TBLU')
+            if (referenceResourcePtr.m_pResourceStub->m_nResourceTag == 'TBLU')
             {
-                AddBlueprintNodesAndPins(referenceResourcePtr.GetResourceStub()->GetRuntimeResourceID(), rootEntityNodeIndex);
+                AddBlueprintNodesAndPins(referenceResourcePtr.m_pResourceStub->m_ridResource, rootEntityNodeIndex);
             }
         }
 
@@ -857,7 +744,7 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
 
     static ax::NodeEditor::NodeId contextNodeId = 0;
     static ax::NodeEditor::LinkId contextLinkId = 0;
-    static ax::NodeEditor::PinId  contextPinId = 0;
+    static ax::NodeEditor::PinId contextPinId = 0;
     static bool createNewNode = false;
     static Pin* newNodeLinkPin = nullptr;
     static Pin* newLinkPin = nullptr;
@@ -866,7 +753,9 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
     {
         const ImVec2 cursorTopLeft = ImGui::GetCursorScreenPos();
 
-        ax::NodeEditor::Utilities::BlueprintNodeBuilder builder(headerBackgroundTextureView, headerBackgroundTextureWidth, headerBackgroundTextureHeight);
+        ax::NodeEditor::Utilities::BlueprintNodeBuilder builder(
+            headerBackgroundTextureView, headerBackgroundTextureWidth, headerBackgroundTextureHeight
+        );
 
         for (auto& node : nodes)
         {
@@ -984,11 +873,11 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
                             showLabel("x Incompatible Pin Kind", ImColor(45, 32, 32, 180));
                             ax::NodeEditor::RejectNewItem(ImColor(255, 0, 0), 2.0f);
                         }
-                        //else if (endPin->Node == startPin->Node)
+                        // else if (endPin->Node == startPin->Node)
                         //{
-                        //    showLabel("x Cannot connect to self", ImColor(45, 32, 32, 180));
-                        //    ax::NodeEditor::RejectNewItem(ImColor(255, 0, 0), 1.0f);
-                        //}
+                        //     showLabel("x Cannot connect to self", ImColor(45, 32, 32, 180));
+                        //     ax::NodeEditor::RejectNewItem(ImColor(255, 0, 0), 1.0f);
+                        // }
                         else if (endPin->type != startPin->type)
                         {
                             showLabel("x Incompatible Pin Type", ImColor(45, 32, 32, 180));
@@ -1074,163 +963,163 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
         ImGui::SetCursorScreenPos(cursorTopLeft);
     }
 
-# if 0
-    auto openPopupPosition = ImGui::GetMousePos();
-    ax::NodeEditor::Suspend();
-    if (ax::NodeEditor::ShowNodeContextMenu(&contextNodeId))
-        ImGui::OpenPopup("Node Context Menu");
-    else if (ax::NodeEditor::ShowPinContextMenu(&contextPinId))
-        ImGui::OpenPopup("Pin Context Menu");
-    else if (ax::NodeEditor::ShowLinkContextMenu(&contextLinkId))
-        ImGui::OpenPopup("Link Context Menu");
-    else if (ax::NodeEditor::ShowBackgroundContextMenu())
-    {
-        ImGui::OpenPopup("Create New Node");
-        newNodeLinkPin = nullptr;
-    }
-    ax::NodeEditor::Resume();
+#if 0
+	auto openPopupPosition = ImGui::GetMousePos();
+	ax::NodeEditor::Suspend();
+	if (ax::NodeEditor::ShowNodeContextMenu(&contextNodeId))
+		ImGui::OpenPopup("Node Context Menu");
+	else if (ax::NodeEditor::ShowPinContextMenu(&contextPinId))
+		ImGui::OpenPopup("Pin Context Menu");
+	else if (ax::NodeEditor::ShowLinkContextMenu(&contextLinkId))
+		ImGui::OpenPopup("Link Context Menu");
+	else if (ax::NodeEditor::ShowBackgroundContextMenu())
+	{
+		ImGui::OpenPopup("Create New Node");
+		newNodeLinkPin = nullptr;
+	}
+	ax::NodeEditor::Resume();
 
-    ax::NodeEditor::Suspend();
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
-    if (ImGui::BeginPopup("Node Context Menu"))
-    {
-        auto node = FindNode(contextNodeId);
+	ax::NodeEditor::Suspend();
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
+	if (ImGui::BeginPopup("Node Context Menu"))
+	{
+		auto node = FindNode(contextNodeId);
 
-        ImGui::TextUnformatted("Node Context Menu");
-        ImGui::Separator();
-        if (node)
-        {
-            ImGui::Text("ID: %p", node->id.AsPointer());
-            //ImGui::Text("Type: %s", node->type == NodeType::Blueprint ? "Blueprint" : (node->Type == NodeType::Tree ? "Tree" : "Comment"));
-            ImGui::Text("Inputs: %d", (int)node->inputs.size());
-            ImGui::Text("Outputs: %d", (int)node->outputs.size());
-        }
-        else
-            ImGui::Text("Unknown node: %p", contextNodeId.AsPointer());
-        ImGui::Separator();
-        if (ImGui::MenuItem("Delete"))
-            ax::NodeEditor::DeleteNode(contextNodeId);
-        ImGui::EndPopup();
-    }
+		ImGui::TextUnformatted("Node Context Menu");
+		ImGui::Separator();
+		if (node)
+		{
+			ImGui::Text("ID: %p", node->id.AsPointer());
+			//ImGui::Text("Type: %s", node->type == NodeType::Blueprint ? "Blueprint" : (node->Type == NodeType::Tree ? "Tree" : "Comment"));
+			ImGui::Text("Inputs: %d", (int)node->inputs.size());
+			ImGui::Text("Outputs: %d", (int)node->outputs.size());
+		}
+		else
+			ImGui::Text("Unknown node: %p", contextNodeId.AsPointer());
+		ImGui::Separator();
+		if (ImGui::MenuItem("Delete"))
+			ax::NodeEditor::DeleteNode(contextNodeId);
+		ImGui::EndPopup();
+	}
 
-    if (ImGui::BeginPopup("Pin Context Menu"))
-    {
-        auto pin = FindPin(contextPinId);
+	if (ImGui::BeginPopup("Pin Context Menu"))
+	{
+		auto pin = FindPin(contextPinId);
 
-        ImGui::TextUnformatted("Pin Context Menu");
-        ImGui::Separator();
-        if (pin)
-        {
-            ImGui::Text("ID: %p", pin->id.AsPointer());
-            if (pin->node)
-                ImGui::Text("Node: %p", pin->node->id.AsPointer());
-            else
-                ImGui::Text("Node: %s", "<none>");
-        }
-        else
-            ImGui::Text("Unknown pin: %p", contextPinId.AsPointer());
+		ImGui::TextUnformatted("Pin Context Menu");
+		ImGui::Separator();
+		if (pin)
+		{
+			ImGui::Text("ID: %p", pin->id.AsPointer());
+			if (pin->node)
+				ImGui::Text("Node: %p", pin->node->id.AsPointer());
+			else
+				ImGui::Text("Node: %s", "<none>");
+		}
+		else
+			ImGui::Text("Unknown pin: %p", contextPinId.AsPointer());
 
-        ImGui::EndPopup();
-    }
+		ImGui::EndPopup();
+	}
 
-    if (ImGui::BeginPopup("Link Context Menu"))
-    {
-        auto link = FindLink(contextLinkId);
+	if (ImGui::BeginPopup("Link Context Menu"))
+	{
+		auto link = FindLink(contextLinkId);
 
-        ImGui::TextUnformatted("Link Context Menu");
-        ImGui::Separator();
-        if (link)
-        {
-            ImGui::Text("ID: %p", link->id.AsPointer());
-            ImGui::Text("From: %p", link->startPinID.AsPointer());
-            ImGui::Text("To: %p", link->endPinID.AsPointer());
-        }
-        else
-            ImGui::Text("Unknown link: %p", contextLinkId.AsPointer());
-        ImGui::Separator();
-        if (ImGui::MenuItem("Delete"))
-            ax::NodeEditor::DeleteLink(contextLinkId);
-        ImGui::EndPopup();
-    }
+		ImGui::TextUnformatted("Link Context Menu");
+		ImGui::Separator();
+		if (link)
+		{
+			ImGui::Text("ID: %p", link->id.AsPointer());
+			ImGui::Text("From: %p", link->startPinID.AsPointer());
+			ImGui::Text("To: %p", link->endPinID.AsPointer());
+		}
+		else
+			ImGui::Text("Unknown link: %p", contextLinkId.AsPointer());
+		ImGui::Separator();
+		if (ImGui::MenuItem("Delete"))
+			ax::NodeEditor::DeleteLink(contextLinkId);
+		ImGui::EndPopup();
+	}
 
-    if (ImGui::BeginPopup("Create New Node"))
-    {
-        auto newNodePostion = openPopupPosition;
+	if (ImGui::BeginPopup("Create New Node"))
+	{
+		auto newNodePostion = openPopupPosition;
 
-        Node* node = nullptr;
-        if (ImGui::MenuItem("Input Action"))
-            node = SpawnInputActionNode();
-        if (ImGui::MenuItem("Output Action"))
-            node = SpawnOutputActionNode();
-        if (ImGui::MenuItem("Branch"))
-            node = SpawnBranchNode();
-        if (ImGui::MenuItem("Do N"))
-            node = SpawnDoNNode();
-        if (ImGui::MenuItem("Set Timer"))
-            node = SpawnSetTimerNode();
-        if (ImGui::MenuItem("Less"))
-            node = SpawnLessNode();
-        if (ImGui::MenuItem("Weird"))
-            node = SpawnWeirdNode();
-        if (ImGui::MenuItem("Trace by Channel"))
-            node = SpawnTraceByChannelNode();
-        if (ImGui::MenuItem("Print String"))
-            node = SpawnPrintStringNode();
-        ImGui::Separator();
-        if (ImGui::MenuItem("Comment"))
-            node = SpawnComment();
-        ImGui::Separator();
-        if (ImGui::MenuItem("Sequence"))
-            node = SpawnTreeSequenceNode();
-        if (ImGui::MenuItem("Move To"))
-            node = SpawnTreeTaskNode();
-        if (ImGui::MenuItem("Random Wait"))
-            node = SpawnTreeTask2Node();
-        ImGui::Separator();
-        if (ImGui::MenuItem("Message"))
-            node = SpawnMessageNode();
-        ImGui::Separator();
-        if (ImGui::MenuItem("Transform"))
-            node = SpawnHoudiniTransformNode();
-        if (ImGui::MenuItem("Group"))
-            node = SpawnHoudiniGroupNode();
+		Node* node = nullptr;
+		if (ImGui::MenuItem("Input Action"))
+			node = SpawnInputActionNode();
+		if (ImGui::MenuItem("Output Action"))
+			node = SpawnOutputActionNode();
+		if (ImGui::MenuItem("Branch"))
+			node = SpawnBranchNode();
+		if (ImGui::MenuItem("Do N"))
+			node = SpawnDoNNode();
+		if (ImGui::MenuItem("Set Timer"))
+			node = SpawnSetTimerNode();
+		if (ImGui::MenuItem("Less"))
+			node = SpawnLessNode();
+		if (ImGui::MenuItem("Weird"))
+			node = SpawnWeirdNode();
+		if (ImGui::MenuItem("Trace by Channel"))
+			node = SpawnTraceByChannelNode();
+		if (ImGui::MenuItem("Print String"))
+			node = SpawnPrintStringNode();
+		ImGui::Separator();
+		if (ImGui::MenuItem("Comment"))
+			node = SpawnComment();
+		ImGui::Separator();
+		if (ImGui::MenuItem("Sequence"))
+			node = SpawnTreeSequenceNode();
+		if (ImGui::MenuItem("Move To"))
+			node = SpawnTreeTaskNode();
+		if (ImGui::MenuItem("Random Wait"))
+			node = SpawnTreeTask2Node();
+		ImGui::Separator();
+		if (ImGui::MenuItem("Message"))
+			node = SpawnMessageNode();
+		ImGui::Separator();
+		if (ImGui::MenuItem("Transform"))
+			node = SpawnHoudiniTransformNode();
+		if (ImGui::MenuItem("Group"))
+			node = SpawnHoudiniGroupNode();
 
-        if (node)
-        {
-            BuildNodes();
+		if (node)
+		{
+			BuildNodes();
 
-            createNewNode = false;
+			createNewNode = false;
 
-            ax::NodeEditor::SetNodePosition(node->ID, newNodePostion);
+			ax::NodeEditor::SetNodePosition(node->ID, newNodePostion);
 
-            if (auto startPin = newNodeLinkPin)
-            {
-                auto& pins = startPin->Kind == PinKind::Input ? node->Outputs : node->Inputs;
+			if (auto startPin = newNodeLinkPin)
+			{
+				auto& pins = startPin->Kind == PinKind::Input ? node->Outputs : node->Inputs;
 
-                for (auto& pin : pins)
-                {
-                    if (CanCreateLink(startPin, &pin))
-                    {
-                        auto endPin = &pin;
-                        if (startPin->Kind == PinKind::Input)
-                            std::swap(startPin, endPin);
+				for (auto& pin : pins)
+				{
+					if (CanCreateLink(startPin, &pin))
+					{
+						auto endPin = &pin;
+						if (startPin->Kind == PinKind::Input)
+							std::swap(startPin, endPin);
 
-                        m_Links.emplace_back(Link(GetNextId(), startPin->ID, endPin->ID));
-                        m_Links.back().Color = GetIconColor(startPin->Type);
+						m_Links.emplace_back(Link(GetNextId(), startPin->ID, endPin->ID));
+						m_Links.back().Color = GetIconColor(startPin->Type);
 
-                        break;
-                    }
-                }
-            }
-        }
+						break;
+					}
+				}
+			}
+		}
 
-        ImGui::EndPopup();
-    }
-    else
-        createNewNode = false;
-    ImGui::PopStyleVar();
-    ax::NodeEditor::Resume();
-# endif
+		ImGui::EndPopup();
+	}
+	else
+		createNewNode = false;
+	ImGui::PopStyleVar();
+	ax::NodeEditor::Resume();
+#endif
 
     ax::NodeEditor::End();
 
@@ -1239,9 +1128,12 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
     ImGui::PopFont();
 }
 
-void Editor::AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntityRef rootEntity, ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory, const int parentIndex, STemplateEntityBlueprint* templateEntityBlueprint)
+void Editor::AddChildren(
+    std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntityRef rootEntity, ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory,
+    const int parentIndex, STemplateEntityBlueprint* templateEntityBlueprint
+)
 {
-    const ZRuntimeResourceID& tbluRuntimeResourceID = templateEntityBlueprintFactory->GetRuntimeResourceID();
+    const ZRuntimeResourceID& tbluRuntimeResourceID = templateEntityBlueprintFactory->m_ridResource;
 
     if (!templateEntityBlueprints.contains(tbluRuntimeResourceID))
     {
@@ -1254,58 +1146,67 @@ void Editor::AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntity
     {
         if (templateEntityBlueprint->entityTemplates[i].parentIndex == parentIndex)
         {
-            ZEntityRef entityRef = templateEntityBlueprintFactory->GetSubEntity(rootEntity.GetEntityTypePtrPtr(), i);
+            ZEntityRef entityRef = templateEntityBlueprintFactory->GetSubEntity(rootEntity.m_pEntityTypePtrPtr, i);
             IEntityBlueprintFactory* entityBlueprintFactory2 = templateEntityBlueprintFactory->GetBlueprintResource(i);
-            std::shared_ptr<EntityTreeNode> childNode = std::make_shared<EntityTreeNode>(i, templateEntityBlueprint->entityTemplates[i].entityName.ToCString(), entityRef, tbluRuntimeResourceID, templateEntityBlueprint->entityTemplates[i].entityTypeResourceIndex);
+            std::shared_ptr<EntityTreeNode> childNode = std::make_shared<EntityTreeNode>(
+                i, templateEntityBlueprint->entityTemplates[i].entityName.ToCString(), entityRef, tbluRuntimeResourceID,
+                templateEntityBlueprint->entityTemplates[i].entityTypeResourceIndex
+            );
 
             childNode->parentNode = entityTreeNode;
 
             AddChildren(childNode, rootEntity, templateEntityBlueprintFactory, childNode->entityIndex, templateEntityBlueprint);
 
-            if (*reinterpret_cast<void**>(entityBlueprintFactory2) == ZTemplateEntityBlueprintFactoryVFTbl)
+            if (*reinterpret_cast<void**>(entityBlueprintFactory2) == Globals::ZTemplateEntityBlueprintFactoryVFTbl)
             {
-                ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory2 = static_cast<ZTemplateEntityBlueprintFactory*>(entityBlueprintFactory2);
+                ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory2 =
+                    static_cast<ZTemplateEntityBlueprintFactory*>(entityBlueprintFactory2);
 
-                childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory2->GetRootEntityIndex();
+                childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory2->m_rootEntityIndex;
 
                 AddChildren(childNode, childNode->entityRef, templateEntityBlueprintFactory2, childNode->entityIndexInReferencedTEMP);
 
-                ZEntityRef entityRef2 = templateEntityBlueprintFactory2->GetSubEntity(childNode->entityRef.GetEntityTypePtrPtr(), childNode->entityIndexInReferencedTEMP);
-                IEntityBlueprintFactory* entityBlueprintFactory3 = templateEntityBlueprintFactory2->GetBlueprintResource(childNode->entityIndexInReferencedTEMP);
+                ZEntityRef entityRef2 =
+                    templateEntityBlueprintFactory2->GetSubEntity(childNode->entityRef.m_pEntityTypePtrPtr, childNode->entityIndexInReferencedTEMP);
+                IEntityBlueprintFactory* entityBlueprintFactory3 =
+                    templateEntityBlueprintFactory2->GetBlueprintResource(childNode->entityIndexInReferencedTEMP);
 
-                if (*reinterpret_cast<void**>(entityBlueprintFactory3) == ZTemplateEntityBlueprintFactoryVFTbl)
+                if (*reinterpret_cast<void**>(entityBlueprintFactory3) == Globals::ZTemplateEntityBlueprintFactoryVFTbl)
                 {
-                    ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory3 = static_cast<ZTemplateEntityBlueprintFactory*>(entityBlueprintFactory3);
+                    ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory3 =
+                        static_cast<ZTemplateEntityBlueprintFactory*>(entityBlueprintFactory3);
 
-                    childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory3->GetRootEntityIndex();
+                    childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory3->m_rootEntityIndex;
 
                     AddChildren(childNode, entityRef2, templateEntityBlueprintFactory3, childNode->entityIndexInReferencedTEMP);
                 }
-                else if (*reinterpret_cast<void**>(entityBlueprintFactory3) == ZAspectEntityBlueprintFactoryVFTbl)
+                else if (*reinterpret_cast<void**>(entityBlueprintFactory3) == Globals::ZAspectEntityBlueprintFactoryVFTbl)
                 {
-                    ZAspectEntityBlueprintFactory* aspectEntityBlueprintFactory = static_cast<ZAspectEntityBlueprintFactory*>(entityBlueprintFactory3);
-                    IEntityBlueprintFactory* aspectFactory = aspectEntityBlueprintFactory->GetAspectFactory(0);
+                    ZAspectEntityBlueprintFactory* aspectEntityBlueprintFactory =
+                        static_cast<ZAspectEntityBlueprintFactory*>(entityBlueprintFactory3);
+                    IEntityBlueprintFactory* aspectFactory = aspectEntityBlueprintFactory->m_aspectFactories[0];
 
-                    if (*reinterpret_cast<void**>(aspectFactory) == ZTemplateEntityBlueprintFactoryVFTbl)
+                    if (*reinterpret_cast<void**>(aspectFactory) == Globals::ZTemplateEntityBlueprintFactoryVFTbl)
                     {
-                        ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory3 = static_cast<ZTemplateEntityBlueprintFactory*>(aspectFactory);
+                        ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory3 =
+                            static_cast<ZTemplateEntityBlueprintFactory*>(aspectFactory);
 
-                        childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory3->GetRootEntityIndex();
+                        childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory3->m_rootEntityIndex;
 
                         AddChildren(childNode, childNode->entityRef, templateEntityBlueprintFactory3, childNode->entityIndexInReferencedTEMP);
                     }
                 }
             }
-            else if (*reinterpret_cast<void**>(entityBlueprintFactory2) == ZAspectEntityBlueprintFactoryVFTbl)
+            else if (*reinterpret_cast<void**>(entityBlueprintFactory2) == Globals::ZAspectEntityBlueprintFactoryVFTbl)
             {
                 ZAspectEntityBlueprintFactory* aspectEntityBlueprintFactory = static_cast<ZAspectEntityBlueprintFactory*>(entityBlueprintFactory2);
-                IEntityBlueprintFactory* aspectFactory = aspectEntityBlueprintFactory->GetAspectFactory(0);
+                IEntityBlueprintFactory* aspectFactory = aspectEntityBlueprintFactory->m_aspectFactories[0];
 
-                if (*reinterpret_cast<void**>(aspectFactory) == ZTemplateEntityBlueprintFactoryVFTbl)
+                if (*reinterpret_cast<void**>(aspectFactory) == Globals::ZTemplateEntityBlueprintFactoryVFTbl)
                 {
                     ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory2 = static_cast<ZTemplateEntityBlueprintFactory*>(aspectFactory);
 
-                    childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory2->GetRootEntityIndex();
+                    childNode->entityIndexInReferencedTEMP = templateEntityBlueprintFactory2->m_rootEntityIndex;
 
                     AddChildren(childNode, childNode->entityRef, templateEntityBlueprintFactory2, childNode->entityIndexInReferencedTEMP);
                 }
@@ -1322,10 +1223,10 @@ void Editor::AddChildren(std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntity
 
     if (entityTreeNode->children.size() > 0)
     {
-        std::sort(entityTreeNode->children.begin(), entityTreeNode->children.end(), [](const std::shared_ptr<EntityTreeNode> a, const std::shared_ptr<EntityTreeNode> b)
-        {
-            return a->entityName < b->entityName;
-        });
+        std::sort(
+            entityTreeNode->children.begin(), entityTreeNode->children.end(),
+            [](const std::shared_ptr<EntityTreeNode> a, const std::shared_ptr<EntityTreeNode> b) { return a->entityName < b->entityName; }
+        );
     }
     else
     {
@@ -1358,7 +1259,10 @@ std::shared_ptr<Editor::EntityTreeNode> Editor::FindNode(const ZEntityRef& entit
     return nullptr;
 }
 
-void Editor::SearchEntityNameInTree(std::shared_ptr<EntityTreeNode> node, const std::string& entityName, std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap)
+void Editor::SearchEntityNameInTree(
+    std::shared_ptr<EntityTreeNode> node, const std::string& entityName,
+    std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap
+)
 {
     if (!node)
     {
@@ -1382,7 +1286,10 @@ void Editor::SearchEntityNameInTree(std::shared_ptr<EntityTreeNode> node, const 
     }
 }
 
-void Editor::SearchTypeNameInTree(std::shared_ptr<EntityTreeNode> node, const std::string& typeName, std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap)
+void Editor::SearchTypeNameInTree(
+    std::shared_ptr<EntityTreeNode> node, const std::string& typeName,
+    std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap
+)
 {
     if (!node)
     {
@@ -1400,7 +1307,8 @@ void Editor::SearchTypeNameInTree(std::shared_ptr<EntityTreeNode> node, const st
     }
 }
 
-std::shared_ptr<Editor::EntityTreeNode> Editor::GeneratedFilteredEntityTree(const std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap)
+std::shared_ptr<Editor::EntityTreeNode>
+Editor::GeneratedFilteredEntityTree(const std::unordered_map<std::shared_ptr<EntityTreeNode>, std::shared_ptr<EntityTreeNode>>& parentMap)
 {
     std::shared_ptr<EntityTreeNode> searchRoot = std::make_shared<EntityTreeNode>();
 
@@ -1418,7 +1326,10 @@ std::shared_ptr<Editor::EntityTreeNode> Editor::GeneratedFilteredEntityTree(cons
         {
             if (searchTreeMap.find(parentInOriginalTree) == searchTreeMap.end())
             {
-                parentNodeInSearchTree = std::make_shared<EntityTreeNode>(parentInOriginalTree->entityIndex, parentInOriginalTree->entityName.c_str(), parentInOriginalTree->entityRef, parentInOriginalTree->tbluRuntimeResourceID, parentInOriginalTree->entityTypeResourceIndex);
+                parentNodeInSearchTree = std::make_shared<EntityTreeNode>(
+                    parentInOriginalTree->entityIndex, parentInOriginalTree->entityName.c_str(), parentInOriginalTree->entityRef,
+                    parentInOriginalTree->tbluRuntimeResourceID, parentInOriginalTree->entityTypeResourceIndex
+                );
 
                 searchTreeMap[parentInOriginalTree] = parentNodeInSearchTree;
                 searchRoot->children.push_back(parentNodeInSearchTree);
@@ -1433,7 +1344,10 @@ std::shared_ptr<Editor::EntityTreeNode> Editor::GeneratedFilteredEntityTree(cons
             parentNodeInSearchTree = searchRoot;
         }
 
-        std::shared_ptr<EntityTreeNode> newNode = std::make_shared<EntityTreeNode>(currentNode->entityIndex, currentNode->entityName.c_str(), currentNode->entityRef, currentNode->tbluRuntimeResourceID, currentNode->entityTypeResourceIndex);
+        std::shared_ptr<EntityTreeNode> newNode = std::make_shared<EntityTreeNode>(
+            currentNode->entityIndex, currentNode->entityName.c_str(), currentNode->entityRef, currentNode->tbluRuntimeResourceID,
+            currentNode->entityTypeResourceIndex
+        );
 
         parentNodeInSearchTree->children.push_back(newNode);
         searchTreeMap[currentNode] = newNode;
@@ -1466,7 +1380,7 @@ ZStaticPhysicsAspect* Editor::FindStaticPhysicsAspect(std::shared_ptr<EntityTree
 
 void Editor::OnSelectEntity(ZEntityRef entityRef)
 {
-    if (entityRef.GetEntityTypePtrPtr())
+    if (entityRef.m_pEntityTypePtrPtr)
     {
         if (rootNode->children.size() > 0)
         {
@@ -1492,7 +1406,7 @@ void Editor::OnLeftMouseButtonDown(const SVector2& mousePosition, const bool isF
     const float4 from = float4(worldPosition.x, worldPosition.y, worldPosition.z, 1.f);
     const float4 to = from + direction2 * 200.f;
 
-    if (!CollisionManager)
+    if (!Globals::CollisionManager)
     {
         return;
     }
@@ -1500,14 +1414,14 @@ void Editor::OnLeftMouseButtonDown(const SVector2& mousePosition, const bool isF
     ZRayQueryInput rayQueryInput = ZRayQueryInput(from, to, RAYDETAILS_MESH);
     ZRayQueryOutput rayQueryOutput{};
 
-    if (!CollisionManager->RayCastClosestHit(rayQueryInput, &rayQueryOutput))
+    if (!Globals::CollisionManager->RayCastClosestHit(rayQueryInput, &rayQueryOutput))
     {
         return;
     }
 
-    if (isFirstClick && rayQueryOutput.GetBlockingEntity().GetEntityTypePtrPtr())
+    if (isFirstClick && rayQueryOutput.m_BlockingEntity.m_pEntityTypePtrPtr)
     {
-        const ZEntityRef selectedEntity = rayQueryOutput.GetBlockingEntity();
+        const ZEntityRef selectedEntity = rayQueryOutput.m_BlockingEntity;
 
         OnSelectEntity(selectedEntity);
 
@@ -1531,7 +1445,7 @@ void Editor::OnEntityTransformChange(std::shared_ptr<EntityTreeNode> entityTreeN
     }
     else
     {
-        ZSpatialEntity* transformParent = spatialEntity->GetTransformParent();
+        ZSpatialEntity* transformParent = spatialEntity->m_pTransformParent;
         SMatrix parentTransform;
 
         if (transformParent)
@@ -1730,8 +1644,8 @@ void Editor::EnumProperty(const std::string& id, const ZEntityRef entityRef, con
 {
     int value = *static_cast<int*>(data);
     STypeID* typeID = propertyData->m_pInfo->m_Type;
-    const char* typeName = typeID->pTypeInfo->GetTypeName();
-    const std::map<int, std::string>& enumItems = EnumRegistry::GetInstance().GetEnum(typeName);
+    const char* typeName = typeID->pTypeInfo->pszTypeName;
+    const std::map<int32_t, std::string>& enumItems = SDK::GetInstance().GetEnum(typeName);
 
     std::string currentValue;
 
@@ -1831,14 +1745,14 @@ void Editor::SMatrix43Property(const std::string& id, const ZEntityRef entityRef
     SVector3 rotation;
     SVector3 scale;
 
-    matrix->Decompose(position, rotation, scale);
+    /*matrix->Decompose(position, rotation, scale);
 
     if (ImGui::InputFloat3((id + "Rotation").c_str(), &rotation.x))
     {
         *matrix = SMatrix43::Recompose(position, rotation, scale);
 
         OnSetPropertyValue(entityRef, propertyID, variant);
-    }
+    }*/
 
     /*if (ImGui::InputFloat3((id + "x").c_str(), &matrix->XAxis.x))
     {
@@ -1866,11 +1780,11 @@ void Editor::ResourceProperty(const std::string& id, const ZEntityRef entityRef,
     const ZResourcePtr* resourcePtr = static_cast<ZResourcePtr*>(data);
     static char stringBuffer[2048] = {};
 
-    if (resourcePtr->GetResourceStub())
+    if (resourcePtr->m_pResourceStub)
     {
-        const ZResourceID resourceID = ZRuntimeResourceID::QueryResourceID(resourcePtr->GetResourceStub()->GetRuntimeResourceID());
+        const std::string resourceID = SDK::GetInstance().GetResourceID(resourcePtr->m_pResourceStub->m_ridResource);
 
-        memcpy(stringBuffer, resourceID.GetURI().ToCString(), resourceID.GetURI().Length() + 1);
+        // memcpy(stringBuffer, resourceID.c_str(), resourceID.GetURI().Length() + 1);
     }
     else
     {
@@ -1879,8 +1793,8 @@ void Editor::ResourceProperty(const std::string& id, const ZEntityRef entityRef,
 
     if (ImGui::InputText(id.c_str(), stringBuffer, sizeof(stringBuffer)))
     {
-        const ZRuntimeResourceID runtimeResourceID = ZRuntimeResourceID::QueryRuntimeResourceID(stringBuffer);
-        const ZResourcePtr resourcePtr2 = ResourceManager->GetResourcePtr(runtimeResourceID, 0);
+        const ZRuntimeResourceID runtimeResourceID = SDK::GetInstance().GetRuntimeResourceID(stringBuffer);
+        const ZResourcePtr resourcePtr2 = Globals::ResourceManager->GetResourcePtr(runtimeResourceID, 0);
         ZVariant variant;
 
         variant.Set<ZResourcePtr>(resourcePtr2);
@@ -1893,7 +1807,7 @@ void Editor::EntityRefProperty(void* data)
 {
     const ZEntityRef* entityRef = static_cast<ZEntityRef*>(data);
 
-    if (entityRef->GetEntityTypePtrPtr())
+    if (entityRef->m_pEntityTypePtrPtr)
     {
         const std::shared_ptr<EntityTreeNode> entityTreeNode = FindNode(*entityRef, rootNode);
 
@@ -1910,7 +1824,7 @@ void Editor::EntityRefProperty(void* data)
 
 void Editor::UnsupportedProperty(const std::string& id, const ZEntityRef entityRef, const SPropertyData* propertyData, void* data)
 {
-    const std::string typeName = propertyData->m_pInfo->m_Type->pTypeInfo->GetTypeName();
+    const std::string typeName = propertyData->m_pInfo->m_Type->pTypeInfo->pszTypeName;
 
     ImGui::Text(" %s (Unsupported)", typeName.c_str());
 }
@@ -1983,7 +1897,9 @@ Editor::Pin* Editor::FindPin(const ax::NodeEditor::PinId id)
 bool Editor::IsPinLinked(const ax::NodeEditor::PinId id) const
 {
     if (!id)
+    {
         return false;
+    }
 
     for (auto& link : links)
     {
@@ -2033,38 +1949,64 @@ ImColor Editor::GetIconColor(const PinType type)
 {
     switch (type)
     {
-        default:
-        case PinType::Flow:     return ImColor(255, 255, 255);
-        case PinType::Bool:     return ImColor(220, 48, 48);
-        case PinType::Int:      return ImColor(68, 201, 156);
-        case PinType::Float:    return ImColor(147, 226, 74);
-        case PinType::String:   return ImColor(124, 21, 153);
-        case PinType::Object:   return ImColor(51, 150, 215);
-        case PinType::Function: return ImColor(218, 0, 183);
-        case PinType::Delegate: return ImColor(255, 48, 48);
+    default:
+    case PinType::Flow:
+        return ImColor(255, 255, 255);
+    case PinType::Bool:
+        return ImColor(220, 48, 48);
+    case PinType::Int:
+        return ImColor(68, 201, 156);
+    case PinType::Float:
+        return ImColor(147, 226, 74);
+    case PinType::String:
+        return ImColor(124, 21, 153);
+    case PinType::Object:
+        return ImColor(51, 150, 215);
+    case PinType::Function:
+        return ImColor(218, 0, 183);
+    case PinType::Delegate:
+        return ImColor(255, 48, 48);
     }
 }
 
 void Editor::DrawPinIcon(const Pin& pin, const bool connected, const int alpha)
 {
     ax::Drawing::IconType iconType;
-    ImColor  color = GetIconColor(pin.type);
+    ImColor color = GetIconColor(pin.type);
     color.Value.w = alpha / 255.0f;
     switch (pin.type)
     {
-        case PinType::Flow:     iconType = ax::Drawing::IconType::Flow;   break;
-        case PinType::Bool:     iconType = ax::Drawing::IconType::Circle; break;
-        case PinType::Int:      iconType = ax::Drawing::IconType::Circle; break;
-        case PinType::Float:    iconType = ax::Drawing::IconType::Circle; break;
-        case PinType::String:   iconType = ax::Drawing::IconType::Circle; break;
-        case PinType::Object:   iconType = ax::Drawing::IconType::Circle; break;
-        case PinType::Function: iconType = ax::Drawing::IconType::Circle; break;
-        case PinType::Delegate: iconType = ax::Drawing::IconType::Square; break;
-        default:
-            return;
+    case PinType::Flow:
+        iconType = ax::Drawing::IconType::Flow;
+        break;
+    case PinType::Bool:
+        iconType = ax::Drawing::IconType::Circle;
+        break;
+    case PinType::Int:
+        iconType = ax::Drawing::IconType::Circle;
+        break;
+    case PinType::Float:
+        iconType = ax::Drawing::IconType::Circle;
+        break;
+    case PinType::String:
+        iconType = ax::Drawing::IconType::Circle;
+        break;
+    case PinType::Object:
+        iconType = ax::Drawing::IconType::Circle;
+        break;
+    case PinType::Function:
+        iconType = ax::Drawing::IconType::Circle;
+        break;
+    case PinType::Delegate:
+        iconType = ax::Drawing::IconType::Square;
+        break;
+    default:
+        return;
     }
 
-    ax::Widgets::Icon(ImVec2(static_cast<float>(pinIconSize), static_cast<float>(pinIconSize)), iconType, connected, color, ImColor(32, 32, 32, alpha));
+    ax::Widgets::Icon(
+        ImVec2(static_cast<float>(pinIconSize), static_cast<float>(pinIconSize)), iconType, connected, color, ImColor(32, 32, 32, alpha)
+    );
 }
 
 void Editor::AddBlueprintNodesAndPins(const ZRuntimeResourceID& tbluRuntimeResourceID, unsigned int& rootEntityNodeIndex)
@@ -2182,25 +2124,137 @@ void Editor::AddBlueprintNodesAndPins(const ZRuntimeResourceID& tbluRuntimeResou
     }
 }
 
-void __fastcall ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactoryHook(ZTemplateEntityBlueprintFactory* pThis, int edx, STemplateEntityBlueprint* pTemplateEntityBlueprint, ZResourcePending& ResourcePending)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    Editor, void, ZEntitySceneContext_CreateScene, ZEntitySceneContext* p_EntitySceneContext, const ZString& p_StreamingState
+)
 {
-    GetModInstance()->OnTemplateEntityBlueprintFactoryCreate(pTemplateEntityBlueprint, ResourcePending);
+    rootNode = std::make_shared<EntityTreeNode>();
 
-    Hooks::ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory.CallOriginalFunction(pThis, pTemplateEntityBlueprint, ResourcePending);
+    rootNode->entityName = "Scene";
+
+    return { HookAction::Continue() };
 }
 
-void __fastcall ZEntitySceneContext_CreateSceneHook(ZEntitySceneContext* pThis, int edx, const ZString& sStreamingState)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Editor, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene)
 {
-    GetModInstance()->OnCreateScene(pThis, sStreamingState);
+    rootNode.reset();
+    selectedentityTreeNode.reset();
+    filteredTreeRootNode.reset();
+    filteredProperties.clear();
 
-    Hooks::ZEntitySceneContext_CreateScene.CallOriginalFunction(pThis, sStreamingState);
+    if (p_FullyUnloadScene)
+    {
+        for (auto it = templateEntityBlueprints.begin(); it != templateEntityBlueprints.end();)
+        {
+            const ZRuntimeResourceID runtimeResourceID = it->first;
+
+            if (runtimeResourceID.IsLibraryResource())
+            {
+                templateEntityBlueprints.erase(it++);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+
+    return { HookAction::Continue() };
 }
 
-void __fastcall ZEntitySceneContext_ClearSceneHook(ZEntitySceneContext* pThis, int edx, bool bFullyUnloadScene)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    Editor, void, ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory, ZTemplateEntityBlueprintFactory* p_TemplateEntityBlueprintFactory,
+    STemplateEntityBlueprint* p_TemplateEntityBlueprint, ZResourcePending& p_ResourcePending
+)
 {
-    GetModInstance()->OnClearScene(pThis, bFullyUnloadScene);
+    const unsigned int resourceDataSize = p_ResourcePending.m_pResourceReader.GetTarget()->m_nResourceDataSize;
+    const ZRuntimeResourceID& tbluRuntimeResourceID = p_ResourcePending.m_pResource.m_pResourceStub->m_ridResource;
 
-    Hooks::ZEntitySceneContext_ClearScene.CallOriginalFunction(pThis, bFullyUnloadScene);
+    if (templateEntityBlueprints.contains(tbluRuntimeResourceID))
+    {
+        return { HookAction::Continue() };
+    }
+
+    templateEntityBlueprints.insert(std::make_pair(tbluRuntimeResourceID, STemplateEntityBlueprint()));
+
+    STemplateEntityBlueprint& templateEntityBlueprint2 = templateEntityBlueprints[tbluRuntimeResourceID];
+
+    templateEntityBlueprint2.entityTemplates.Resize(p_TemplateEntityBlueprint->entityTemplates.Size());
+    templateEntityBlueprint2.pinConnections.Resize(p_TemplateEntityBlueprint->pinConnections.Size());
+    templateEntityBlueprint2.inputPinForwardings.Resize(p_TemplateEntityBlueprint->inputPinForwardings.Size());
+    templateEntityBlueprint2.outputPinForwardings.Resize(p_TemplateEntityBlueprint->outputPinForwardings.Size());
+
+    templateEntityBlueprint2.rootEntityIndex = p_TemplateEntityBlueprint->rootEntityIndex;
+
+    for (size_t i = 0; i < templateEntityBlueprint2.entityTemplates.Size(); ++i)
+    {
+        ZString entityName;
+
+        entityName.Allocate(
+            p_TemplateEntityBlueprint->entityTemplates[i].entityName.ToCString(), p_TemplateEntityBlueprint->entityTemplates[i].entityName.Length()
+        );
+
+        templateEntityBlueprint2.entityTemplates[i].parentIndex = p_TemplateEntityBlueprint->entityTemplates[i].parentIndex;
+        templateEntityBlueprint2.entityTemplates[i].entityTypeResourceIndex = p_TemplateEntityBlueprint->entityTemplates[i].entityTypeResourceIndex;
+        templateEntityBlueprint2.entityTemplates[i].entityName = entityName;
+    }
+
+    for (size_t i = 0; i < templateEntityBlueprint2.pinConnections.Size(); ++i)
+    {
+        ZString fromPinName, toPinName;
+
+        fromPinName.Allocate(
+            p_TemplateEntityBlueprint->pinConnections[i].fromPinName.ToCString(), p_TemplateEntityBlueprint->pinConnections[i].fromPinName.Length()
+        );
+        toPinName.Allocate(
+            p_TemplateEntityBlueprint->pinConnections[i].toPinName.ToCString(), p_TemplateEntityBlueprint->pinConnections[i].toPinName.Length()
+        );
+
+        templateEntityBlueprint2.pinConnections[i].fromID = p_TemplateEntityBlueprint->pinConnections[i].fromID;
+        templateEntityBlueprint2.pinConnections[i].toID = p_TemplateEntityBlueprint->pinConnections[i].toID;
+        templateEntityBlueprint2.pinConnections[i].fromPinName = fromPinName;
+        templateEntityBlueprint2.pinConnections[i].toPinName = toPinName;
+    }
+
+    for (size_t i = 0; i < templateEntityBlueprint2.inputPinForwardings.Size(); ++i)
+    {
+        ZString fromPinName, toPinName;
+
+        fromPinName.Allocate(
+            p_TemplateEntityBlueprint->inputPinForwardings[i].fromPinName.ToCString(),
+            p_TemplateEntityBlueprint->inputPinForwardings[i].fromPinName.Length()
+        );
+        toPinName.Allocate(
+            p_TemplateEntityBlueprint->inputPinForwardings[i].toPinName.ToCString(),
+            p_TemplateEntityBlueprint->inputPinForwardings[i].toPinName.Length()
+        );
+
+        templateEntityBlueprint2.inputPinForwardings[i].fromID = p_TemplateEntityBlueprint->inputPinForwardings[i].fromID;
+        templateEntityBlueprint2.inputPinForwardings[i].toID = p_TemplateEntityBlueprint->inputPinForwardings[i].toID;
+        templateEntityBlueprint2.inputPinForwardings[i].fromPinName = fromPinName;
+        templateEntityBlueprint2.inputPinForwardings[i].toPinName = toPinName;
+    }
+
+    for (size_t i = 0; i < templateEntityBlueprint2.outputPinForwardings.Size(); ++i)
+    {
+        ZString fromPinName, toPinName;
+
+        fromPinName.Allocate(
+            p_TemplateEntityBlueprint->outputPinForwardings[i].fromPinName.ToCString(),
+            p_TemplateEntityBlueprint->outputPinForwardings[i].fromPinName.Length()
+        );
+        toPinName.Allocate(
+            p_TemplateEntityBlueprint->outputPinForwardings[i].toPinName.ToCString(),
+            p_TemplateEntityBlueprint->outputPinForwardings[i].toPinName.Length()
+        );
+
+        templateEntityBlueprint2.outputPinForwardings[i].fromID = p_TemplateEntityBlueprint->outputPinForwardings[i].fromID;
+        templateEntityBlueprint2.outputPinForwardings[i].toID = p_TemplateEntityBlueprint->outputPinForwardings[i].toID;
+        templateEntityBlueprint2.outputPinForwardings[i].fromPinName = fromPinName;
+        templateEntityBlueprint2.outputPinForwardings[i].toPinName = toPinName;
+    }
+
+    return { HookAction::Continue() };
 }
 
 DEFINE_MOD(Editor);

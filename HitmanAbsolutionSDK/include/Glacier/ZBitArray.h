@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Templates/TArray.h"
+#include "TArray.h"
 
 class ZBitArray
 {
-private:
-	TArray<unsigned char> m_aBytes;
-	unsigned int m_nSize;
+  public:
+    TArray<uint8_t> m_aBytes;
+    uint32_t m_nSize;
 };

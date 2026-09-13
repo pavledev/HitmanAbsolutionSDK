@@ -2,8 +2,8 @@
 
 #include "ISharedPointerTarget.h"
 
-class HitmanAbsolutionSDK_API ZSharedPointerTarget : public ISharedPointerTarget
+class ZSharedPointerTarget : public ISharedPointerTarget
 {
-private:
-	long m_iRefCount;
+  public:
+    long m_iRefCount;
 };

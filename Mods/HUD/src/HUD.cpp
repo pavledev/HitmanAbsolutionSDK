@@ -3,31 +3,20 @@
 #include "imgui.h"
 
 #include "Glacier/ZGameLoopManager.h"
-#include "Glacier/UI/ZHUDManager.h"
 #include "Glacier/ZLevelManager.h"
 
-#include "Global.h"
 #include "HUD.h"
-
-HUD::HUD() :
-    isOpen(false),
-    toggleHUDAction("ToggleHUD")
-{
-    uiDisableHUD = reinterpret_cast<int*>(BaseAddress + 0xD5644C);
-}
 
 HUD::~HUD()
 {
     const ZMemberDelegate<HUD, void(const SGameUpdateEvent&)> delegate(this, &HUD::OnFrameUpdate);
-
-    GameLoopManager->UnregisterForFrameUpdate(delegate);
+    Globals::GameLoopManager->UnregisterForFrameUpdate(delegate);
 }
 
 void HUD::OnEngineInitialized()
 {
     const ZMemberDelegate<HUD, void(const SGameUpdateEvent&)> delegate(this, &HUD::OnFrameUpdate);
-
-    GameLoopManager->RegisterForFrameUpdate(delegate, 1);
+    Globals::GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 
     AddBindings();
 }
@@ -36,13 +25,13 @@ void HUD::OnDrawMenu()
 {
     if (ImGui::Button(ICON_MD_MONITOR " HUD"))
     {
-        isOpen = !isOpen;
+        m_ShowWindow = !m_ShowWindow;
     }
 }
 
 void HUD::OnDrawUI(const bool hasFocus)
 {
-    if (!hasFocus || !isOpen)
+    if (!hasFocus || !m_ShowWindow)
     {
         return;
     }
@@ -50,86 +39,83 @@ void HUD::OnDrawUI(const bool hasFocus)
     ImGui::PushFont(SDK::GetInstance().GetBoldFont());
     ImGui::SetNextWindowSize(ImVec2(1250, 850), ImGuiCond_FirstUseEver);
 
-    const bool isWindowVisible = ImGui::Begin(ICON_MD_MONITOR " HUD", &isOpen, ImGuiWindowFlags_NoScrollbar);
+    const bool isWindowExpanded = ImGui::Begin(ICON_MD_MONITOR " HUD", &m_ShowWindow, ImGuiWindowFlags_NoScrollbar);
 
     ImGui::PushFont(SDK::GetInstance().GetRegularFont());
 
-    if (isWindowVisible)
+    if (isWindowExpanded)
     {
-        isHUDVisible = *uiDisableHUD == 0;
-        isHealthBarVisible = IsHUDItemVisible("_root.g_mcHealthBar");
-        isMinimapVisible = IsHUDItemVisible("_root.g_mcMinimap");
-        isTrespassingIconVisible = IsHUDItemVisible("_root.g_mcMinimap.icons.trespass");
-        isWeaponDisplayVisible = IsHUDItemVisible("_root.g_mcWeaponDisplay");
-        isWeaponSelectorVisible = IsHUDItemVisible("_root.g_mcWeaponSelectorMKB");
-        isFocusBarVisible = IsHUDItemVisible("_root.g_mcFocusBar");
-        isRatingTrackerVisible = IsHUDItemVisible("_root.g_mcRating");
-        isTargetTrackerVisible = IsHUDItemVisible("_root.g_mcContractInfo");
-        isAttentionVisible = IsHUDItemVisible("_root.g_mcAttention");
-        isCrosshairVisible = IsHUDItemVisible("_root.g_mcReticules");
+        m_IsHUDVisible = Globals::HUDManager->m_bDisplayHUD;
+        m_IsHealthBarVisible = IsHUDItemVisible("_root.g_mcHealthBar");
+        m_IsMinimapVisible = IsHUDItemVisible("_root.g_mcMinimap");
+        m_IsTrespassingIconVisible = IsHUDItemVisible("_root.g_mcMinimap.icons.trespass");
+        m_IsWeaponDisplayVisible = IsHUDItemVisible("_root.g_mcWeaponDisplay");
+        m_IsWeaponSelectorVisible = IsHUDItemVisible("_root.g_mcWeaponSelectorMKB");
+        m_IsFocusBarVisible = IsHUDItemVisible("_root.g_mcFocusBar");
+        m_IsRatingTrackerVisible = IsHUDItemVisible("_root.g_mcRating");
+        m_IsTargetTrackerVisible = IsHUDItemVisible("_root.g_mcContractInfo");
+        m_IsAttentionVisible = IsHUDItemVisible("_root.g_mcAttention");
+        m_IsCrosshairVisible = IsHUDItemVisible("_root.g_mcReticules");
 
-        if (ImGui::Checkbox("HUD", &isHUDVisible))
+        ImGui::BeginDisabled(!Globals::LevelManager->m_rHitman.m_pInterfaceRef);
+
+        if (ImGui::Checkbox("HUD", &m_IsHUDVisible))
         {
-            *uiDisableHUD = !*uiDisableHUD;
+            *Globals::UIDisableHUD = !*Globals::UIDisableHUD;
         }
 
-        if (ImGui::Checkbox("Health Bar", &isHealthBarVisible))
+        if (ImGui::Checkbox("Health bar", &m_IsHealthBarVisible))
         {
-            ToggleHUDItem("_root.g_mcHealthBar", isHealthBarVisible);
+            ToggleHUDItem("_root.g_mcHealthBar", m_IsHealthBarVisible);
         }
 
-        if (ImGui::Checkbox("Minimap", &isMinimapVisible))
+        if (ImGui::Checkbox("Minimap", &m_IsMinimapVisible))
         {
-            ToggleHUDItem("_root.g_mcMinimap", isMinimapVisible);
-            ToggleHUDItem("_root.g_mcMinimapBG", isMinimapVisible);
+            ToggleHUDItem("_root.g_mcMinimap", m_IsMinimapVisible);
+            ToggleHUDItem("_root.g_mcMinimapBG", m_IsMinimapVisible);
         }
 
-        if (ImGui::Checkbox("Trespassing Icon", &isTrespassingIconVisible))
+        if (ImGui::Checkbox("Trespassing icon", &m_IsTrespassingIconVisible))
         {
-            ToggleHUDItem("_root.g_mcMinimap.icons.trespass", isTrespassingIconVisible);
+            ToggleHUDItem("_root.g_mcMinimap.icons.trespass", m_IsTrespassingIconVisible);
         }
 
-        if (ImGui::Checkbox("Weapon Display", &isWeaponDisplayVisible))
+        if (ImGui::Checkbox("Weapon display", &m_IsWeaponDisplayVisible))
         {
-            ToggleHUDItem("_root.g_mcWeaponDisplay", isWeaponDisplayVisible);
+            ToggleHUDItem("_root.g_mcWeaponDisplay", m_IsWeaponDisplayVisible);
         }
 
-        if (ImGui::Checkbox("Weapon Selector", &isWeaponSelectorVisible))
+        if (ImGui::Checkbox("Weapon selector", &m_IsWeaponSelectorVisible))
         {
-            ToggleHUDItem("_root.g_mcWeaponSelectorMKB", isWeaponSelectorVisible);
+            ToggleHUDItem("_root.g_mcWeaponSelectorMKB", m_IsWeaponSelectorVisible);
         }
 
-        if (ImGui::Checkbox("Focus Bar", &isFocusBarVisible))
+        if (ImGui::Checkbox("Focus bar", &m_IsFocusBarVisible))
         {
-            ToggleHUDItem("_root.g_mcFocusBar", isFocusBarVisible);
+            ToggleHUDItem("_root.g_mcFocusBar", m_IsFocusBarVisible);
         }
 
-        if (ImGui::Checkbox("Rating Tracker", &isRatingTrackerVisible))
+        if (ImGui::Checkbox("Rating tracker", &m_IsRatingTrackerVisible))
         {
-            ToggleHUDItem("_root.g_mcRating", isRatingTrackerVisible);
+            ToggleHUDItem("_root.g_mcRating", m_IsRatingTrackerVisible);
         }
 
-        if (ImGui::Checkbox("Target Tracker", &isTargetTrackerVisible))
+        if (ImGui::Checkbox("Target tracker", &m_IsTargetTrackerVisible))
         {
-            ToggleHUDItem("_root.g_mcContractInfo", isTargetTrackerVisible);
+            ToggleHUDItem("_root.g_mcContractInfo", m_IsTargetTrackerVisible);
         }
 
-        if (ImGui::Checkbox("Attention", &isAttentionVisible))
+        if (ImGui::Checkbox("Attention", &m_IsAttentionVisible))
         {
-            ToggleHUDItem("_root.g_mcAttention", isAttentionVisible);
+            ToggleHUDItem("_root.g_mcAttention", m_IsAttentionVisible);
         }
 
-        if (ImGui::Checkbox("Crosshair", &isCrosshairVisible))
+        if (ImGui::Checkbox("Crosshair", &m_IsCrosshairVisible))
         {
-            ToggleHUDItem("_root.g_mcReticules", isCrosshairVisible);
+            ToggleHUDItem("_root.g_mcReticules", m_IsCrosshairVisible);
         }
 
-        ImGui::Separator();
-
-        if (ImGui::Button("Ok"))
-        {
-            isOpen = false;
-        }
+        ImGui::EndDisabled();
     }
 
     ImGui::PopFont();
@@ -137,42 +123,50 @@ void HUD::OnDrawUI(const bool hasFocus)
     ImGui::PopFont();
 }
 
-const bool HUD::IsHUDItemVisible(const char* name)
+const bool HUD::IsHUDItemVisible(const char* p_Name)
 {
+    if (!Globals::HUDManager || !Globals::HUDManager->m_mcHUD)
+    {
+        return false;
+    }
+
     GFxValue value;
     GFxValue visibleValue;
 
-    HUDManager->GetHUD()->GetMember(name, &value);
+    Globals::HUDManager->m_mcHUD->GetMember(p_Name, &value);
     value.GetMember("_visible", &visibleValue);
 
     return visibleValue.GetBool();
 }
 
-void HUD::ToggleHUDItem(const char* name, const bool show)
+void HUD::ToggleHUDItem(const char* p_Name, bool p_Show)
 {
-    GFxValue value;
-    GFxValue visibleValue;
-
-    HUDManager->GetHUD()->GetMember(name, &value);
-    value.GetMember("_visible", &visibleValue);
-
-    visibleValue.SetBool(show);
-
-    value.SetMember("_visible", visibleValue);
-}
-
-void HUD::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
-{
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-    if (!hitman)
+    if (!Globals::HUDManager || !Globals::HUDManager->m_mcHUD)
     {
         return;
     }
 
-    if (toggleHUDAction.Digital())
+    GFxValue value;
+    GFxValue visibleValue;
+
+    Globals::HUDManager->m_mcHUD->GetMember(p_Name, &value);
+    value.GetMember("_visible", &visibleValue);
+
+    visibleValue.SetBoolean(p_Show);
+
+    value.SetMember("_visible", visibleValue);
+}
+
+void HUD::OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent)
+{
+    if (!Globals::LevelManager->m_rHitman.m_pInterfaceRef)
     {
-        *uiDisableHUD = !*uiDisableHUD;
+        return;
+    }
+
+    if (m_ToggleHUDAction.Digital())
+    {
+        *Globals::UIDisableHUD = !*Globals::UIDisableHUD;
     }
 }
 

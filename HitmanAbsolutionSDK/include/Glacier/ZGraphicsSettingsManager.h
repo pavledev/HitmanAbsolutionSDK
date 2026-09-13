@@ -6,14 +6,11 @@
 
 #include <Common.h>
 
-class HitmanAbsolutionSDK_API ZGraphicsSettingsManager : public IComponentInterface
+class ZGraphicsSettingsManager : public IComponentInterface
 {
-public:
-	HWND GetHWND();
-
-private:
-	HWND m_hWnd; //0x4
-	PAD(0x80);
+  public:
+    HWND m_hWnd; // 0x4
+    PAD(0x80);   // 0x8
 };
 
 static_assert(sizeof(ZGraphicsSettingsManager) == 0x88);

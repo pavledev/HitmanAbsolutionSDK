@@ -2,71 +2,59 @@
 
 #include <MinHook.h>
 
-#include <Glacier/Module/ZHitman5Module.h>
-#include <Glacier/Engine/ZApplicationEngineWin32.h>
-#include <Glacier/Engine/ZIniFile.h>
+#include <Glacier/ZModule.h>
+#include <Glacier/ZApplication.h>
 
 #include "SDK.h"
-#include "Global.h"
-#include "Function.h"
-#include "Logger.h"
+#include "Globals.h"
+#include "Logging.h"
 #include "Hooks.h"
-#include "ModInterface.h"
+#include "IModInterface.h"
 #include "Registry/ResourceIDRegistry.h"
 #include "Registry/EnumRegistry.h"
 #include "Registry/PropertyRegistry.h"
+#include "Utils/ProcessUtils.h"
+#include "UI/ModSelector.h"
+#include "UI/MainMenu.h"
+#include "UI/Console.h"
+#include "UI/Settings.h"
+#include "HookImpl.h"
+#include "DebugConsole.h"
+#include "Renderer/DirectXRenderer.h"
+#include "Renderer/ImGuiRenderer.h"
+#include "Utils/ResourceUtils.h"
 
-uintptr_t BaseAddress;
-ZRenderManager* RenderManager;
-ZLevelManager* LevelManager;
-ZGraphicsSettingsManager* GraphicsSettingsManager;
-ZMemoryManager* MemoryManager;
-ZGameTimeManager* GameTimeManager;
-ZInputDeviceManagerWindows* InputDeviceManager;
-ZInputActionManager* InputActionManager;
-ZHitman5Module* Hitman5Module;
-ZGameLoopManager* GameLoopManager;
-ZGameWideUI* GameWideUI;
-ZHUDManager* HUDManager;
-ZScaleformManager* ScaleformManager;
-ZInputAction* HM5InputControl;
-ZCollisionManager* CollisionManager;
-ZTypeRegistry** TypeRegistry;
-ZContentKitManager* ContentKitManager;
-ZResourceManager* ResourceManager;
-ZActorManager* ActorManager;
-LocalResourceIDsResolver** LocalResourceIDsResolverSingleton;
-ZCheckPointManager* CheckPointManager;
-ZHM5ActionManager* HM5ActionManager;
-ZEntityManager* EntityManager;
-bool IsEngineInitialized;
-void* ZTemplateEntityFactoryVFTbl;
-void* ZTemplateEntityBlueprintFactoryVFTbl;
-void* ZAspectEntityFactoryVFTbl;
-void* ZAspectEntityBlueprintFactoryVFTbl;
+extern void SetupLogging(spdlog::level::level_enum logLevel);
 
 SDK::SDK()
 {
-    InitializeSingletons();
+#if _DEBUG
+    m_DebugConsole = std::make_shared<DebugConsole>();
+    SetupLogging(spdlog::level::trace);
+#else
+    SetupLogging(spdlog::level::info);
+#endif
 
-    if (MH_Initialize() != MH_OK)
-    {
-        Logger::GetInstance().Log(Logger::Level::Error, "Failed to initialize MinHook!");
-    }
+    m_DirectXRenderer = std::make_shared<DirectXRenderer>();
+    m_ImGuiRenderer = std::make_shared<ImGuiRenderer>();
 
-    directXRenderer = std::make_shared<DirectXRenderer>();
-    imGuiRenderer = std::make_shared<ImGuiRenderer>();
+    m_ModManager = std::make_shared<ModManager>();
 
-    modManager = std::make_shared<ModManager>();
+    m_MainMenu = std::make_shared<UI::MainMenu>();
+    m_ModSelector = std::make_shared<UI::ModSelector>();
+    m_Settings = std::make_shared<UI::Settings>();
+    m_Console = std::make_shared<UI::Console>();
 
-    mainMenu = std::make_shared<MainMenu>();
-    modSelector = std::make_shared<ModSelector>();
-    settings = std::make_shared<Settings>();
-    
-    if (settings->PatchResources())
+    /*if (settings->PatchResources())
     {
         resourcePatcher = std::make_shared<ResourcePatcher>();
-    }
+    }*/
+
+    HMODULE module = GetModuleHandleA(nullptr);
+
+    m_ModuleBase = reinterpret_cast<uintptr_t>(module) + util::ProcessUtils::GetBaseOfCode(module);
+    m_SizeOfCode = util::ProcessUtils::GetSizeOfCode(module);
+    m_ImageSize = util::ProcessUtils::GetSizeOfImage(module);
 
     ResourceIDRegistry& resourceIDRegistry = ResourceIDRegistry::GetInstance();
     EnumRegistry& enumRegistry = EnumRegistry::GetInstance();
@@ -78,24 +66,6 @@ SDK::SDK()
     thread.detach();
     thread2.detach();
     thread3.detach();
-
-    Hooks::ZRenderDevice_PresentHook.CreateHook("ZRenderDevice::Present", 0x5A7F30, ZRenderDevice_PresentHook);
-    Hooks::ZRenderSwapChain_ResizeHook.CreateHook("ZRenderSwapChain::Resize", 0x2FA520, ZRenderSwapChain_ResizeHook);
-    Hooks::ZApplicationEngineWin32_MainWindowProc.CreateHook("ZApplicationEngineWin32::MainWindowProc", 0x4FF520, ZApplicationEngineWin32_MainWindowProcHook);
-    Hooks::ZHitman5Module_Initialize.CreateHook("ZHitman5Module::Initialize", 0x58E8D0, ZHitman5Module_InitializeHook);
-    Hooks::ZEngineAppCommon_Initialize.CreateHook("ZEngineAppCommon::Initialize", 0x55A620, ZEngineAppCommon_InitializeHook);
-    Hooks::ZEngineAppCommon_Uninitialize.CreateHook("ZEngineAppCommon::Uninitialize", 0x338F00, ZEngineAppCommon_UninitializeHook);
-    Hooks::ZMouseWindows_Update.CreateHook("ZMouseWindows::Update", 0x3F1D90, ZMouseWindows_UpdateHook);
-    Hooks::ZKeyboardWindows_Update.CreateHook("ZKeyboardWindows::Update", 0x1EF2C0, ZKeyboardWindows_UpdateHook);
-
-    Hooks::ZRenderDevice_PresentHook.EnableHook();
-    Hooks::ZRenderSwapChain_ResizeHook.EnableHook();
-    Hooks::ZApplicationEngineWin32_MainWindowProc.EnableHook();
-    Hooks::ZHitman5Module_Initialize.EnableHook();
-    Hooks::ZEngineAppCommon_Initialize.EnableHook();
-    Hooks::ZEngineAppCommon_Uninitialize.EnableHook();
-    Hooks::ZMouseWindows_Update.EnableHook();
-    Hooks::ZKeyboardWindows_Update.EnableHook();
 }
 
 SDK& SDK::GetInstance()
@@ -107,89 +77,62 @@ SDK& SDK::GetInstance()
 
 void SDK::Setup()
 {
-    modManager->LoadAllMods();
+#if _DEBUG
+    m_DebugConsole->StartRedirecting();
+#endif
 
-    /*modManager->LockRead();
+    Hooks::ZHitman5Module_Initialize->AddDetour(this, &SDK::ZHitman5Module_Initialize);
+    Hooks::ZEngineAppCommon_Initialize->AddDetour(this, &SDK::ZEngineAppCommon_Initialize);
+    Hooks::ZEngineAppCommon_Uninitialize->AddDetour(this, &SDK::ZEngineAppCommon_Uninitialize);
 
-    for (const auto& mod : modManager->GetLoadedMods())
-    {
-        mod.second.modInterface->SetupUI();
-        mod.second.modInterface->Initialize();
-    }
+    Hooks::ZRenderDevice_Present->AddDetour(this, &SDK::ZRenderDevice_Present);
+    Hooks::ZRenderSwapChain_Resize->AddDetour(this, &SDK::ZRenderSwapChain_Resize);
 
-    modManager->UnlockRead();*/
+    m_ModManager->LoadAllMods();
 
-    if (IsEngineInitialized)
+    if (Globals::Hitman5Module->IsEngineInitialized())
     {
         OnEngineInitialized();
+    }
+
+    const MH_STATUS status = MH_EnableHook(MH_ALL_HOOKS);
+
+    if (status != MH_OK)
+    {
+        Logger::Error("Failed to enable hooks. MinHook error: {}.", static_cast<int>(status));
     }
 }
 
 void SDK::Cleanup()
 {
-    Hooks::ZRenderDevice_PresentHook.RemoveHook();
-    Hooks::ZRenderSwapChain_ResizeHook.RemoveHook();
-    Hooks::ZApplicationEngineWin32_MainWindowProc.RemoveHook();
+    m_ModManager.reset();
 
-    modManager.reset();
+    HookRegistry::ClearDetoursWithContext(this);
 
-    directXRenderer->Cleanup();
-    imGuiRenderer->Cleanup();
+    m_DirectXRenderer->Cleanup();
+    m_ImGuiRenderer->Cleanup();
+
+    HookRegistry::DestroyHooks();
+    Trampolines::ClearTrampolines();
 
     if (MH_Uninitialize() != MH_OK)
     {
-        Logger::GetInstance().Log(Logger::Level::Error, "Failed to uninitialize MinHook.");
+        Logger::Error("Failed to uninitialize MinHook.");
     }
-}
-
-ZMemoryManager* SDK::GetMemoryManager()
-{
-    return Function::CallAndReturn<ZMemoryManager*>(BaseAddress + 0x389F10);
-}
-
-void SDK::InitializeSingletons()
-{
-    BaseAddress = reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr));
-    RenderManager = reinterpret_cast<ZRenderManager*>(BaseAddress + 0xE31B80);
-    LevelManager = reinterpret_cast<ZLevelManager*>(BaseAddress + 0xE21310);
-    GraphicsSettingsManager = reinterpret_cast<ZGraphicsSettingsManager*>(BaseAddress + 0xD57190);
-    MemoryManager = GetMemoryManager();
-    GameTimeManager = reinterpret_cast<ZGameTimeManager*>(BaseAddress + 0xE24730);
-    InputDeviceManager = reinterpret_cast<ZInputDeviceManagerWindows*>(BaseAddress + 0xE2EE10);
-    InputActionManager = reinterpret_cast<ZInputActionManager*>(BaseAddress + 0xE2F7D0);
-    Hitman5Module = reinterpret_cast<ZHitman5Module*>(BaseAddress + 0xE21B30);
-    GameLoopManager = reinterpret_cast<ZGameLoopManager*>(BaseAddress + 0xE24630);
-    GameWideUI = reinterpret_cast<ZGameWideUI*>(BaseAddress + 0xE21690);
-    HUDManager = reinterpret_cast<ZHUDManager*>(BaseAddress + 0xD61C00);
-    ScaleformManager = reinterpret_cast<ZScaleformManager*>(BaseAddress + 0xE550F0);
-    HM5InputControl = reinterpret_cast<ZInputAction*>(BaseAddress + 0xD4DE98);
-    CollisionManager = reinterpret_cast<ZCollisionManager*>(BaseAddress + 0xE54440);
-    TypeRegistry = reinterpret_cast<ZTypeRegistry**>(BaseAddress + 0xD47BFC);
-    ContentKitManager = reinterpret_cast<ZContentKitManager*>(BaseAddress + 0xD58F30);
-    ResourceManager = reinterpret_cast<ZResourceManager*>(BaseAddress + 0xE258C0);
-    ActorManager = reinterpret_cast<ZActorManager*>(BaseAddress + 0xDFDE70);
-    LocalResourceIDsResolverSingleton = reinterpret_cast<LocalResourceIDsResolver**>(BaseAddress + 0xE25CCC);
-    CheckPointManager = reinterpret_cast<ZCheckPointManager*>(BaseAddress + 0xE21580);
-    HM5ActionManager = reinterpret_cast<ZHM5ActionManager*>(BaseAddress + 0xD64C30);
-    EntityManager = reinterpret_cast<ZEntityManager*>(BaseAddress + 0xE251A0);
-    ZTemplateEntityFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADC8EC);
-    ZTemplateEntityBlueprintFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADC714);
-    ZAspectEntityFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADB874);
-    ZAspectEntityBlueprintFactoryVFTbl = reinterpret_cast<void*>(BaseAddress + 0xADB7EC);
-
-    ZApplicationEngineWin32::SetInstance(reinterpret_cast<ZApplicationEngineWin32**>(BaseAddress + 0xCC6B90));
 }
 
 void SDK::OnEngineInitialized()
 {
-    modManager->LockRead();
+    m_ImGuiRenderer->OnEngineInitialized();
 
-    for (auto& loadedMod : modManager->GetLoadedMods())
+    m_ModManager->LockRead();
+
+    for (auto& loadedMod : m_ModManager->GetLoadedMods())
     {
-        loadedMod.second.modInterface->OnEngineInitialized();
+        loadedMod.second.m_ModInterface->OnEngineInitialized();
     }
 
-    modManager->UnlockRead();
+    m_ModManager->UnlockRead();
 }
 
 void SDK::OnEngineUninitialized()
@@ -197,167 +140,169 @@ void SDK::OnEngineUninitialized()
     Cleanup();
 }
 
-void SDK::OnModLoaded(const std::string& name, ModInterface* modInterface, const bool liveLoad)
+void SDK::OnModLoaded(const std::string& p_Name, IModInterface* m_ModInterface, const bool m_LiveLoad)
 {
-    modInterface->SetupUI();
-    modInterface->Initialize();
-    modInterface->LoadConfiguration(name);
+    m_ModInterface->SetupUI();
+    m_ModInterface->Initialize();
+    m_ModInterface->LoadConfiguration(p_Name);
 
-    if (liveLoad && IsEngineInitialized)
+    if (m_LiveLoad && Globals::Hitman5Module->IsEngineInitialized())
     {
-        modInterface->OnEngineInitialized();
+        m_ModInterface->OnEngineInitialized();
     }
 }
 
 void SDK::OnDrawUI(const bool hasFocus)
 {
-    mainMenu->Draw(hasFocus);
-    modSelector->Draw(hasFocus);
-    settings->Draw(hasFocus);
+    m_MainMenu->Draw(hasFocus);
+    m_ModSelector->Draw(hasFocus);
+    m_Settings->Draw(hasFocus);
+    m_Console->Draw(hasFocus);
 
-    modManager->LockRead();
+    m_ModManager->LockRead();
 
-    for (auto& mod : modManager->GetLoadedMods())
+    for (auto& mod : m_ModManager->GetLoadedMods())
     {
-        mod.second.modInterface->OnDrawUI(hasFocus);
+        mod.second.m_ModInterface->OnDrawUI(hasFocus);
     }
 
-    modManager->UnlockRead();
+    m_ModManager->UnlockRead();
 }
 
 void SDK::OnDraw3D()
 {
-    modManager->LockRead();
+    m_ModManager->LockRead();
 
-    for (auto& mod : modManager->GetLoadedMods())
+    for (auto& mod : m_ModManager->GetLoadedMods())
     {
-        mod.second.modInterface->OnDraw3D();
+        mod.second.m_ModInterface->OnDraw3D();
     }
 
-    modManager->UnlockRead();
+    m_ModManager->UnlockRead();
 }
 
 void SDK::OnDrawMenu()
 {
-    modManager->LockRead();
+    m_ModManager->LockRead();
 
-    for (auto& mod : modManager->GetLoadedMods())
+    for (auto& mod : m_ModManager->GetLoadedMods())
     {
-        mod.second.modInterface->OnDrawMenu();
+        mod.second.m_ModInterface->OnDrawMenu();
     }
 
-    modManager->UnlockRead();
+    m_ModManager->UnlockRead();
 }
 
-void SDK::OnPresent(ZRenderDevice* renderDevice)
+const char* SDK::GetResourceID(uint64_t p_RuntimeResourceID) const
 {
-    directXRenderer->OnPresent(renderDevice);
-    imGuiRenderer->OnPresent(renderDevice);
+    return ResourceIDRegistry::GetInstance().GetResourceID(p_RuntimeResourceID);
 }
 
-void SDK::OnResize(const SRenderDestinationDesc* pDescription)
+uint64_t SDK::GetRuntimeResourceID(const std::string& p_ResourceID) const
 {
-    directXRenderer->OnResize(pDescription);
-    imGuiRenderer->OnResize(pDescription);
+    ZRuntimeResourceID runtimeResourceID = ResourceIDRegistry::GetInstance().GetRuntimeResourceID(p_ResourceID);
+
+    if (runtimeResourceID.GetID() == -1)
+    {
+        const std::string resourceID = util::ToLowerCase(p_ResourceID);
+
+        runtimeResourceID = hash::GetMD5Hash64(resourceID);
+    }
+
+    if (Globals::LocalResourceResolver && !runtimeResourceID.IsLibraryResource())
+    {
+        (*Globals::LocalResourceResolver)->RecordMapping(runtimeResourceID, ZString(p_ResourceID));
+    }
+
+    return runtimeResourceID;
 }
 
-long SDK::MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam)
+const std::map<int, std::string>& SDK::GetEnum(const std::string& p_TypeName)
 {
-    return imGuiRenderer->OnMainWindowProc(applicationEngineWin32, hWnd, uMsgId, wParam, lParam);
+    return EnumRegistry::GetInstance().GetEnum(p_TypeName);
 }
 
-void SDK::OnMouseWindowsUpdate(ZMouseWindows* mouseWindows, bool bIgnoreOldEvents)
+const std::string& SDK::GetPropertyName(const uint32_t p_PropertyID) const
 {
-    imGuiRenderer->OnMouseWindowsUpdate(mouseWindows, bIgnoreOldEvents);
+    return PropertyRegistry::GetInstance().GetPropertyName(p_PropertyID);
 }
 
-void SDK::OnKeyboardWindowsUpdate(ZKeyboardWindows* keyboardWindows, bool bIgnoreOldEvents)
+bool SDK::CreateAndInstallDynamicResourceLibrary(
+    const std::string& p_ResourceID, ZDynamicResourceLibrary*& p_DynamicResourceLibrary, ZRuntimeResourceID& p_TempRuntimeResourceID,
+    const uint32_t p_EntityCount
+)
 {
-    imGuiRenderer->OnKeyboardWindowsUpdate(keyboardWindows, bIgnoreOldEvents);
+    return util::CreateAndInstallDynamicResourceLibrary(p_ResourceID, p_DynamicResourceLibrary, p_TempRuntimeResourceID, p_EntityCount);
 }
 
 ImGuiContext* SDK::GetImGuiContext()
 {
-    return imGuiRenderer->GetImGuiContext();
+    return m_ImGuiRenderer->GetImGuiContext();
 }
 
 ImGuiMemAllocFunc SDK::GetImGuiMemAllocFunc()
 {
-    return imGuiRenderer->GetImGuiMemAllocFunc();
+    return m_ImGuiRenderer->GetImGuiMemAllocFunc();
 }
 
 ImGuiMemFreeFunc SDK::GetImGuiMemFreeFunc()
 {
-    return imGuiRenderer->GetImGuiMemFreeFunc();
+    return m_ImGuiRenderer->GetImGuiMemFreeFunc();
 }
 
 void* SDK::GetImGuiUserDataAllocator()
 {
-    return imGuiRenderer->GetImGuiUserDataAllocator();
+    return m_ImGuiRenderer->GetImGuiUserDataAllocator();
 }
 
 ImFont* SDK::GetRegularFont()
 {
-    return imGuiRenderer->GetRegularFont();
+    return m_ImGuiRenderer->GetRegularFont();
 }
 
 ImFont* SDK::GetBoldFont()
 {
-    return imGuiRenderer->GetBoldFont();
+    return m_ImGuiRenderer->GetBoldFont();
 }
 
 std::shared_ptr<DirectXRenderer> SDK::GetDirectXRenderer() const
 {
-    return directXRenderer;
+    return m_DirectXRenderer;
 }
 
 std::shared_ptr<ImGuiRenderer> SDK::GetImGuiRenderer() const
 {
-    return imGuiRenderer;
+    return m_ImGuiRenderer;
 }
 
 std::shared_ptr<ModManager> SDK::GetModManager() const
 {
-    return modManager;
+    return m_ModManager;
 }
 
-std::shared_ptr<ModSelector> SDK::GetModSelector() const
+std::shared_ptr<UI::ModSelector> SDK::GetModSelector() const
 {
-    return modSelector;
+    return m_ModSelector;
 }
 
-std::shared_ptr<Settings> SDK::GetSettings() const
+std::shared_ptr<UI::Console> SDK::GetConsole() const
 {
-    return settings;
+    return m_Console;
+}
+
+std::shared_ptr<UI::Settings> SDK::GetSettings() const
+{
+    return m_Settings;
 }
 
 std::shared_ptr<ResourcePatcher> SDK::GetResourcePatcher() const
 {
-    return resourcePatcher;
+    return m_ResourcePatcher;
 }
 
-void __fastcall ZRenderDevice_PresentHook(ZRenderDevice* pThis, int edx)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(SDK, bool, ZHitman5Module_Initialize, ZHitman5Module* p_Hitman5Module)
 {
-    SDK::GetInstance().OnPresent(pThis);
-
-    Hooks::ZRenderDevice_PresentHook.CallOriginalFunction(pThis);
-}
-
-void __fastcall ZRenderSwapChain_ResizeHook(ZRenderSwapChain* pThis, int edx, const SRenderDestinationDesc* pDescription)
-{
-    SDK::GetInstance().OnResize(pDescription);
-
-    Hooks::ZRenderSwapChain_ResizeHook.CallOriginalFunction(pThis, pDescription);
-}
-
-long __stdcall ZApplicationEngineWin32_MainWindowProcHook(ZApplicationEngineWin32* pThis, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam)
-{
-    return SDK::GetInstance().MainWindowProc(pThis, hWnd, uMsgId, wParam, lParam);
-}
-
-bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx)
-{
-    std::shared_ptr<Settings> settings = SDK::GetInstance().GetSettings();
+    std::shared_ptr<UI::Settings> settings = SDK::GetInstance().GetSettings();
 
     if (settings->ReadHMAIni())
     {
@@ -370,7 +315,7 @@ bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx)
             std::replace(iniFilePath2.begin(), iniFilePath2.end(), '\\', '/');
 
             const ZFilePath filePath3 = ZFilePath(iniFilePath2.c_str());
-            ZIniFile* iniFile = static_cast<ZIniFile*>(ZApplicationEngineWin32::GetInstance()->GetIniFile());
+            ZIniFile* iniFile = static_cast<ZIniFile*>((*Globals::ApplicationEngineWin32)->GetIniFile());
             TArray<unsigned char> buffer;
 
             ZIniFile::LoadIniFileContent(filePath3, buffer, true);
@@ -383,27 +328,27 @@ bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx)
 
                 int argc = 0;
 
-                ZApplicationEngineWin32::GetInstance()->AddApplicationSpecificOptions(iniFile);
-                ZApplicationEngineWin32::GetInstance()->ApplyOptionOverrides(argc, nullptr);
+                (*Globals::ApplicationEngineWin32)->AddApplicationSpecificOptions(iniFile);
+                (*Globals::ApplicationEngineWin32)->ApplyOptionOverrides(argc, nullptr);
             }
 
-            Logger::GetInstance().Log(Logger::Level::Info, "HMA.ini was read successfully.");
+            Logger::Info("HMA.ini was read successfully.");
         }
     }
 
-    bool result = Hooks::ZHitman5Module_Initialize.CallOriginalFunction(pThis);
+    bool result = p_Hook->CallOriginal(p_Hitman5Module);
 
-    //SDK::GetInstance().OnEngineInitialized();
+    // SDK::GetInstance().OnEngineInitialized();
 
     if (settings->IniFileHasKey("Settings", "PauseOnFocusLoss"))
     {
         const char* value = settings->PauseOnFocusLoss() ? "true" : "false";
 
-        ZApplicationEngineWin32::GetInstance()->SetOption("PauseOnFocusLoss", value);
+        (*Globals::ApplicationEngineWin32)->SetOption("PauseOnFocusLoss", value);
     }
     else
     {
-        const bool pauseOnFocusLoss = GetApplicationOptionBool("PauseOnFocusLoss", false);
+        const bool pauseOnFocusLoss = Functions::GetApplicationOptionBool->Call("PauseOnFocusLoss", false);
 
         settings->SetPauseOnFocusLoss(pauseOnFocusLoss);
     }
@@ -412,40 +357,52 @@ bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx)
     {
         const char* value = settings->MinimizeOnFocusLoss() ? "true" : "false";
 
-        ZApplicationEngineWin32::GetInstance()->SetOption("NO_MINIMIZE_FOCUSLOSS", value);
+        (*Globals::ApplicationEngineWin32)->SetOption("NO_MINIMIZE_FOCUSLOSS", value);
     }
     else
     {
-        const bool minimizeOnFocusLoss = GetApplicationOptionBool("NO_MINIMIZE_FOCUSLOSS", false);
+        const bool minimizeOnFocusLoss = Functions::GetApplicationOptionBool->Call("NO_MINIMIZE_FOCUSLOSS", false);
 
         settings->SetMinimizeOnFocusLoss(minimizeOnFocusLoss);
     }
 
-    return result;
+    return { HookAction::Return(), result };
 }
 
-bool __fastcall ZEngineAppCommon_InitializeHook(ZEngineAppCommon* pThis, int edx, const SRenderDestinationDesc& description)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    SDK, bool, ZEngineAppCommon_Initialize, ZEngineAppCommon* p_EngineAppCommon, const SRenderDestinationDesc& p_Description
+)
 {
-    IsEngineInitialized = Hooks::ZEngineAppCommon_Initialize.CallOriginalFunction(pThis, description);
+    bool result = p_Hook->CallOriginal(p_EngineAppCommon, p_Description);
 
-    SDK::GetInstance().OnEngineInitialized();
+    OnEngineInitialized();
 
-    return IsEngineInitialized;
+    return { HookAction::Return(), result };
 }
 
-void __fastcall ZEngineAppCommon_UninitializeHook(ZEngineAppCommon* pThis, int edx)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(SDK, void, ZEngineAppCommon_Uninitialize, ZEngineAppCommon* p_EngineAppCommon)
 {
-    Hooks::ZEngineAppCommon_Uninitialize.CallOriginalFunction(pThis);
+    p_Hook->CallOriginal(p_EngineAppCommon);
 
     SDK::GetInstance().OnEngineUninitialized();
+
+    return { HookAction::Return() };
 }
 
-void __fastcall ZMouseWindows_UpdateHook(ZMouseWindows* pThis, int edx, bool bIgnoreOldEvents)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(SDK, void, ZRenderDevice_Present, ZRenderDevice* p_RenderDevice)
 {
-    SDK::GetInstance().OnMouseWindowsUpdate(pThis, bIgnoreOldEvents);
+    m_DirectXRenderer->OnPresent(p_RenderDevice);
+    m_ImGuiRenderer->OnPresent(p_RenderDevice);
+
+    return { HookAction::Continue() };
 }
 
-void __fastcall ZKeyboardWindows_UpdateHook(ZKeyboardWindows* pThis, int edx, bool bIgnoreOldEvents)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    SDK, void, ZRenderSwapChain_Resize, ZRenderSwapChain* p_RenderSwapChain, const SRenderDestinationDesc* p_Description
+)
 {
-    SDK::GetInstance().OnKeyboardWindowsUpdate(pThis, bIgnoreOldEvents);
+    m_DirectXRenderer->OnResize(p_Description);
+    m_ImGuiRenderer->OnResize(p_Description);
+
+    return { HookAction::Continue() };
 }

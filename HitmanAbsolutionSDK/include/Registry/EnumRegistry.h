@@ -6,17 +6,17 @@
 
 #include "Common.h"
 
-class HitmanAbsolutionSDK_API EnumRegistry
+class EnumRegistry
 {
-public:
-	static EnumRegistry& GetInstance();
-	void Load();
-	const std::map<int, std::string>& GetEnum(const std::string& typeName);
+  public:
+    static EnumRegistry& GetInstance();
+    void Load();
+    const std::map<int32_t, std::string>& GetEnum(const std::string& p_TypeName);
 
-private:
-	EnumRegistry() = default;
-	EnumRegistry(const EnumRegistry& other) = delete;
-	EnumRegistry& operator=(const EnumRegistry& other) = delete;
+  private:
+    EnumRegistry() = default;
+    EnumRegistry(const EnumRegistry& other) = delete;
+    EnumRegistry& operator=(const EnumRegistry& other) = delete;
 
-	std::unordered_map<std::string, std::map<int, std::string>> enums;
+    std::unordered_map<std::string, std::map<int32_t, std::string>> m_Enums;
 };

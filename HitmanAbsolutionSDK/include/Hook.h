@@ -1,381 +1,207 @@
 #pragma once
 
-#include <cstdint>
+#include <cassert>
+#include <type_traits>
 
-#include <MinHook.h>
+#include "Common.h"
+#include "EngineFunction.h"
 
-#include "Global.h"
-#include "Utility/MinHookUtility.h"
-#include "Logger.h"
-
-template <typename ReturnType, typename... Args>
-class CdeclHook
+class HookBase : public IDestructible
 {
-public:
-	using Function = ReturnType(__cdecl*)(Args...);
-	using HookFunction = ReturnType(__cdecl*)(Args...);
+  public:
+    ~HookBase() override = default;
 
-	CdeclHook()
-	{
-		pFunction = nullptr;
-		pOriginalFunction = nullptr;
-	}
+    virtual void RemoveDetoursWithContext(void* p_Context) = 0;
+    virtual void RemoveAllDetours() = 0;
 
-	void CreateHook(const std::string& functionName, const uintptr_t offset, HookFunction hookFunction)
-	{
-		this->functionName = functionName;
+  protected:
+    struct Detour
+    {
+        void* m_Context;
+        void* m_DetourFunc;
+    };
 
-		pFunction = reinterpret_cast<Function>(BaseAddress + offset);
-		MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(pFunction), reinterpret_cast<LPVOID>(hookFunction), reinterpret_cast<LPVOID*>(&pOriginalFunction));
+    virtual void AddDetourInternal(void*, void*) = 0;
+    virtual void RemoveDetourInternal(void*) = 0;
+    virtual Detour** GetDetours() = 0;
+    virtual void LockForCall() = 0;
+    virtual void UnlockForCall() = 0;
+    virtual void Remove() = 0;
 
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully created hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to create hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
+    void* m_OriginalFunc = nullptr;
 
-	void EnableHook()
-	{
-		MH_STATUS status = MH_EnableHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully enabled hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to enable hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void DisableHook()
-	{
-		MH_STATUS status = MH_DisableHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully disabled hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to disable hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void RemoveHook()
-	{
-		MH_STATUS status = MH_RemoveHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully removed hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to remove hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	ReturnType CallOriginalFunction(Args... args)
-	{
-		if (!std::is_void_v<ReturnType>)
-		{
-			return reinterpret_cast<Function>(pOriginalFunction)(args...);
-		}
-
-		reinterpret_cast<Function>(pOriginalFunction)(args...);
-	}
-
-private:
-	Function pFunction;
-	Function pOriginalFunction;
-	std::string functionName;
-	std::string moduleName;
+    friend class HookRegistry;
 };
 
-template <typename ReturnType, typename... Args>
-class StdCallHook
+namespace HookAction
 {
-public:
-	using Function = ReturnType(__stdcall*)(Args...);
-	using HookFunction = ReturnType(__stdcall*)(Args...);
+    struct Return
+    {};
 
-	StdCallHook()
-	{
-		pFunction = nullptr;
-		pOriginalFunction = nullptr;
-	}
+    struct Continue
+    {};
+}
 
-	void CreateHook(const std::string& functionName, const uintptr_t offset, HookFunction hookFunction)
-	{
-		this->functionName = functionName;
+template<typename T> class HookResult
+{
+  public:
+    HookResult(HookAction::Return, T p_Value) : m_ReturnVal(p_Value), m_HasReturnVal(true) {}
 
-		pFunction = reinterpret_cast<Function>(BaseAddress + offset);
-		MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(pFunction), reinterpret_cast<LPVOID>(hookFunction), reinterpret_cast<LPVOID*>(&pOriginalFunction));
+    HookResult(HookAction::Continue) : m_HasReturnVal(false) {}
 
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully created hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to create hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void CreateWinApiHook(const std::string& functionName, const std::string& moduleName, HookFunction hookFunction)
-	{
-		this->functionName = functionName;
-
-		std::wstring moduleName2 = std::wstring(moduleName.begin(), moduleName.end());
-		MH_STATUS status = MH_CreateHookApi(moduleName2.c_str(), functionName.c_str(), reinterpret_cast<LPVOID>(hookFunction), reinterpret_cast<LPVOID*>(&pOriginalFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully created hook for {} function in {}.", functionName, moduleName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to create hook for {} function in {}! {}", functionName, moduleName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void EnableHook()
-	{
-		MH_STATUS status = MH_EnableHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully enabled hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to enable hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void DisableHook()
-	{
-		MH_STATUS status = MH_DisableHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully disabled hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to disable hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void RemoveHook()
-	{
-		MH_STATUS status = MH_RemoveHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully removed hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to remove hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	ReturnType CallOriginalFunction(Args... args)
-	{
-		if (!std::is_void_v<ReturnType>)
-		{
-			return reinterpret_cast<Function>(pOriginalFunction)(args...);
-		}
-
-		reinterpret_cast<Function>(pOriginalFunction)(args...);
-	}
-
-private:
-	Function pFunction;
-	Function pOriginalFunction;
-	std::string functionName;
-	std::string moduleName;
+    T m_ReturnVal;
+    bool m_HasReturnVal;
 };
 
-template <typename ReturnType, typename... Args>
-class FastCallHook
+template<> class HookResult<void>
 {
-public:
-	using Function = ReturnType(__fastcall*)(Args...);
-	using HookFunction = ReturnType(__fastcall*)(Args...);
-
-	FastCallHook()
-	{
-		pFunction = nullptr;
-		pOriginalFunction = nullptr;
-	}
-
-	void CreateHook(const std::string& functionName, const uintptr_t offset, HookFunction hookFunction)
-	{
-		this->functionName = functionName;
-
-		pFunction = reinterpret_cast<Function>(BaseAddress + offset);
-		MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(pFunction), reinterpret_cast<LPVOID>(hookFunction), reinterpret_cast<LPVOID*>(&pOriginalFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully created hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to create hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void EnableHook()
-	{
-		MH_STATUS status = MH_EnableHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully enabled hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to enable hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void DisableHook()
-	{
-		MH_STATUS status = MH_DisableHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully disabled hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to disable hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void RemoveHook()
-	{
-		MH_STATUS status = MH_RemoveHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully removed hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to remove hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	ReturnType CallOriginalFunction(Args... args)
-	{
-		if (!std::is_void_v<ReturnType>)
-		{
-			return reinterpret_cast<Function>(pOriginalFunction)(args...);
-		}
-
-		reinterpret_cast<Function>(pOriginalFunction)(args...);
-	}
-
-private:
-	Function pFunction;
-	Function pOriginalFunction;
-	std::string functionName;
-	std::string moduleName;
+  public:
+    HookResult(HookAction::Return) : m_HasReturnVal(true) {}
+    HookResult(HookAction::Continue) : m_HasReturnVal(false) {}
+    bool m_HasReturnVal;
 };
 
-template <typename ReturnType, typename Class, typename... Args>
-class ThisCallHook
+template<typename T, ECallingConvention Convention> struct HookAbi;
+
+template<typename R, class... A> struct HookAbi<R(A...), ECallingConvention::Cdecl>
 {
-public:
-	using Function = ReturnType(__thiscall*)(Class* pThis, Args...);
-	using HookFunction = ReturnType(__fastcall*)(Class* pThis, int edx, Args...);
-
-	ThisCallHook()
-	{
-		pFunction = nullptr;
-		pOriginalFunction = nullptr;
-	}
-
-	void CreateHook(const std::string& functionName, const uintptr_t offset, HookFunction hookFunction)
-	{
-		this->functionName = functionName;
-
-		pFunction = reinterpret_cast<Function>(BaseAddress + offset);
-		MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(pFunction), reinterpret_cast<LPVOID>(hookFunction), reinterpret_cast<LPVOID*>(&pOriginalFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully created hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to create hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void EnableHook()
-	{
-		MH_STATUS status = MH_EnableHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully enabled hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to enable hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void DisableHook()
-	{
-		MH_STATUS status = MH_DisableHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully disabled hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to disable hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	void RemoveHook()
-	{
-		MH_STATUS status = MH_RemoveHook(reinterpret_cast<LPVOID>(pFunction));
-
-		if (status == MH_OK)
-		{
-			Logger::GetInstance().Log(Logger::Level::Info, "Successfully removed hook for {} function.", functionName);
-		}
-		else
-		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to remove hook for {} function! {}", functionName, MinHookUtility::GetMessageFromStatus(status));
-		}
-	}
-
-	ReturnType CallOriginalFunction(Class* pThis, Args... args)
-	{
-		if (!std::is_void_v<ReturnType>)
-		{
-			return pOriginalFunction(pThis, args...);
-		}
-
-		pOriginalFunction(pThis, args...);
-	}
-
-private:
-	Function pFunction;
-	Function pOriginalFunction;
-	std::string functionName;
+    using Original = R(__cdecl*)(A...);
+    using Entry = Original;
 };
+
+template<typename R, class... A> struct HookAbi<R(A...), ECallingConvention::Stdcall>
+{
+    using Original = R(__stdcall*)(A...);
+    using Entry = Original;
+};
+
+template<typename R, class... A> struct HookAbi<R(A...), ECallingConvention::Fastcall>
+{
+    using Original = R(__fastcall*)(A...);
+    using Entry = Original;
+};
+
+template<typename R, class This, class... A> struct HookAbi<R(This, A...), ECallingConvention::Thiscall>
+{
+    using Original = R(__thiscall*)(This, A...);
+    using Entry = R(__fastcall*)(This, void*, A...);
+};
+
+template<typename T, ECallingConvention Convention = ECallingConvention::Cdecl> class Hook;
+
+template<typename T> using CdeclHook = Hook<T, ECallingConvention::Cdecl>;
+template<typename T> using StdcallHook = Hook<T, ECallingConvention::Stdcall>;
+template<typename T> using FastcallHook = Hook<T, ECallingConvention::Fastcall>;
+template<typename T> using ThiscallHook = Hook<T, ECallingConvention::Thiscall>;
+
+template<typename R, class... A, ECallingConvention Convention> class Hook<R(A...), Convention> : public HookBase
+{
+  public:
+    using OriginalFunc_t = typename HookAbi<R(A...), Convention>::Original;
+    using EntryFunc_t = typename HookAbi<R(A...), Convention>::Entry;
+    using DetourFunc_t = HookResult<R>(__cdecl*)(void*, Hook*, A...);
+
+    void AddDetour(void* p_Context, DetourFunc_t p_Detour)
+    {
+        AddDetourInternal(p_Context, reinterpret_cast<void*>(p_Detour));
+    }
+
+    void RemoveDetour(DetourFunc_t p_Detour)
+    {
+        RemoveDetourInternal(reinterpret_cast<void*>(p_Detour));
+    }
+
+    R Call(A... p_Args)
+    {
+        LockForCall();
+
+        auto detours = GetDetours();
+
+        for (auto detour = *detours; detour != nullptr; detour = *++detours)
+        {
+            auto fn = reinterpret_cast<DetourFunc_t>(detour->m_DetourFunc);
+            auto result = fn(detour->m_Context, this, p_Args...);
+
+            if (result.m_HasReturnVal)
+            {
+                UnlockForCall();
+
+                if constexpr (std::is_void_v<R>)
+                {
+                    return;
+                }
+                else
+                {
+                    return result.m_ReturnVal;
+                }
+            }
+        }
+
+        UnlockForCall();
+
+        if constexpr (std::is_void_v<R>)
+        {
+            CallOriginal(p_Args...);
+        }
+        else
+        {
+            return CallOriginal(p_Args...);
+        }
+    }
+
+    R CallOriginal(A... p_Args)
+    {
+        assert(m_OriginalFunc != nullptr);
+
+        auto original = reinterpret_cast<OriginalFunc_t>(m_OriginalFunc);
+
+        if constexpr (std::is_void_v<R>)
+        {
+            original(p_Args...);
+        }
+        else
+        {
+            return original(p_Args...);
+        }
+    }
+};
+
+#define DECLARE_DETOUR_WITH_CONTEXT_CC(ContextType, Convention, ReturnType, DetourName, ...)                     \
+    template<typename... Args> static HookResult<ReturnType> __cdecl DetourName(void* p_Context, Args... p_Args) \
+    {                                                                                                            \
+        return reinterpret_cast<ContextType*>(p_Context)->DetourName##_Internal(p_Args...);                      \
+    }                                                                                                            \
+    HookResult<ReturnType> DetourName##_Internal(Hook<ReturnType(__VA_ARGS__), ECallingConvention::Convention>* p_Hook, __VA_ARGS__);
+
+#define DEFINE_DETOUR_WITH_CONTEXT_CC(ContextType, Convention, ReturnType, DetourName, ...) \
+    HookResult<ReturnType> ContextType::DetourName##_Internal(Hook<ReturnType(__VA_ARGS__), ECallingConvention::Convention>* p_Hook, __VA_ARGS__)
+
+#define DECLARE_STATIC_DETOUR_CC(Convention, ReturnType, DetourName, ...) \
+    static HookResult<ReturnType> __cdecl DetourName(void*, Hook<ReturnType(__VA_ARGS__), ECallingConvention::Convention>* p_Hook, __VA_ARGS__);
+
+#define DEFINE_STATIC_DETOUR_CC(ParentType, Convention, ReturnType, DetourName, ...) \
+    HookResult<ReturnType> __cdecl ParentType::DetourName(void*, Hook<ReturnType(__VA_ARGS__), ECallingConvention::Convention>* p_Hook, __VA_ARGS__)
+
+#define DECLARE_CDECL_DETOUR_WITH_CONTEXT(ContextType, ReturnType, DetourName, ...) \
+    DECLARE_DETOUR_WITH_CONTEXT_CC(ContextType, Cdecl, ReturnType, DetourName, __VA_ARGS__)
+
+#define DECLARE_STDCALL_DETOUR_WITH_CONTEXT(ContextType, ReturnType, DetourName, ...) \
+    DECLARE_DETOUR_WITH_CONTEXT_CC(ContextType, Stdcall, ReturnType, DetourName, __VA_ARGS__)
+
+#define DECLARE_FASTCALL_DETOUR_WITH_CONTEXT(ContextType, ReturnType, DetourName, ...) \
+    DECLARE_DETOUR_WITH_CONTEXT_CC(ContextType, Fastcall, ReturnType, DetourName, __VA_ARGS__)
+
+#define DECLARE_THISCALL_DETOUR_WITH_CONTEXT(ContextType, ReturnType, DetourName, ...) \
+    DECLARE_DETOUR_WITH_CONTEXT_CC(ContextType, Thiscall, ReturnType, DetourName, __VA_ARGS__)
+
+#define DEFINE_CDECL_DETOUR_WITH_CONTEXT(ContextType, ReturnType, DetourName, ...) \
+    DEFINE_DETOUR_WITH_CONTEXT_CC(ContextType, Cdecl, ReturnType, DetourName, __VA_ARGS__)
+
+#define DEFINE_STDCALL_DETOUR_WITH_CONTEXT(ContextType, ReturnType, DetourName, ...) \
+    DEFINE_DETOUR_WITH_CONTEXT_CC(ContextType, Stdcall, ReturnType, DetourName, __VA_ARGS__)
+
+#define DEFINE_FASTCALL_DETOUR_WITH_CONTEXT(ContextType, ReturnType, DetourName, ...) \
+    DEFINE_DETOUR_WITH_CONTEXT_CC(ContextType, Fastcall, ReturnType, DetourName, __VA_ARGS__)
+
+#define DEFINE_THISCALL_DETOUR_WITH_CONTEXT(ContextType, ReturnType, DetourName, ...) \
+    DEFINE_DETOUR_WITH_CONTEXT_CC(ContextType, Thiscall, ReturnType, DetourName, __VA_ARGS__)

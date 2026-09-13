@@ -2,33 +2,38 @@
 
 #include <IconsMaterialDesign.h>
 
-#include <UI/MainMenu.h>
+#include "MainMenu.h"
+#include "ModSelector.h"
+#include "Settings.h"
 #include <SDK.h>
 
-void MainMenu::Draw(const bool hasFocus)
+namespace UI
 {
-    if (!hasFocus)
+    void MainMenu::Draw(bool hasFocus)
     {
-        return;
+        if (!hasFocus)
+        {
+            return;
+        }
+
+        ImGui::BeginMainMenuBar();
+
+        ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+        ImGui::Text("Hitman Absolution SDK");
+        ImGui::PopFont();
+
+        if (ImGui::Button(ICON_MD_TOKEN " MODS"))
+        {
+            SDK::GetInstance().GetModSelector()->Show();
+        }
+
+        if (ImGui::Button(ICON_MD_SETTINGS " Settings"))
+        {
+            SDK::GetInstance().GetSettings()->Show();
+        }
+
+        SDK::GetInstance().OnDrawMenu();
+
+        ImGui::EndMainMenuBar();
     }
-
-    ImGui::BeginMainMenuBar();
-
-    ImGui::PushFont(SDK::GetInstance().GetBoldFont());
-    ImGui::Text("Hitman Absolution SDK");
-    ImGui::PopFont();
-
-    if (ImGui::Button(ICON_MD_TOKEN " MODS"))
-    {
-        SDK::GetInstance().GetModSelector()->Show();
-    }
-
-    if (ImGui::Button(ICON_MD_SETTINGS " Settings"))
-    {
-        SDK::GetInstance().GetSettings()->Show();
-    }
-
-    SDK::GetInstance().OnDrawMenu();
-
-    ImGui::EndMainMenuBar();
 }

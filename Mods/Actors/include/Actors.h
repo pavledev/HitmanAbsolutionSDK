@@ -1,24 +1,23 @@
 #pragma once
 
-#include <Glacier/Resource/ZRuntimeResourceID.h>
-#include <Glacier/STokenID.h>
+#include <Glacier/ZResource.h>
+#include <Glacier/ZToken.h>
 
-#include <ModInterface.h>
+#include <IModInterface.h>
 
 class ZDynamicResourceLibrary;
 
-class Actors : public ModInterface
+class Actors : public IModInterface
 {
-public:
+  public:
     Actors();
     ~Actors() override;
-    void Initialize() override;
     void OnEngineInitialized() override;
     void OnDrawMenu() override;
     void OnDrawUI(const bool hasFocus) override;
     void OnDraw3D() override;
 
-private:
+  private:
     void OnFrameUpdate(const SGameUpdateEvent& updateEvent);
 
     void EquipModel(ZActor* actor, const std::string& resourceID);
@@ -41,8 +40,6 @@ private:
     std::vector<FireArmKitEntity> fireArmKitEntities;
     bool spawnWeapon;
     int selectedActorWeaponIndex;
-
-    inline static int* godMode;
 };
 
 DECLARE_MOD(Actors)

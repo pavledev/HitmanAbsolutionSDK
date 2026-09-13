@@ -1,211 +1,258 @@
+#include "FreeCamera.h"
+
 #include "imgui.h"
 
 #include "IconsMaterialDesign.h"
 
-#include <Glacier/Templates/TEntityRef.h>
-#include <Glacier/Render/IRenderDestinationEntity.h>
-#include <Glacier/Render/ZRenderManager.h>
+#include <Glacier/ZEntity.h>
+#include <Glacier/ZRender.h>
 #include <Glacier/ZLevelManager.h>
-#include <Glacier/Engine/ZApplicationEngineWin32.h>
-#include <Glacier/Input/ZInputActionManager.h>
-#include <Glacier/Math/ZMath.h>
-#include <Glacier/Physics/ZCollisionManager.h>
-#include <Glacier/Actor/ZActor.h>
-#include <Glacier/UI/ZHUDManager.h>
+#include <Glacier/ZApplication.h>
+#include <Glacier/ZInput.h>
+#include <Glacier/ZMath.h>
+#include <Glacier/ZPhysics.h>
+#include <Glacier/ZActor.h>
+#include <Glacier/ZScaleform.h>
 #include <Glacier/ZGameTimeManager.h>
 
-#include "FreeCamera.h"
-#include "Global.h"
 #include "SDK.h"
 #include "Hooks.h"
 
-FreeCamera::FreeCamera() :
-    isFreeCameraActive(false),
-    freezeCamera(false),
-    toggleFreeCameraAction("ToggleFreeCamera"),
-    freezeFreeCameraAction("FreezeCamera"),
-    instantlyKillNpcAction("InstantKill"),
-    teleportMainCharacterAction("Teleport"),
-    pauseGameAction("PauseGame"),
-    toggleFreeCameraAndPauseGameAction("ToggleFreeCameraAndPauseGame"),
-    areControlsVisible(false),
-    pauseGame(false),
-    freeCamSpeedChangeThreshold(0.5f),
-    deltaTranslationSpeed(0.f),
-    freeCamTranslationSpeedChangeSensitivity(4.f),
-    freeCamTranslationSpeedMin(0.1f),
-    freeCamTranslationSpeedMax(10.f),
-    freeCamRotationSpeedMin(0.1f),
-    freeCamRotationSpeedMax(2.f),
-    freeCamRotationSpeedChangeSensitivity(2.f),
-    freeCamFovDependentSpeedMin(0.1f),
-    freeCamFovDependentSpeedMax(2.f),
-    fovDependentSpeedMultiplier(1.f),
-    persistentTranslationSpeedMultiplier(0x3F800000),
-    persistentRotationSpeedMultiplier(0x3F800000)
+FreeCamera::FreeCamera()
+    : m_IsFreeCameraActive(false)
+    , m_ShouldToggle(false)
+    , m_IsGamePaused(false)
+    , m_IsPlayerInputEnabled(false)
+    , m_IsFreeCameraFrozen(false)
+    , m_ToggleFreeCameraAction("ToggleFreeCamera")
+    , m_ActivatePlayerInputAction("ActivatePlayerInput")
+    , m_ActivateGameControlAction("ActivateGameControl")
+    , m_TogglePauseGameAction("TogglePauseGame")
+    , m_TeleportPlayerAction("TeleportPlayer")
+    , m_KillActorAction("KillActor")
+    , m_ShowFreeCameraWindow(false)
+    , m_ShowControlsWindow(false)
+    , m_FreeCamSpeedChangeThreshold(0.5f)
+    , m_DeltaTranslationSpeed(0.f)
+    , m_FreeCamTranslationSpeedChangeSensitivity(4.f)
+    , m_FreeCamTranslationSpeedMin(0.1f)
+    , m_FreeCamTranslationSpeedMax(10.f)
+    , m_FreeCamRotationSpeedMin(0.1f)
+    , m_FreeCamRotationSpeedMax(2.f)
+    , m_FreeCamRotationSpeedChangeSensitivity(2.f)
+    , m_FreeCamFovDependentSpeedMin(0.1f)
+    , m_FreeCamFovDependentSpeedMax(2.f)
+    , m_FOVDependentSpeedMultiplier(1.f)
+    , m_PersistentTranslationSpeedMultiplier(0x3F800000)
+    , m_PersistentRotationSpeedMultiplier(0x3F800000)
 {
-    pcControls = {
-        { "K", "Toggle freecam" },
-        { "F3", "Lock camera and enable 47 input" },
-        { "Ctrl + W/S", "Change FOV" },
-        { "Ctrl + A/D", "Roll camera" },
-        { "Alt + W/S", "Change camera speed" },
-        { "Space + Q/E", "Change camera height" },
-        { "Space + W/S", "Move camera on axis" },
-        { "Shift", "Increase camera speed" },
-        { "Ctrl + F9", "Teleport Hitman" },
-        { "F9", "Kill NPC" },
+    m_PcControls = {
+        {"K", "Toggle freecam"},
+        {"F3", "Freeze camera and enable player input"},
+
+        {"W / S", "Move camera forward/backward"},
+        {"A / D", "Move camera left/right"},
+        {"Q / E", "Move camera down/up"},
+        {"Arrow Keys", "Move camera"},
+
+        {"Mouse", "Rotate camera"},
+
+        {"Ctrl + A/D", "Roll camera"},
+        {"Ctrl + W/S", "Change FOV"},
+
+        {"Alt + W/S", "Change camera speed"},
+        {"Alt + A/D", "Change rotation speed"},
+
+        {"Ctrl + X", "Reset roll"},
+        {"Ctrl + Z", "Reset FOV"},
+        {"Alt + Z", "Reset camera speed"},
+
+        {"Space + W/A/S/D", "Move camera in world space"},
+        {"Space + Q/E", "Move camera vertically in world space"},
+
+        {"Shift", "Temporary speed boost"},
+        {"F", "Fixed-degree camera rotation"},
+
+        {"Ctrl + F6", "Teleport player"},
+        {"F9", "Kill humanoid"},
+
+        {"F8", "Pause/Resume game"}
     };
 
-    controllerControls = {
-        { "Y + L", "Change FOV" },
-        { "A + L", "Roll camera" },
-        { "A + L press", "Reset rotation" },
-        { "B + R", "Change camera speed" },
-        { "RT", "Increase camera speed" },
-        { "LB", "Lock camera and enable 47 input" },
-        { "LT + R", "Change camera height" },
+    m_ControllerControls = {
+        {"Right Stick", "Rotate camera"},
+        {"Left Stick", "Move camera"},
+
+        {"RB", "Move camera vertically"},
+        {"RT", "Temporary speed boost"},
+
+        {"A + Left Stick", "Roll camera"},
+        {"Y + Left Stick", "Change FOV"},
+        {"B + Left Stick", "Change camera speed"},
+
+        {"Left Stick Press", "Reset roll/FOV/speed"},
+
+        {"LT + Left Stick", "Move camera in world space"},
+        {"LT + Right Stick Vertical", "Move camera vertically in world space"},
+
+        {"LB", "Freeze camera and enable player input"}
     };
 }
 
 FreeCamera::~FreeCamera()
 {
     const ZMemberDelegate<FreeCamera, void(const SGameUpdateEvent&)> delegate(this, &FreeCamera::OnFrameUpdate);
+    Globals::GameLoopManager->UnregisterForFrameUpdate(delegate);
 
-    GameLoopManager->UnregisterForFrameUpdate(delegate);
-
-    if (isFreeCameraActive)
+    if (m_IsFreeCameraActive)
     {
-        ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
-        ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
-        TEntityRef<IRenderDestinationEntity> renderDestinationEntity = RenderManager->GetGameRenderDestinationEntity();
+        ZApplicationEngineWin32* applicationEngineWin32 = *Globals::ApplicationEngineWin32;
+        TEntityRef<IRenderDestinationEntity> renderDestinationEntity = Globals::RenderManager->GetGameRenderDestinationEntity();
 
-        renderDestinationEntity.GetRawPointer()->SetSource(engineAppCommon.GetMainCamera().GetEntityRef());
+        renderDestinationEntity.m_pInterfaceRef->SetSource(applicationEngineWin32->m_common.m_pMainCamera.m_entityRef);
 
-        TEntityRef<ZHitman5> hitman = LevelManager->GetHitman();
-
-        if (hitman.GetRawPointer())
+        if (!m_IsPlayerInputEnabled)
         {
-            ZHM5InputControl* inputControl = hitman.GetRawPointer()->GetInputControl();
+            TEntityRef<ZHitman5> hitman = Globals::LevelManager->m_rHitman;
 
-            if (inputControl)
+            if (hitman.m_pInterfaceRef)
             {
-                inputControl->EnableBindings();
+                ZHM5InputControl* inputControl = hitman.m_pInterfaceRef->m_pInputControl;
+
+                if (inputControl)
+                {
+                    inputControl->EnableBindings();
+                }
             }
         }
     }
-	
-    Hooks::ZEntitySceneContext_CreateScene.RemoveHook();
-    Hooks::ZEntitySceneContext_ClearScene.RemoveHook();
-    Hooks::ZFreeCameraControlEntity_UpdateCamera.RemoveHook();
-	Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput.RemoveHook();
-	Hooks::ZEngineAppCommon_ResetSceneCallback.RemoveHook();
-	Hooks::ZFreeCameraControlEntity_Dtor.RemoveHook();
 }
 
 void FreeCamera::Initialize()
 {
-    ModInterface::Initialize();
-
-    Hooks::ZEntitySceneContext_CreateScene.CreateHook("ZEntitySceneContext::CreateScene", 0x4479E0, ZEntitySceneContext_CreateSceneHook);
-    Hooks::ZEntitySceneContext_ClearScene.CreateHook("ZEntitySceneContext::ClearScene", 0x265A80, ZEntitySceneContext_ClearSceneHook);
-    //Hooks::ZFreeCameraControlEntity_UpdateCamera.CreateHook("ZFreeCameraControlEntity::UpdateCamera", 0x192990, ZFreeCameraControlEntity_UpdateCameraHook);
-    Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput.CreateHook("ZFreeCameraControlEntity::UpdateMovementFromInput", 0x3DFA70, ZFreeCameraControlEntity_UpdateMovementFromInputHook);
-    Hooks::ZEngineAppCommon_ResetSceneCallback.CreateHook("ZEngineAppCommon::ResetSceneCallbackHook", 0x53D390, ZEngineAppCommon_ResetSceneCallbackHook);
-
-    Hooks::ZEntitySceneContext_CreateScene.EnableHook();
-    Hooks::ZEntitySceneContext_ClearScene.EnableHook();
-    //Hooks::ZFreeCameraControlEntity_UpdateCamera.EnableHook();
-    Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput.EnableHook();
-    Hooks::ZEngineAppCommon_ResetSceneCallback.EnableHook();
-
-    leftBumperAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE53714);
-    rightBumperAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE536FC);
-    analogLeftXAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE5388C);
-    analogLeftYAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE5375C);
-    analogRightXAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE53868);
-    analogRightYAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE53818);
-    moveXAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE537B0);
-    moveYAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE53798);
-    moveZAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE537D8);
-    tiltCameraAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE53904);
-    turnCameraAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE537A4);
-    leftTriggerAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE538A4);
-    rightTriggerAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE537F0);
-    rollModifierAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE538E0);
-    fovModifierAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE53930);
-    resetRollAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE5384C);
-    resetFovAction = reinterpret_cast<ZInputAction*>(BaseAddress + 0xE53744);
+    Hooks::ZEntitySceneContext_ClearScene->AddDetour(this, &FreeCamera::ZEntitySceneContext_ClearScene);
+    Hooks::ZFreeCameraControlEntity_UpdateCamera->AddDetour(this, &FreeCamera::ZFreeCameraControlEntity_UpdateCamera);
+    Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput->AddDetour(this, &FreeCamera::ZFreeCameraControlEntity_UpdateMovementFromInput);
+    Hooks::ZEngineAppCommon_ResetSceneCallback->AddDetour(this, &FreeCamera::ZEngineAppCommon_ResetSceneCallback);
 }
 
 void FreeCamera::OnEngineInitialized()
 {
     const ZMemberDelegate<FreeCamera, void(const SGameUpdateEvent&)> delegate(this, &FreeCamera::OnFrameUpdate);
+    Globals::GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 
-    GameLoopManager->RegisterForFrameUpdate(delegate, 1);
+    const char* bindings = "FreeCameraInput={"
+                           "ToggleFreeCamera=tap(kb,k);"
+                           "TogglePauseGame=tap(kb,f8);"
+                           "ActivatePlayerInput=tap(kb,f3);"
+                           "TeleportPlayer=& hold(kb,lctrl) tap(kb,f6);"
+                           "KillHumanoid=tap(kb,f9);};";
 
-    AddBindings();
+    Globals::InputActionManager->AddBindings(bindings);
 }
 
 void FreeCamera::OnDrawMenu()
 {
-    bool isFreeCameraActive = this->isFreeCameraActive;
-
-    if (ImGui::Checkbox(ICON_MD_PHOTO_CAMERA " Free Camera", &isFreeCameraActive))
+    if (ImGui::Button(ICON_MD_PHOTO_CAMERA " Free camera"))
     {
-        ToggleFreeCamera();
-    }
-
-    if (ImGui::Checkbox(ICON_MD_TIMER " Pause Game", &pauseGame))
-    {
-        GameTimeManager->SetPaused(pauseGame);
-    }
-
-    if (ImGui::Button(ICON_MD_SPORTS_ESPORTS " Free Camera Controls"))
-    {
-        areControlsVisible = !areControlsVisible;
+        m_ShowFreeCameraWindow = !m_ShowFreeCameraWindow;
     }
 }
 
 void FreeCamera::OnDrawUI(const bool hasFocus)
 {
-    if (areControlsVisible)
+    if (!hasFocus)
+    {
+        return;
+    }
+
+    if (m_ShowFreeCameraWindow)
+    {
+        const auto center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+        ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+        const auto isWindowExpanded = ImGui::Begin(ICON_MD_PHOTO_CAMERA " FreeCam", &m_ShowFreeCameraWindow);
+        ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+
+        if (isWindowExpanded)
+        {
+            bool isFreeCamActive = m_IsFreeCameraActive;
+
+            if (ImGui::Checkbox("Enable free camera", &isFreeCamActive))
+            {
+                ToggleFreeCamera();
+            }
+
+            bool isPlayerInputEnabled = m_IsPlayerInputEnabled;
+
+            if (ImGui::Checkbox("Enable player input", &isPlayerInputEnabled))
+            {
+                TogglePlayerInput();
+            }
+
+            if (ImGui::Checkbox("Pause game in freecam", &m_IsGamePaused))
+            {
+                Globals::GameTimeManager->m_bPaused = m_IsGamePaused;
+            }
+
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::SetTooltip("Whether the player should move along with the camera when in freecam.");
+            }
+
+            if (ImGui::Button(ICON_MD_SPORTS_ESPORTS " Show freecam controls"))
+            {
+                m_ShowControlsWindow = !m_ShowControlsWindow;
+            }
+        }
+
+        ImGui::PopFont();
+        ImGui::End();
+        ImGui::PopFont();
+    }
+
+    if (m_ShowControlsWindow)
     {
         ImGui::PushFont(SDK::GetInstance().GetBoldFont());
 
-        const auto areControlsExpanded = ImGui::Begin(ICON_MD_PHOTO_CAMERA " Free Camera Controls", &areControlsVisible);
+        const auto areControlsExpanded = ImGui::Begin(ICON_MD_PHOTO_CAMERA " Free Camera Controls", &m_ShowControlsWindow);
 
         ImGui::PushFont(SDK::GetInstance().GetRegularFont());
 
         if (areControlsExpanded)
         {
             ImGui::TextUnformatted("PC Controls");
-            ImGui::BeginTable("FreeCameraControlsPc", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit);
 
-            for (auto& [key, description] : pcControls)
+            if (ImGui::BeginTable("FreeCamControlsPc", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit))
             {
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
-                ImGui::TextUnformatted(key.c_str());
-                ImGui::TableNextColumn();
-                ImGui::TextUnformatted(description.c_str());
-            }
+                for (auto& [key, description] : m_PcControls)
+                {
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+                    ImGui::TextUnformatted(key.c_str());
+                    ImGui::TableNextColumn();
+                    ImGui::TextUnformatted(description.c_str());
+                }
 
-            ImGui::EndTable();
+                ImGui::EndTable();
+            }
 
             ImGui::TextUnformatted("Controller Controls");
-            ImGui::BeginTable("FreeCameraControlsController", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit);
 
-            for (auto& [key, description] : controllerControls)
+            if (ImGui::BeginTable("FreeCamControlsController", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit))
             {
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
-                ImGui::TextUnformatted(key.c_str());
-                ImGui::TableNextColumn();
-                ImGui::TextUnformatted(description.c_str());
-            }
+                for (auto& [key, description] : m_ControllerControls)
+                {
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+                    ImGui::TextUnformatted(key.c_str());
+                    ImGui::TableNextColumn();
+                    ImGui::TextUnformatted(description.c_str());
+                }
 
-            ImGui::EndTable();
+                ImGui::EndTable();
+            }
         }
 
         ImGui::PopFont();
@@ -216,258 +263,406 @@ void FreeCamera::OnDrawUI(const bool hasFocus)
 
 void FreeCamera::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
 {
-    if (HUDManager->IsPauseMenuActive())
+    if (Globals::HUDManager->m_bPauseMenuActive)
     {
         return;
     }
 
-    ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
+    ZApplicationEngineWin32* applicationEngineWin32 = *Globals::ApplicationEngineWin32;
 
     if (!applicationEngineWin32)
     {
         return;
     }
 
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+    ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
     if (!hitman)
     {
         return;
     }
 
-    ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
-    ZFreeCameraControlEntity* freeCameraControlEntity = engineAppCommon.GetFreeCameraControl().GetRawPointer();
+    ZFreeCameraControlEntity* freeCameraControlEntity = applicationEngineWin32->m_common.m_pFreeCameraControl.m_pInterfaceRef;
 
-    if (toggleFreeCameraAction.Digital())
+    if (m_ToggleFreeCameraAction.Digital())
     {
         ToggleFreeCamera();
     }
 
-    if (toggleFreeCameraAndPauseGameAction.Digital())
+    if (m_ShouldToggle)
     {
-        ToggleFreeCamera();
+        m_ShouldToggle = false;
 
-        pauseGame = !pauseGame;
-
-        GameTimeManager->SetPaused(pauseGame);
-    }
-
-    if (isFreeCameraActive)
-    {
-        if (instantlyKillNpcAction.Digital())
+        if (m_IsFreeCameraActive)
         {
-            InstantlyKillNpc();
+            EnableFreeCamera();
         }
-
-        if (teleportMainCharacterAction.Digital())
+        else
         {
-            TeleportMainCharacter();
-        }
-
-        if (freezeFreeCameraAction.Digital())
-        {
-            freezeCamera = !freezeCamera;
-
-            if (freeCameraControlEntity)
-            {
-                freeCameraControlEntity->SetActive(!freezeCamera);
-            }
-
-            ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-            if (hitman)
-            {
-                ZHM5InputControl* inputControl = hitman->GetInputControl();
-
-                if (inputControl)
-                {
-                    if (freezeCamera)
-                    {
-                        inputControl->EnableBindings();
-                    }
-                    else
-                    {
-                        inputControl->DisableBindings();
-                    }
-                }
-            }
+            DisableFreeCamera();
         }
     }
 
-    if (pauseGameAction.Digital())
+    if (m_IsFreeCameraActive)
     {
-        pauseGame = !pauseGame;
+        if (m_TogglePauseGameAction.Digital())
+        {
+            m_IsGamePaused = !m_IsGamePaused;
+            Globals::GameTimeManager->m_bPaused = m_IsGamePaused;
+        }
 
-        GameTimeManager->SetPaused(pauseGame);
+        if (m_ActivatePlayerInputAction.Digital() || m_ActivateGameControlAction.Digital())
+        {
+            TogglePlayerInput();
+            SetFreeCamFrozen(m_IsPlayerInputEnabled);
+        }
+
+        if (m_TeleportPlayerAction.Digital())
+        {
+            TeleportPlayer();
+        }
+
+        if (m_KillActorAction.Digital())
+        {
+            KillActor();
+        }
     }
 }
 
 void FreeCamera::ToggleFreeCamera()
 {
-    ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
-    ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
-
-    if (!engineAppCommon.GetFreeCamera().GetRawPointer())
-    {
-        //Hooks::ZFreeCameraControlEntity_UpdateCamera.CreateHook("ZFreeCameraControlEntity::UpdateCamera", 0x192990, ZFreeCameraControlEntity_UpdateCameraHook);
-        //Hooks::ZFreeCameraControlEntity_UpdateCamera.EnableHook();
-
-        engineAppCommon.CreateFreeCameraAndControl();
-
-        InputActionManager->AddBindings("FreeCamControl0={SpeedModifier0=| hold(gc0,b) | hold(gc0,circle) | hold(kb,lalt) hold(kb, ralt);};");
-        InputActionManager->AddBindings("FreeCamControl1={SpeedModifier1=| hold(gc1,b) | hold(gc1,circle) | hold(kb,lalt) hold(kb, ralt);};");
-
-        speedModifierAction[0] = ZInputAction("SpeedModifier0");
-        speedModifierAction[1] = ZInputAction("SpeedModifier1");
-    }
-
-    isFreeCameraActive = !isFreeCameraActive;
-
-    if (isFreeCameraActive)
-    {
-        EnableFreeCamera();
-    }
-    else
-    {
-        DisableFreeCamera();
-    }
-
-    engineAppCommon.GetFreeCameraControl().GetRawPointer()->SetActive(isFreeCameraActive);
+    m_IsFreeCameraActive = !m_IsFreeCameraActive;
+    m_ShouldToggle = true;
 }
 
 void FreeCamera::EnableFreeCamera()
 {
-    ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
-    ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
+    ZApplicationEngineWin32* applicationEngineWin32 = *Globals::ApplicationEngineWin32;
 
-    TEntityRef<ZCameraEntity> freeCamera = engineAppCommon.GetFreeCamera();
+    if (!applicationEngineWin32->m_common.m_pFreeCamera)
+    {
+        applicationEngineWin32->m_common.CreateFreeCameraAndControl();
 
-    if (!freeCamera.GetRawPointer())
+        Globals::InputActionManager->AddBindings(
+            "FreeCamControl0={"
+            "SpeedModifier0=| hold(gc0,b) | hold(gc0,circle) | hold(kb,lalt) hold(kb, ralt);"
+            "ResetSpeed0=| hold(gc0, leftstick) | hold(gc0, left_thumb) hold(kb, z);"
+            "};"
+        );
+        Globals::InputActionManager->AddBindings(
+            "FreeCamControl1={"
+            "SpeedModifier1=| hold(gc1,b) | hold(gc1,circle) | hold(kb,lalt) hold(kb, ralt);"
+            "ResetSpeed1=| hold(gc1, leftstick) | hold(gc1, left_thumb) hold(kb, z);"
+            "};"
+        );
+    }
+
+    if (!applicationEngineWin32->m_common.m_pFreeCamera)
     {
         return;
     }
 
-    TEntityRef<IRenderDestinationEntity> renderDestinationEntity = RenderManager->GetGameRenderDestinationEntity();
-    TEntityRef<ZCameraEntity> playerCamera = renderDestinationEntity.GetRawPointer()->GetSource();
+    TEntityRef<IRenderDestinationEntity> renderDestinationEntity = Globals::RenderManager->GetGameRenderDestinationEntity();
+    TEntityRef<ZCameraEntity> playerCamera = renderDestinationEntity.m_pInterfaceRef->GetSource();
 
-    engineAppCommon.SetMainCamera(playerCamera);
-    engineAppCommon.CopyMainCameraSettingsToFreeCamera();
-    renderDestinationEntity.GetRawPointer()->SetSource(freeCamera.GetEntityRef());
+    applicationEngineWin32->m_common.m_pMainCamera = playerCamera;
+    applicationEngineWin32->m_common.CopyMainCameraSettingsToFreeCamera();
+    renderDestinationEntity.m_pInterfaceRef->SetSource(applicationEngineWin32->m_common.m_pFreeCamera.m_entityRef);
 
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-    if (hitman)
+    if (!m_IsPlayerInputEnabled)
     {
-        ZHM5InputControl* inputControl = hitman->GetInputControl();
+        ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
-        if (inputControl)
+        if (hitman)
         {
-            inputControl->DisableBindings();
+            ZHM5InputControl* inputControl = hitman->m_pInputControl;
+
+            if (inputControl)
+            {
+                inputControl->DisableBindings();
+            }
         }
     }
+
+    if (m_IsGamePaused)
+    {
+        Globals::GameTimeManager->m_bPaused = true;
+    }
+
+    applicationEngineWin32->m_common.m_pFreeCameraControl.m_pInterfaceRef->SetActive(true);
 }
 
 void FreeCamera::DisableFreeCamera()
 {
-    ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
-    ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
-    TEntityRef<IRenderDestinationEntity> renderDestinationEntity = RenderManager->GetGameRenderDestinationEntity();
+    ZApplicationEngineWin32* applicationEngineWin32 = *Globals::ApplicationEngineWin32;
+    TEntityRef<IRenderDestinationEntity> renderDestinationEntity = Globals::RenderManager->GetGameRenderDestinationEntity();
     TEntityRef<ZCameraEntity> mainCamera;
 
-    renderDestinationEntity.GetRawPointer()->SetSource(engineAppCommon.GetMainCamera().GetEntityRef());
-    engineAppCommon.SetMainCamera(mainCamera);
+    renderDestinationEntity.m_pInterfaceRef->SetSource(applicationEngineWin32->m_common.m_pMainCamera.m_entityRef);
+    applicationEngineWin32->m_common.m_pMainCamera = mainCamera;
 
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-    if (hitman)
+    if (!m_IsPlayerInputEnabled)
     {
-        ZHM5InputControl* inputControl = hitman->GetInputControl();
+        ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
-        if (inputControl)
+        if (hitman)
         {
-            inputControl->EnableBindings();
+            ZHM5InputControl* inputControl = hitman->m_pInputControl;
+
+            if (inputControl)
+            {
+                inputControl->EnableBindings();
+            }
+        }
+    }
+
+    Globals::GameTimeManager->m_bPaused = false;
+
+    applicationEngineWin32->m_common.m_pFreeCameraControl.m_pInterfaceRef->SetActive(false);
+}
+
+void FreeCamera::TogglePlayerInput()
+{
+    m_IsPlayerInputEnabled = !m_IsPlayerInputEnabled;
+
+    ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+
+    if (!hitman)
+    {
+        return;
+    }
+
+    ZHM5InputControl* inputControl = hitman->m_pInputControl;
+
+    if (!inputControl)
+    {
+        return;
+    }
+
+    if (m_IsPlayerInputEnabled)
+    {
+        inputControl->EnableBindings();
+    }
+    else
+    {
+        inputControl->DisableBindings();
+    }
+}
+
+void FreeCamera::SetFreeCamFrozen(bool p_Frozen)
+{
+    m_IsFreeCameraFrozen = p_Frozen;
+
+    auto freeCameraControl = (*Globals::ApplicationEngineWin32)->m_common.m_pFreeCameraControl;
+
+    if (freeCameraControl.m_pInterfaceRef)
+    {
+        freeCameraControl.m_pInterfaceRef->m_bActive = !p_Frozen;
+    }
+}
+
+void FreeCamera::UpdateFov(float p_Delta)
+{
+    const auto freeCameraControlEntity = (*Globals::ApplicationEngineWin32)->m_common.m_pFreeCameraControl.m_pInterfaceRef;
+
+    float fov = (((((m_TemporaryTranslationSpeedMultiplier * freeCameraControlEntity->m_fMoveSpeed) * m_PersistentTranslationSpeedMultiplier)
+                   * m_FOVDependentSpeedMultiplier)
+                  * freeCameraControlEntity->m_fDeltaFov)
+                 * p_Delta)
+                + freeCameraControlEntity->m_fFov;
+
+    if (fov >= 170.f)
+    {
+        fov = 170.f;
+    }
+    else if (fov < 5.0)
+    {
+        fov = 5.f;
+    }
+
+    freeCameraControlEntity->m_fFov = fov;
+
+    if (fov < freeCameraControlEntity->m_fInitialFov)
+    {
+        m_FOVDependentSpeedMultiplier = ZMath::MapRange01(fov, 5.f, freeCameraControlEntity->m_fInitialFov) * (1.f - m_FreeCamFovDependentSpeedMin)
+                                        + m_FreeCamFovDependentSpeedMin;
+    }
+    else
+    {
+        m_FOVDependentSpeedMultiplier =
+            ZMath::MapRange01(fov, freeCameraControlEntity->m_fInitialFov, 170.f) * (m_FreeCamFovDependentSpeedMax - 1.f) + 1.f;
+    }
+
+    if (freeCameraControlEntity->m_pControlledCameraEntity)
+    {
+        freeCameraControlEntity->m_pControlledCameraEntity->SetFovYDeg(fov);
+    }
+}
+
+float FreeCamera::MoveValueWithinRange(
+    const float p_Delta, const float p_CurrentValue, const float p_PivotValue, const float p_RangeMin, const float p_RangeMax
+)
+{
+    float result;
+
+    if (p_CurrentValue < p_PivotValue)
+    {
+        result = (std::abs(p_RangeMin - 1.f) * 0.1f) * p_Delta + p_CurrentValue;
+    }
+    else
+    {
+        result = (std::abs(p_RangeMax - 1.f) * 0.1f) * p_Delta + p_CurrentValue;
+    }
+
+    if (result < p_RangeMin)
+    {
+        result = p_RangeMin;
+    }
+    else if (result > p_RangeMax)
+    {
+        result = p_RangeMax;
+    }
+
+    return result;
+}
+
+bool FreeCamera::RaycastFromFreeCamera(ZRayQueryOutput& p_RayQueryOutput)
+{
+    ZApplicationEngineWin32* applicationEngineWin32 = *Globals::ApplicationEngineWin32;
+    TEntityRef<ZCameraEntity> freeCamera = applicationEngineWin32->m_common.m_pFreeCamera;
+
+    SMatrix worldMatrix = freeCamera.m_pInterfaceRef->GetObjectToWorldMatrix();
+    float4 invertedDirection = float4(-worldMatrix.ZAxis.x, -worldMatrix.ZAxis.y, -worldMatrix.ZAxis.z, -worldMatrix.ZAxis.w);
+    float4 from = worldMatrix.Trans;
+    float4 to = worldMatrix.Trans + invertedDirection * 500.f;
+
+    if (!Globals::CollisionManager)
+    {
+        return false;
+    }
+
+    ZRayQueryInput rayQueryInput = ZRayQueryInput(from, to, ERayDetailLevel::RAYDETAILS_MESH);
+
+    if (!Globals::CollisionManager->RayCastClosestHit(rayQueryInput, &p_RayQueryOutput))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void FreeCamera::TeleportPlayer()
+{
+    ZRayQueryOutput rayQueryOutput{};
+
+    if (RaycastFromFreeCamera(rayQueryOutput) && rayQueryOutput.m_BlockingEntity.m_pEntityTypePtrPtr)
+    {
+        if (Globals::LevelManager->m_rHitman.m_pInterfaceRef)
+        {
+            ZSpatialEntity* spatialEntity = Globals::LevelManager->m_rHitman.m_entityRef.QueryInterfacePtr<ZSpatialEntity>();
+            SMatrix worldMatrix = spatialEntity->GetObjectToWorldMatrix();
+
+            worldMatrix.Trans = rayQueryOutput.m_vPosition;
+
+            spatialEntity->SetObjectToWorldMatrix(worldMatrix);
         }
     }
 }
 
-void FreeCamera::OnCreateScene(ZEntitySceneContext* entitySceneContext, const ZString& streamingState)
+void FreeCamera::KillActor()
 {
-    Hooks::ZFreeCameraControlEntity_UpdateCamera.CreateHook("ZFreeCameraControlEntity::UpdateCamera", 0x192990, ZFreeCameraControlEntity_UpdateCameraHook);
-    Hooks::ZFreeCameraControlEntity_UpdateCamera.EnableHook();
+    ZRayQueryOutput rayQueryOutput{};
 
-    if (isFreeCameraActive)
+    if (RaycastFromFreeCamera(rayQueryOutput) && rayQueryOutput.m_BlockingEntity.m_pEntityTypePtrPtr)
+    {
+        ZActor* actor = rayQueryOutput.m_BlockingEntity.QueryInterfacePtr<ZActor>();
+
+        if (actor)
+        {
+            actor->KillActor(EActorDeathType::eADT_UNDEFINED, true);
+        }
+    }
+}
+
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    FreeCamera, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene
+)
+{
+    if (m_IsFreeCameraActive)
     {
         DisableFreeCamera();
     }
 
-    isFreeCameraActive = false;
+    m_IsFreeCameraActive = false;
+    m_ShouldToggle = false;
+
+    return {HookAction::Continue()};
 }
 
-void FreeCamera::OnClearScene(ZEntitySceneContext* entitySceneContext, bool fullyUnloadScene)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(FreeCamera, void, ZEngineAppCommon_ResetSceneCallback, ZEngineAppCommon* p_EngineAppCommon)
 {
-    Hooks::ZFreeCameraControlEntity_UpdateCamera.RemoveHook();
+    p_Hook->CallOriginal(p_EngineAppCommon);
 
-    if (isFreeCameraActive)
-    {
-        DisableFreeCamera();
-    }
+    ZApplicationEngineWin32* applicationEngineWin32 = *Globals::ApplicationEngineWin32;
+    TEntityRef<ZCameraEntity> freeCamera;
 
-    isFreeCameraActive = false;
+    applicationEngineWin32->m_common.m_pFreeCamera = freeCamera;
+
+    return {HookAction::Return()};
 }
 
-void FreeCamera::OnUpdateCamera(const float delta)
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    FreeCamera, void, ZFreeCameraControlEntity_UpdateCamera, ZFreeCameraControlEntity* p_FreeCameraControlEntity, float p_Dt
+)
 {
-    if (HUDManager->IsPauseMenuActive())
+    if (!m_IsFreeCameraActive)
     {
-        return;
+        return {HookAction::Return()};
     }
 
-    ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
-    ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
-    ZFreeCameraControlEntity* freeCameraControlEntity = engineAppCommon.GetFreeCameraControl().GetRawPointer();
+    if (Globals::HUDManager->m_bPauseMenuActive)
+    {
+        return {HookAction::Return()};
+    }
+
+    ZApplicationEngineWin32* applicationEngineWin32 = *Globals::ApplicationEngineWin32;
+    ZFreeCameraControlEntity* freeCameraControlEntity = applicationEngineWin32->m_common.m_pFreeCameraControl.m_pInterfaceRef;
 
     if (!freeCameraControlEntity)
     {
-        return;
+        return {HookAction::Return()};
     }
 
-    ZCameraEntity* controlledCameraEntity = freeCameraControlEntity->GetControlledCameraEntity();
-
-    if (controlledCameraEntity)
+    if (freeCameraControlEntity->m_pControlledCameraEntity)
     {
-        UpdateFov(delta);
+        UpdateFov(p_Dt);
 
-        persistentTranslationSpeedMultiplier = MoveValueWithinRange(
-            (delta * deltaTranslationSpeed) * freeCamTranslationSpeedChangeSensitivity,
-            persistentTranslationSpeedMultiplier,
-            1.0,
-            freeCamTranslationSpeedMin,
-            freeCamTranslationSpeedMax);
-        persistentRotationSpeedMultiplier = MoveValueWithinRange(
-            (delta * deltaRotationSpeed) * freeCamRotationSpeedChangeSensitivity,
-            persistentRotationSpeedMultiplier,
-            1.0,
-            freeCamRotationSpeedMin,
-            freeCamRotationSpeedMax);
+        m_PersistentTranslationSpeedMultiplier = MoveValueWithinRange(
+            (p_Dt * m_DeltaTranslationSpeed) * m_FreeCamTranslationSpeedChangeSensitivity, m_PersistentTranslationSpeedMultiplier, 1.0,
+            m_FreeCamTranslationSpeedMin, m_FreeCamTranslationSpeedMax
+        );
+        m_PersistentRotationSpeedMultiplier = MoveValueWithinRange(
+            (p_Dt * m_DeltaRotationSpeed) * m_FreeCamRotationSpeedChangeSensitivity, m_PersistentRotationSpeedMultiplier, 1.0,
+            m_FreeCamRotationSpeedMin, m_FreeCamRotationSpeedMax
+        );
 
-        float translationSpeed = ((temporaryTranslationSpeedMultiplier * freeCameraControlEntity->GetMoveSpeed()) * persistentTranslationSpeedMultiplier) * fovDependentSpeedMultiplier;
-        float rotationSpeed = ((temporaryRotationSpeedMultiplier * freeCameraControlEntity->GetTurnSpeed()) * persistentRotationSpeedMultiplier) * fovDependentSpeedMultiplier;
+        float translationSpeed =
+            ((m_TemporaryTranslationSpeedMultiplier * freeCameraControlEntity->m_fMoveSpeed) * m_PersistentTranslationSpeedMultiplier)
+            * m_FOVDependentSpeedMultiplier;
+        float rotationSpeed = ((m_TemporaryRotationSpeedMultiplier * freeCameraControlEntity->m_fTurnSpeed) * m_PersistentRotationSpeedMultiplier)
+                              * m_FOVDependentSpeedMultiplier;
 
-        float moveX = (translationSpeed * freeCameraControlEntity->GetMoveX()) * delta;
-        float moveY = (translationSpeed * freeCameraControlEntity->GetMoveY()) * delta;
-        float moveZ = (translationSpeed * freeCameraControlEntity->GetMoveZ()) * delta;
-        float deltaRoll = (rotationSpeed * freeCameraControlEntity->GetDeltaRoll()) * delta;
-        float deltaYaw = (rotationSpeed * freeCameraControlEntity->GetDeltaYaw()) * delta;
-        float deltaPitch = (rotationSpeed * freeCameraControlEntity->GetDeltaPitch()) * delta;
+        float moveX = (translationSpeed * freeCameraControlEntity->m_fMoveX) * p_Dt;
+        float moveY = (translationSpeed * freeCameraControlEntity->m_fMoveY) * p_Dt;
+        float moveZ = (translationSpeed * freeCameraControlEntity->m_fMoveZ) * p_Dt;
+        float deltaRoll = (rotationSpeed * freeCameraControlEntity->m_fDeltaRoll) * p_Dt;
+        float deltaYaw = (rotationSpeed * freeCameraControlEntity->m_fDeltaYaw) * p_Dt;
+        float deltaPitch = (rotationSpeed * freeCameraControlEntity->m_fDeltaPitch) * p_Dt;
 
-        bool updateCameraRotation = std::abs(deltaRoll) > 0.00024414062 ||
-            std::abs(deltaYaw) > 0.00024414062 ||
-            std::abs(deltaPitch) > 0.00024414062 ||
-            freeCameraControlEntity->GetResetRoll();
-        bool updateCameraPosition = std::abs(moveX) > 0.00024414062 ||
-            std::abs(moveY) > 0.00024414062 ||
-            std::abs(moveZ) > 0.00024414062;
-        SMatrix currentCameraToWorld = controlledCameraEntity->GetObjectToWorldMatrix();
+        bool updateCameraRotation = std::abs(deltaRoll) > 0.00024414062 || std::abs(deltaYaw) > 0.00024414062 || std::abs(deltaPitch) > 0.00024414062
+                                    || freeCameraControlEntity->m_bResetRoll;
+        bool updateCameraPosition = std::abs(moveX) > 0.00024414062 || std::abs(moveY) > 0.00024414062 || std::abs(moveZ) > 0.00024414062;
+        SMatrix currentCameraToWorld = freeCameraControlEntity->m_pControlledCameraEntity->GetObjectToWorldMatrix();
 
         if (updateCameraRotation)
         {
@@ -483,49 +678,55 @@ void FreeCamera::OnUpdateCamera(const float delta)
 
         if (updateCameraRotation || updateCameraPosition)
         {
-            controlledCameraEntity->SetObjectToWorldMatrix(currentCameraToWorld);
+            freeCameraControlEntity->m_pControlledCameraEntity->SetObjectToWorldMatrix(currentCameraToWorld);
         }
     }
+
+    return {HookAction::Return()};
 }
 
-void FreeCamera::OnUpdateMovementFromInput()
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    FreeCamera, void, ZFreeCameraControlEntity_UpdateMovementFromInput, ZFreeCameraControlEntity* p_FreeCameraControlEntity
+)
 {
-    if (HUDManager->IsPauseMenuActive())
+    if (!m_IsFreeCameraActive)
     {
-        return;
+        return {HookAction::Return()};
     }
 
-    ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
-    ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
-    ZFreeCameraControlEntity* freeCameraControlEntity = engineAppCommon.GetFreeCameraControl().GetRawPointer();
+    if (Globals::HUDManager->m_bPauseMenuActive)
+    {
+        return {HookAction::Return()};
+    }
+
+    ZApplicationEngineWin32* applicationEngineWin32 = *Globals::ApplicationEngineWin32;
+    ZFreeCameraControlEntity* freeCameraControlEntity = applicationEngineWin32->m_common.m_pFreeCameraControl.m_pInterfaceRef;
 
     if (!freeCameraControlEntity)
     {
-        return;
+        return {HookAction::Return()};
     }
 
-    const int controllerID = freeCameraControlEntity->GetControllerID();
+    freeCameraControlEntity->m_fMoveX = 0;
+    freeCameraControlEntity->m_fMoveY = 0;
+    freeCameraControlEntity->m_fMoveZ = 0;
+    freeCameraControlEntity->m_fDeltaPitch = 0;
+    freeCameraControlEntity->m_fDeltaRoll = 0;
+    freeCameraControlEntity->m_fDeltaFov = 0;
+    freeCameraControlEntity->m_bMoveInWorldSpace = false;
+    freeCameraControlEntity->m_bResetRoll = false;
 
-    freeCameraControlEntity->SetMoveX(0);
-    freeCameraControlEntity->SetMoveY(0);
-    freeCameraControlEntity->SetMoveZ(0);
-    freeCameraControlEntity->SetDeltaPitch(0);
-    freeCameraControlEntity->SetDeltaRoll(0);
-    freeCameraControlEntity->SetDeltaFov(0);
-    freeCameraControlEntity->SetMoveInWorldSpace(false);
-    freeCameraControlEntity->SetResetRoll(false);
+    m_DeltaTranslationSpeed = 0.f;
+    m_DeltaRotationSpeed = 0.f;
 
-    deltaTranslationSpeed = 0.f;
-    deltaRotationSpeed = 0.f;
-
-    if (leftBumperAction[controllerID].Digital())
+    if (m_LeftBumperAction[freeCameraControlEntity->m_nControllerId].Digital())
     {
-        freeCameraControlEntity->SetIsGameControlActive(true);
+        freeCameraControlEntity->m_bIsGameControlActive = true;
 
-        return;
+        return {HookAction::Return()};
     }
 
-    float moveX = moveXAction->Analog() + analogLeftXAction[controllerID].Analog();
+    float moveX = m_MoveXAction.Analog() + m_AnalogLeftXAction[freeCameraControlEntity->m_nControllerId].Analog();
 
     if (moveX >= 1.f)
     {
@@ -536,7 +737,7 @@ void FreeCamera::OnUpdateMovementFromInput()
         moveX = -1.f;
     }
 
-    float moveY = analogLeftYAction[controllerID].Analog() - moveYAction->Analog();
+    float moveY = m_AnalogLeftYAction[freeCameraControlEntity->m_nControllerId].Analog() - m_MoveYAction.Analog();
 
     if (moveY >= 1.f)
     {
@@ -547,7 +748,7 @@ void FreeCamera::OnUpdateMovementFromInput()
         moveY = -1.f;
     }
 
-    float moveZ = analogRightYAction[controllerID].Analog() - moveZAction->Analog();
+    float moveZ = m_AnalogRightYAction[freeCameraControlEntity->m_nControllerId].Analog() - m_MoveZAction.Analog();
 
     if (moveZ >= 1.f)
     {
@@ -558,7 +759,7 @@ void FreeCamera::OnUpdateMovementFromInput()
         moveZ = -1.f;
     }
 
-    float deltaPitch = analogRightYAction[controllerID].Analog() - tiltCameraAction->Analog() * 0.14285715f;
+    float deltaPitch = m_AnalogRightYAction[freeCameraControlEntity->m_nControllerId].Analog() - m_TiltCameraAction.Analog() * 0.14285715f;
 
     if (deltaPitch >= 4.f)
     {
@@ -569,7 +770,7 @@ void FreeCamera::OnUpdateMovementFromInput()
         deltaPitch = -4.f;
     }
 
-    float deltaYaw = turnCameraAction->Analog() * 0.14285715f + analogRightXAction[controllerID].Analog();
+    float deltaYaw = m_TurnCameraAction.Analog() * 0.14285715f + m_AnalogRightXAction[freeCameraControlEntity->m_nControllerId].Analog();
 
     if (deltaYaw >= 4.f)
     {
@@ -580,242 +781,86 @@ void FreeCamera::OnUpdateMovementFromInput()
         deltaYaw = -4.f;
     }
 
-    temporaryTranslationSpeedMultiplier = rightTriggerAction[controllerID].Analog() * (freeCamTranslationSpeedMax - 1.f) + 1.f;
-    temporaryRotationSpeedMultiplier = (rightTriggerAction[controllerID].Analog() * (freeCamRotationSpeedMax - 1.f)) + 1.f;
+    m_TemporaryTranslationSpeedMultiplier =
+        m_RightTriggerAction[freeCameraControlEntity->m_nControllerId].Analog() * (m_FreeCamTranslationSpeedMax - 1.f) + 1.f;
+    m_TemporaryRotationSpeedMultiplier =
+        (m_RightTriggerAction[freeCameraControlEntity->m_nControllerId].Analog() * (m_FreeCamRotationSpeedMax - 1.f)) + 1.f;
 
-    if (leftTriggerAction[controllerID].Analog() > 0.60000002)
+    if (m_LeftTriggerAction[freeCameraControlEntity->m_nControllerId].Analog() > 0.60000002)
     {
-        freeCameraControlEntity->SetMoveX(moveX);
-        freeCameraControlEntity->SetMoveY(moveY);
-        freeCameraControlEntity->SetMoveZ(moveZ);
-        freeCameraControlEntity->SetMoveInWorldSpace(true);
+        freeCameraControlEntity->m_fMoveX = moveX;
+        freeCameraControlEntity->m_fMoveY = moveY;
+        freeCameraControlEntity->m_fMoveZ = moveZ;
+        freeCameraControlEntity->m_bMoveInWorldSpace = true;
     }
-    else if (rightBumperAction[controllerID].Analog())
+    else if (m_RightBumperAction[freeCameraControlEntity->m_nControllerId].Analog())
     {
-        freeCameraControlEntity->SetMoveX(moveX);
-        freeCameraControlEntity->SetMoveZ(analogLeftYAction->Digital());
-        freeCameraControlEntity->SetDeltaPitch(deltaPitch);
-        freeCameraControlEntity->SetDeltaYaw(deltaYaw);
+        freeCameraControlEntity->m_fMoveX = moveX;
+        freeCameraControlEntity->m_fMoveZ = m_AnalogLeftYAction[freeCameraControlEntity->m_nControllerId].Digital();
+        freeCameraControlEntity->m_fDeltaPitch = deltaPitch;
+        freeCameraControlEntity->m_fDeltaYaw = deltaYaw;
     }
-    else if (rollModifierAction[controllerID].Digital() || fovModifierAction[controllerID].Digital() || speedModifierAction[controllerID].Digital())
+    else if (
+        m_RollModifierAction[freeCameraControlEntity->m_nControllerId].Digital()
+        || m_FOVModifierAction[freeCameraControlEntity->m_nControllerId].Digital()
+        || m_SpeedModifierAction[freeCameraControlEntity->m_nControllerId].Digital()
+    )
     {
-        if (rollModifierAction[controllerID].Digital())
+        if (m_RollModifierAction[freeCameraControlEntity->m_nControllerId].Digital())
         {
-            if (resetRollAction[controllerID].Digital())
+            if (m_ResetRollAction[freeCameraControlEntity->m_nControllerId].Digital())
             {
-                freeCameraControlEntity->SetRoll(0);
-                freeCameraControlEntity->SetResetRoll(true);
+                freeCameraControlEntity->m_fRoll = 0;
+                freeCameraControlEntity->m_bResetRoll = true;
             }
             else
             {
-                freeCameraControlEntity->SetDeltaRoll(moveX);
+                freeCameraControlEntity->m_fDeltaRoll = moveX;
             }
         }
 
-        if (fovModifierAction[controllerID].Digital())
+        if (m_FOVModifierAction[freeCameraControlEntity->m_nControllerId].Digital())
         {
-            if (resetFovAction[controllerID].Digital())
+            if (m_ResetFovAction[freeCameraControlEntity->m_nControllerId].Digital())
             {
-                freeCameraControlEntity->SetFov(freeCameraControlEntity->GetInitialFov());
+                freeCameraControlEntity->m_fFov = freeCameraControlEntity->m_fInitialFov;
             }
             else
             {
-                freeCameraControlEntity->SetDeltaFov(moveY);
+                freeCameraControlEntity->m_fDeltaFov = moveY;
             }
         }
 
-        if (speedModifierAction[controllerID].Digital())
+        if (m_SpeedModifierAction[freeCameraControlEntity->m_nControllerId].Digital())
         {
-            if (resetSpeedAction[controllerID].Digital())
+            if (m_ResetSpeedAction[freeCameraControlEntity->m_nControllerId].Digital())
             {
-                persistentTranslationSpeedMultiplier = 1.f;
-                persistentRotationSpeedMultiplier = 1.f;
+                m_PersistentTranslationSpeedMultiplier = 1.f;
+                m_PersistentRotationSpeedMultiplier = 1.f;
             }
             else
             {
-                if (std::abs(moveY) > freeCamSpeedChangeThreshold)
+                if (std::abs(moveY) > m_FreeCamSpeedChangeThreshold)
                 {
-                    deltaTranslationSpeed = moveY;
+                    m_DeltaTranslationSpeed = moveY;
                 }
 
-                if (std::abs(moveX) > freeCamSpeedChangeThreshold)
+                if (std::abs(moveX) > m_FreeCamSpeedChangeThreshold)
                 {
-                    deltaRotationSpeed = moveX;
+                    m_DeltaRotationSpeed = moveX;
                 }
             }
         }
     }
     else
     {
-        freeCameraControlEntity->SetMoveX(moveX);
-        freeCameraControlEntity->SetMoveY(moveY);
-        freeCameraControlEntity->SetDeltaPitch(deltaPitch);
-        freeCameraControlEntity->SetDeltaYaw(deltaYaw);
-    }
-}
-
-void FreeCamera::UpdateFov(float delta)
-{
-    ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
-    ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
-    ZFreeCameraControlEntity* freeCameraControlEntity = engineAppCommon.GetFreeCameraControl().GetRawPointer();
-    float fov = (((((temporaryTranslationSpeedMultiplier * freeCameraControlEntity->GetMoveSpeed())
-        * persistentTranslationSpeedMultiplier)
-        * fovDependentSpeedMultiplier)
-        * freeCameraControlEntity->GetDeltaFov())
-        * delta)
-        + freeCameraControlEntity->GetFov();
-
-    if (fov >= 170.0)
-    {
-        fov = 170.f;
-    }
-    else if (fov < 5.0)
-    {
-        fov = 5.f;
-    }
-    
-    freeCameraControlEntity->SetFov(fov);
-
-    if (fov < freeCameraControlEntity->GetInitialFov())
-    {
-        fovDependentSpeedMultiplier = ZMath::MapRange01(fov, 5.f, freeCameraControlEntity->GetInitialFov()) * (1.f - freeCamFovDependentSpeedMin) + freeCamFovDependentSpeedMin;
-    }
-    else
-    {
-        fovDependentSpeedMultiplier = ZMath::MapRange01(fov, freeCameraControlEntity->GetInitialFov(), 170.f) * (freeCamFovDependentSpeedMax - 1.f) + 1.f;
+        freeCameraControlEntity->m_fMoveX = moveX;
+        freeCameraControlEntity->m_fMoveY = moveY;
+        freeCameraControlEntity->m_fDeltaPitch = deltaPitch;
+        freeCameraControlEntity->m_fDeltaYaw = deltaYaw;
     }
 
-    ZCameraEntity* controlledCameraEntity = freeCameraControlEntity->GetControlledCameraEntity();
-
-    if (controlledCameraEntity)
-    {
-        controlledCameraEntity->SetFovYDeg(fov);
-    }
-}
-
-float FreeCamera::MoveValueWithinRange(const float delta, const float currentValue, const float pivotValue, const float rangeMin, const float rangeMax)
-{
-    float result;
-
-    if (currentValue < pivotValue)
-    {
-        result = (std::abs(rangeMin - 1.f) * 0.1f) * delta + currentValue;
-    }
-    else
-    {
-        result = (std::abs(rangeMax - 1.f) * 0.1f) * delta + currentValue;
-    }
-
-    if (result < rangeMin)
-    {
-        result = rangeMin;
-    }
-    else if (result > rangeMax)
-    {
-        result = rangeMax;
-    }
-
-    return result;
-}
-
-void FreeCamera::InstantlyKillNpc()
-{
-    ZRayQueryOutput rayQueryOutput{};
-
-    if (GetFreeCameraRayCastClosestHitQueryOutput(ERayDetailLevel::RAYDETAILS_MESH, rayQueryOutput) && rayQueryOutput.GetBlockingEntity().GetEntityTypePtrPtr())
-    {
-        ZActor* actor = rayQueryOutput.GetBlockingEntity().QueryInterfacePtr<ZActor>();
-
-        if (actor)
-        {
-            actor->KillActor(EActorDeathType::eADT_UNDEFINED, true);
-        }
-    }
-}
-
-void FreeCamera::TeleportMainCharacter()
-{
-    ZRayQueryOutput rayQueryOutput{};
-
-    if (GetFreeCameraRayCastClosestHitQueryOutput(ERayDetailLevel::RAYDETAILS_BONES, rayQueryOutput) && rayQueryOutput.GetBlockingEntity().GetEntityTypePtrPtr())
-    {
-        const TEntityRef<ZHitman5>& hitman = LevelManager->GetHitman();
-
-        if (hitman.GetRawPointer())
-        {
-            ZSpatialEntity* spatialEntity = hitman.GetEntityRef().QueryInterfacePtr<ZSpatialEntity>();
-            SMatrix worldMatrix = spatialEntity->GetObjectToWorldMatrix();
-
-            worldMatrix.Trans = rayQueryOutput.GetPosition();
-
-            spatialEntity->SetObjectToWorldMatrix(worldMatrix);
-        }
-    }
-}
-
-bool FreeCamera::GetFreeCameraRayCastClosestHitQueryOutput(const ERayDetailLevel detailLevel, ZRayQueryOutput& rayQueryOutput)
-{
-    ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
-    ZEngineAppCommon& engineAppCommon = applicationEngineWin32->GetEngineAppCommon();
-    TEntityRef<ZCameraEntity> freeCamera = engineAppCommon.GetFreeCamera();
-
-    SMatrix worldMatrix = freeCamera.GetRawPointer()->GetObjectToWorldMatrix();
-    float4 invertedDirection = float4(-worldMatrix.ZAxis.x, -worldMatrix.ZAxis.y, -worldMatrix.ZAxis.z, -worldMatrix.ZAxis.w);
-    float4 from = worldMatrix.Trans;
-    float4 to = worldMatrix.Trans + invertedDirection * 500.f;
-
-    if (!CollisionManager)
-    {
-        return false;
-    }
-
-    ZRayQueryInput rayQueryInput = ZRayQueryInput(from, to, detailLevel);
-
-    if (!CollisionManager->RayCastClosestHit(rayQueryInput, &rayQueryOutput))
-    {
-        return false;
-    }
-
-    return true;
-}
-
-void __fastcall ZEntitySceneContext_CreateSceneHook(ZEntitySceneContext* pThis, int edx, const ZString& sStreamingState)
-{
-    GetModInstance()->OnCreateScene(pThis, sStreamingState);
-
-    Hooks::ZEntitySceneContext_CreateScene.CallOriginalFunction(pThis, sStreamingState);
-}
-
-void __fastcall ZEntitySceneContext_ClearSceneHook(ZEntitySceneContext* pThis, int edx, bool bFullyUnloadScene)
-{
-    GetModInstance()->OnClearScene(pThis, bFullyUnloadScene);
-
-    Hooks::ZEntitySceneContext_ClearScene.CallOriginalFunction(pThis, bFullyUnloadScene);
-}
-
-void __fastcall ZFreeCameraControlEntity_UpdateCameraHook(ZFreeCameraControlEntity* pThis, int edx, float dt)
-{
-    GetModInstance()->OnUpdateCamera(dt);
-
-    //Hooks::ZFreeCameraControlEntity_UpdateCamera.CallOriginalFunction(pThis, dt);
-}
-
-void __fastcall ZFreeCameraControlEntity_UpdateMovementFromInputHook(ZFreeCameraControlEntity* pThis, int edx)
-{
-    GetModInstance()->OnUpdateMovementFromInput();
-
-    //Hooks::ZFreeCameraControlEntity_UpdateMovementFromInput.CallOriginalFunction(pThis);
-}
-
-void __fastcall ZEngineAppCommon_ResetSceneCallbackHook(ZEngineAppCommon* pThis, int edx)
-{
-    Hooks::ZEngineAppCommon_ResetSceneCallback.CallOriginalFunction(pThis);
-
-    ZApplicationEngineWin32* applicationEngineWin32 = ZApplicationEngineWin32::GetInstance();
-    TEntityRef<ZCameraEntity> freeCamera;
-
-    applicationEngineWin32->GetEngineAppCommon().SetFreeCamera(freeCamera);
+    return {HookAction::Return()};
 }
 
 DEFINE_MOD(FreeCamera);

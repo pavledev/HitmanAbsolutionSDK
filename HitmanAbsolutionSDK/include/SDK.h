@@ -1,84 +1,115 @@
 #pragma once
 
-#include "Renderer/DirectXRenderer.h"
-#include "Renderer/ImGuiRenderer.h"
+#include <imgui.h>
+
 #include "ModManager.h"
-#include "UI/MainMenu.h"
-#include "UI/ModSelector.h"
-#include "UI/Settings.h"
-#include "ResourcePatcher.h"
+#include "Hooks.h"
 
-class ZMemoryManager;
-class ZHitman5Module;
-class ZEngineAppCommon;
-class ZIniFile;
-class ZMouseWindows;
-class ZKeyboardWindows;
+class DirectXRenderer;
+class ImGuiRenderer;
+class DebugConsole;
+class ResourcePatcher;
 
-void __fastcall ZRenderDevice_PresentHook(ZRenderDevice* pThis, int edx);
-void __fastcall ZRenderSwapChain_ResizeHook(ZRenderSwapChain* pThis, int edx, const SRenderDestinationDesc* pDescription);
-long __stdcall ZApplicationEngineWin32_MainWindowProcHook(ZApplicationEngineWin32* pThis, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
-bool __fastcall ZHitman5Module_InitializeHook(ZHitman5Module* pThis, int edx);
-bool __fastcall ZEngineAppCommon_InitializeHook(ZEngineAppCommon* pThis, int edx, const SRenderDestinationDesc& description);
-void __fastcall ZEngineAppCommon_UninitializeHook(ZEngineAppCommon* pThis, int edx);
-void __fastcall ZMouseWindows_UpdateHook(ZMouseWindows* pThis, int edx, bool bIgnoreOldEvents);
-void __fastcall ZKeyboardWindows_UpdateHook(ZKeyboardWindows* pThis, int edx, bool bIgnoreOldEvents);
+namespace UI
+{
+    class ModSelector;
+    class MainMenu;
+    class Console;
+    class Settings;
+}
 
 class SDK
 {
-public:
-	HitmanAbsolutionSDK_API static SDK& GetInstance();
-	void Setup();
-	void Cleanup();
+  public:
+    HitmanAbsolutionSDK_API static SDK& GetInstance();
+    void Setup();
+    void Cleanup();
 
-	static ZMemoryManager* GetMemoryManager();
-	static void InitializeSingletons();
+    void OnEngineInitialized();
+    void OnEngineUninitialized();
+    void OnModLoaded(const std::string& p_Name, IModInterface* m_ModInterface, const bool m_LiveLoad);
+    void OnDrawUI(const bool hasFocus);
+    void OnDraw3D();
+    void OnDrawMenu();
 
-	void OnEngineInitialized();
-	void OnEngineUninitialized();
-	void OnModLoaded(const std::string& name, ModInterface* modInterface, const bool liveLoad);
-	void OnDrawUI(const bool hasFocus);
-	void OnDraw3D();
-	void OnDrawMenu();
+    HitmanAbsolutionSDK_API const char* GetResourceID(uint64_t p_RuntimeResourceID) const;
+    HitmanAbsolutionSDK_API uint64_t GetRuntimeResourceID(const std::string& p_ResourceID) const;
 
-	void OnPresent(ZRenderDevice* renderDevice);
-	void OnResize(const SRenderDestinationDesc* pDescription);
+    HitmanAbsolutionSDK_API const std::map<int, std::string>& GetEnum(const std::string& p_TypeName);
 
-	long MainWindowProc(ZApplicationEngineWin32* applicationEngineWin32, HWND hWnd, unsigned int uMsgId, unsigned int wParam, long lParam);
+    HitmanAbsolutionSDK_API const std::string& GetPropertyName(uint32_t p_PropertyID) const;
 
-	void OnMouseWindowsUpdate(ZMouseWindows* mouseWindows, bool bIgnoreOldEvents);
-	void OnKeyboardWindowsUpdate(ZKeyboardWindows* keyboardWindows, bool bIgnoreOldEvents);
+    HitmanAbsolutionSDK_API bool CreateAndInstallDynamicResourceLibrary(
+        const std::string& p_ResourceID, ZDynamicResourceLibrary*& p_DynamicResourceLibrary, ZRuntimeResourceID& p_TempRuntimeResourceID,
+        const uint32_t p_EntityCount = 1
+    );
 
-	HitmanAbsolutionSDK_API ImGuiContext* GetImGuiContext();
-	HitmanAbsolutionSDK_API ImGuiMemAllocFunc GetImGuiMemAllocFunc();
-	HitmanAbsolutionSDK_API ImGuiMemFreeFunc GetImGuiMemFreeFunc();
-	HitmanAbsolutionSDK_API void* GetImGuiUserDataAllocator();
-	HitmanAbsolutionSDK_API ImFont* GetRegularFont();
-	HitmanAbsolutionSDK_API ImFont* GetBoldFont();
+    HitmanAbsolutionSDK_API ImGuiContext* GetImGuiContext();
+    HitmanAbsolutionSDK_API ImGuiMemAllocFunc GetImGuiMemAllocFunc();
+    HitmanAbsolutionSDK_API ImGuiMemFreeFunc GetImGuiMemFreeFunc();
+    HitmanAbsolutionSDK_API void* GetImGuiUserDataAllocator();
+    HitmanAbsolutionSDK_API ImFont* GetRegularFont();
+    HitmanAbsolutionSDK_API ImFont* GetBoldFont();
 
-	HitmanAbsolutionSDK_API std::shared_ptr<DirectXRenderer> GetDirectXRenderer() const;
-	HitmanAbsolutionSDK_API std::shared_ptr<ImGuiRenderer> GetImGuiRenderer() const;
+    HitmanAbsolutionSDK_API std::shared_ptr<DirectXRenderer> GetDirectXRenderer() const;
+    HitmanAbsolutionSDK_API std::shared_ptr<ImGuiRenderer> GetImGuiRenderer() const;
 
-	std::shared_ptr<ModManager> GetModManager() const;
+    std::shared_ptr<ModManager> GetModManager() const;
 
-	std::shared_ptr<ModSelector> GetModSelector() const;
-	std::shared_ptr<Settings> GetSettings() const;
+    std::shared_ptr<UI::ModSelector> GetModSelector() const;
+    std::shared_ptr<UI::Console> GetConsole() const;
+    std::shared_ptr<UI::Settings> GetSettings() const;
 
-	std::shared_ptr<ResourcePatcher> GetResourcePatcher() const;
+    std::shared_ptr<ResourcePatcher> GetResourcePatcher() const;
 
-private:
-	SDK();
-	SDK(const SDK& other) = delete;
-	SDK& operator=(const SDK& other) = delete;
+    uintptr_t GetModuleBase() const
+    {
+        return m_ModuleBase;
+    }
 
-	std::shared_ptr<DirectXRenderer> directXRenderer;
-	std::shared_ptr<ImGuiRenderer> imGuiRenderer;
+    uint32_t GetSizeOfCode() const
+    {
+        return m_SizeOfCode;
+    }
 
-	std::shared_ptr<ModManager> modManager;
+    uint32_t GetImageSize() const
+    {
+        return m_ImageSize;
+    }
 
-	std::shared_ptr<MainMenu> mainMenu;
-	std::shared_ptr<ModSelector> modSelector;
-	std::shared_ptr<Settings> settings;
+  private:
+    SDK();
+    SDK(const SDK& other) = delete;
+    SDK& operator=(const SDK& other) = delete;
 
-	std::shared_ptr<ResourcePatcher> resourcePatcher;
+    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(SDK, bool, ZHitman5Module_Initialize, ZHitman5Module* p_Hitman5Module);
+    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
+        SDK, bool, ZEngineAppCommon_Initialize, ZEngineAppCommon* p_EngineAppCommon, const SRenderDestinationDesc& p_Description
+    );
+    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(SDK, void, ZEngineAppCommon_Uninitialize, ZEngineAppCommon* p_EngineAppCommon);
+
+    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(SDK, void, ZRenderDevice_Present, ZRenderDevice* p_RenderDevice);
+    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
+        SDK, void, ZRenderSwapChain_Resize, ZRenderSwapChain* p_RenderSwapChain, const SRenderDestinationDesc* p_Description
+    );
+
+    std::shared_ptr<DirectXRenderer> m_DirectXRenderer;
+    std::shared_ptr<ImGuiRenderer> m_ImGuiRenderer;
+
+    std::shared_ptr<ModManager> m_ModManager;
+
+    std::shared_ptr<UI::MainMenu> m_MainMenu;
+    std::shared_ptr<UI::ModSelector> m_ModSelector;
+    std::shared_ptr<UI::Console> m_Console;
+    std::shared_ptr<UI::Settings> m_Settings;
+
+    std::shared_ptr<ResourcePatcher> m_ResourcePatcher;
+
+    uintptr_t m_ModuleBase;
+    uint32_t m_SizeOfCode;
+    uint32_t m_ImageSize;
+
+#if _DEBUG
+    std::shared_ptr<DebugConsole> m_DebugConsole{};
+#endif
 };

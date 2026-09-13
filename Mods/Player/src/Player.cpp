@@ -1,6 +1,6 @@
-#include <fstream>
+#include "Player.h"
 
-#include <imgui_internal.h>
+#include <fstream>
 
 #include <IconsMaterialDesign.h>
 
@@ -8,194 +8,150 @@
 #include <rapidjson/document.h>
 
 #include <Glacier/ZLevelManager.h>
-#include <Glacier/ContentKit/ZContentKitManager.h>
-#include <Glacier/Resource/ZResourceManager.h>
-#include <Glacier/Resource/ZHeaderLibrary.h>
-#include <Glacier/Actor/ZActorManager.h>
-#include <Glacier/Input/ZInputActionManager.h>
-#include <Glacier/Resource/ZDynamicResourceLibrary.h>
-#include <Glacier/Item/ZHM5Item.h>
-#include <Glacier/CheckPoint/ZCheckPointManager.h>
-#include <Glacier/Entity/ZTemplateEntityFactory.h>
-#include <Glacier/Entity/ZAspectEntityFactory.h>
-#include <Glacier/Templates/TFixedArray.h>
+#include <Glacier/ZContentKit.h>
+#include <Glacier/ZResource.h>
+#include <Glacier/ZActor.h>
+#include <Glacier/ZInput.h>
+#include <Glacier/ZItem.h>
+#include <Glacier/ZCheckPoint.h>
+#include <Glacier/ZEntity.h>
+#include <Glacier/TFixedArray.h>
+#include <Glacier/ZDynamicResourceLibrary.h>
 
-#include <Player.h>
-#include <Global.h>
-#include <Utility/ResourceUtility.h>
-#include <Utility/MemoryUtility.h>
-#include "Resource/DynamicHeaderLibraryGenerator.h"
+#include <Utils/ResourceUtils.h>
+#include <Utils/ImGuiUtils.h>
 #include <Hooks.h>
-
-Player::OutfitKitEntity::~OutfitKitEntity()
-{
-    if (textureView)
-    {
-        textureView->Release();
-
-        textureView = nullptr;
-    }
-
-    if (texture)
-    {
-        texture->Release();
-
-        texture = nullptr;
-    }
-}
-
-Player::FireArmKitEntity::~FireArmKitEntity()
-{
-    if (textureView)
-    {
-        textureView->Release();
-
-        textureView = nullptr;
-    }
-
-    if (texture)
-    {
-        texture->Release();
-
-        texture = nullptr;
-    }
-}
-
-Player::PropKitEntity::~PropKitEntity()
-{
-    if (textureView)
-    {
-        textureView->Release();
-
-        textureView = nullptr;
-    }
-
-    if (texture)
-    {
-        texture->Release();
-
-        texture = nullptr;
-    }
-}
 
 Player::Player()
 {
-    isOpen = false;
+    m_ShowWindow = false;
 
-    isGodModeEnabled = false;
-    isInvisibilityEnabled = false;
-    isInfiniteAmmoEnabled = false;
+    m_IsGodModeEnabled = false;
+    m_IsInvisibilityEnabled = false;
+    m_IsInfiniteAmmoEnabled = false;
 
-    selectedOutfitIndex = -1;
-    selectedWeaponIndex = -1;
-    selectedItemIndex = -1;
+    m_GetOutfitAction = ZInputAction("GetOufit");
+    m_GetModelAction = ZInputAction("GetModel");
+    m_ChangeOutfitAction = ZInputAction("ChangeOutfit");
+    m_TeleportAction = ZInputAction("TeleportHitman");
 
-    getOutfitAction = ZInputAction("GetOufit");
-    getModelAction = ZInputAction("GetModel");
-    changeOutfitAction = ZInputAction("ChangeOutfit");
-    teleportAction = ZInputAction("TeleportHitman");
+    m_SpawnFirearm = false;
+    m_AddFirearmToWorld = false;
+    m_FirearmSpawnCount = 1;
+    m_SpawnedFirearmCount = 1;
 
-    spawnWeapon = false;
-    spawnItem = false;
-    spawnProp = false;
-    spawnActor = false;
-    weaponCount = 0;
-    itemCount = 0;
-    propCount = 0;
-    actorCount = 0;
-    addWeaponToWorld = false;
-    addItemToWorld = false;
-    spawnCivilianActor = false;
-    selectedActorWeaponIndex = -1;
+    m_SpawnItem = false;
+    m_AddItemToWorld = false;
+    m_ItemSpawnCount = 1;
+    m_SpawnedItemCount = 1;
 }
 
 Player::~Player()
 {
     const ZMemberDelegate<Player, void(const SGameUpdateEvent&)> delegate(this, &Player::OnFrameUpdate);
+    Globals::GameLoopManager->UnregisterForFrameUpdate(delegate);
 
-    GameLoopManager->UnregisterForFrameUpdate(delegate);
-
-    for (size_t i = 0; i < dynamicResourceLibraries.size(); ++i)
+    for (auto dynamicResourceLibrary : m_DynamicResourceLibraries)
     {
-        FreeObject(dynamicResourceLibraries[i]);
+        dynamicResourceLibrary->~ZDynamicResourceLibrary();
+        (*Globals::MemoryManager)->m_pNormalAllocator->Free(dynamicResourceLibrary);
     }
-	
-    Hooks::ZEntityManager_ConstructUninitializedEntity.RemoveHook();
-    Hooks::ZHM5ReloadController_EndReloadWeapon.RemoveHook();
 }
 
 void Player::Initialize()
 {
-    ModInterface::Initialize();
-
-    Hooks::ZEntityManager_ConstructUninitializedEntity.CreateHook("ZEntityManager::ConstructUninitializedEntity", 0x565200, ZEntityManager_ConstructUninitializedEntityHook);
-    Hooks::ZHM5ReloadController_EndReloadWeapon.CreateHook("ZHM5ReloadController_EndReloadWeapon", 0x56BDB0, ZHM5ReloadController_EndReloadWeaponHook);
-
-    Hooks::ZEntityManager_ConstructUninitializedEntity.EnableHook();
-    Hooks::ZHM5ReloadController_EndReloadWeapon.EnableHook();
-
-    godMode = reinterpret_cast<int*>(BaseAddress + 0xD4F5E0);
-    invisible = reinterpret_cast<int*>(BaseAddress + 0xD54328);
+    Hooks::ZEntitySceneContext_ClearScene->AddDetour(this, &Player::ZEntitySceneContext_ClearScene);
+    Hooks::ZEntityManager_ConstructUninitializedEntity->AddDetour(this, &Player::ZEntityManager_ConstructUninitializedEntity);
+    Hooks::ZHM5ReloadController_EndReloadWeapon->AddDetour(this, &Player::ZHM5ReloadController_EndReloadWeapon);
 }
 
 void Player::OnEngineInitialized()
 {
     const ZMemberDelegate<Player, void(const SGameUpdateEvent&)> delegate(this, &Player::OnFrameUpdate);
+    Globals::GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 
-    GameLoopManager->RegisterForFrameUpdate(delegate, 1);
+    const char* bindings = "PlayerInput={"
+                           "GetOufit=tap(kb,i);"
+                           "GetModel=tap(kb,o);"
+                           "ChangeOutfit=tap(kb,p);"
+                           "TeleportHitman=tap(kb,j);};";
 
-    AddBindings();
-
-    LoadActorTypesAndResourceIDs();
+    Globals::InputActionManager->AddBindings(bindings);
 }
 
 void Player::OnDrawMenu()
 {
     if (ImGui::Button(ICON_MD_MAN " Player"))
     {
-        isOpen = !isOpen;
+        m_ShowWindow = !m_ShowWindow;
     }
 }
 
 void Player::OnDrawUI(const bool hasFocus)
 {
-    if (!hasFocus || !isOpen)
+    if (!hasFocus || !m_ShowWindow)
     {
         return;
     }
 
     ImGui::PushFont(SDK::GetInstance().GetBoldFont());
-    ImGui::SetNextWindowSize(ImVec2(600, 600), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
 
-    const bool isWindowVisible = ImGui::Begin(ICON_MD_TOKEN " Player", &isOpen, ImGuiWindowFlags_NoScrollbar);
+    const bool isWindowExpanded = ImGui::Begin(ICON_MD_TOKEN " Player", &m_ShowWindow);
 
     ImGui::PushFont(SDK::GetInstance().GetRegularFont());
 
-    if (isWindowVisible)
+    if (isWindowExpanded)
     {
-        if (outfitKitEntities.size() == 0)
+        if (m_Outfits.size() == 0)
         {
-            GetOufits();
+            LoadOufits();
         }
 
-        if (fireArmKitEntities.size() == 0)
+        if (m_Firearms.size() == 0)
         {
-            GetWeapons();
+            LoadFirearms();
         }
 
-        if (propKitEntities.size() == 0)
+        if (m_Items.size() == 0)
         {
-            GetItems();
+            LoadItems();
+        }
+
+        if (m_ActorTypeToResourceID.size() == 0)
+        {
+            LoadActorTypesAndResourceIDs();
         }
 
         if (ImGui::BeginTabBar("##TabBar"))
         {
-            RenderCheatsTabItem();
-            RenderOutfitsTabItem();
-            RenderWeaponsTabItem();
-            RenderItemsTabItem();
-            RenderPropsTabItem();
-            RenderActorsTabItem();
+            if (ImGui::BeginTabItem("Cheats"))
+            {
+                DrawCheatsTab();
+
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Outfits"))
+            {
+                DrawOutfitsTab();
+
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Firearms"))
+            {
+                DrawFirearmsTab();
+
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Items"))
+            {
+                DrawItemsTab();
+
+                ImGui::EndTabItem();
+            }
 
             ImGui::EndTabBar();
         }
@@ -206,158 +162,16 @@ void Player::OnDrawUI(const bool hasFocus)
     ImGui::PopFont();
 }
 
-void Player::OnConstructUninitializedEntity(IEntityFactory* pEntityFactory, ZEntityType** entityType)
+void Player::OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent)
 {
-    if ((addWeaponToWorld || addItemToWorld || spawnProp) && ZTemplateEntityFactoryVFTbl == *reinterpret_cast<void**>(pEntityFactory))
-    {
-        ZTemplateEntityFactory* templateEntityFactory = static_cast<ZTemplateEntityFactory*>(pEntityFactory);
-        const ZRuntimeResourceID templateRuntimeResourceID = templateEntityFactory->GetTemplateRuntimeResourceID().GetID();
-
-        if (templateRuntimeResourceID == sourceResourceRuntimeResourceID)
-        {
-            ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-            if (hitman)
-            {
-                ZEntityRef entityRef = ZEntityRef(entityType);
-                ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntity().GetRawPointer();
-                SMatrix43 transform;
-
-                transform.Trans = hitmanSpatialEntity->GetWorldPosition() - float4(0.f, 0.5f, 0.f, 0.f);
-
-                entityRef.SetProperty("m_mTransform", transform);
-            }
-        }
-
-        static unsigned int spawnedWeaponCount = 1;
-        static unsigned int spawnedItemCount = 1;
-        static unsigned int spawnedPropCount = 1;
-
-        if (spawnWeapon)
-        {
-            if (spawnedWeaponCount == weaponCount)
-            {
-                spawnedWeaponCount = 1;
-
-                if (spawnWeapon)
-                {
-                    spawnWeapon = false;
-                }
-            }
-            else
-            {
-                ++spawnedWeaponCount;
-            }
-        }
-        else if (spawnItem)
-        {
-            if (spawnedItemCount == itemCount)
-            {
-                spawnedItemCount = 1;
-
-                if (spawnItem)
-                {
-                    spawnItem = false;
-                }
-            }
-            else
-            {
-                ++spawnedItemCount;
-            }
-        }
-        else if (spawnProp)
-        {
-            if (spawnedPropCount == propCount)
-            {
-                spawnedPropCount = 1;
-
-                if (spawnProp)
-                {
-                    spawnProp = false;
-                }
-            }
-            else
-            {
-                ++spawnedPropCount;
-            }
-        }
-
-    }
-    else if (spawnActor && ZAspectEntityFactoryVFTbl == *reinterpret_cast<void**>(pEntityFactory))
-    {
-        ZAspectEntityFactory* aspectEntityFactory = static_cast<ZAspectEntityFactory*>(pEntityFactory);
-        const ZRuntimeResourceID asetRuntimeResourceID = aspectEntityFactory->GetAspectEntityRuntimeResourceID();
-
-        if (asetRuntimeResourceID == sourceResourceRuntimeResourceID)
-        {
-            ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-            if (hitman)
-            {
-                ZEntityRef entityRef = ZEntityRef(entityType);
-                ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntity().GetRawPointer();
-                SMatrix43 transform;
-
-                transform.Trans = hitmanSpatialEntity->GetWorldPosition() - float4(0.f, 0.5f, 0.f, 0.f);
-
-                entityRef.SetProperty("m_bStartEnabled", true);
-                entityRef.SetProperty("m_mTransform", transform);
-            }
-        }
-
-        static unsigned int spawnedActorCount = 1;
-
-        if (spawnActor)
-        {
-            if (spawnedActorCount == actorCount)
-            {
-                spawnedActorCount = 1;
-
-                if (spawnActor)
-                {
-                    spawnActor = false;
-                }
-            }
-            else
-            {
-                ++spawnedActorCount;
-            }
-        }
-    }
-}
-
-const bool Player::IsInfiniteAmmoEnabled() const
-{
-    return isInfiniteAmmoEnabled;
-}
-
-void Player::SetInfiniteAmmo()
-{
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-    if (hitman)
-    {
-        TFixedArray<unsigned int, 8> ammoInPocket;
-
-        for (unsigned int i = 0; i < 8; ++i)
-        {
-            ammoInPocket[i] = 999;
-        }
-
-        hitman->GetBaseInventory()->SetAmmoInPocket(ammoInPocket);
-    }
-}
-
-void Player::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
-{
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+    ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
     if (!hitman)
     {
         return;
     }
 
-    if (getOutfitAction.Digital())
+    if (m_GetOutfitAction.Digital())
     {
         ZActor* actor = FindNearestActor();
 
@@ -367,7 +181,7 @@ void Player::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
         }
     }
 
-    if (getModelAction.Digital())
+    if (m_GetModelAction.Digital())
     {
         ZActor* actor = FindNearestActor();
 
@@ -377,23 +191,23 @@ void Player::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
         }
     }
 
-    if (changeOutfitAction.Digital())
+    if (m_ChangeOutfitAction.Digital())
     {
-        if (outfitKitEntities.size() == 0)
+        if (m_Outfits.size() == 0)
         {
-            GetOufits();
+            LoadOufits();
         }
 
         static unsigned int outfitIndex = 0;
         static unsigned int outfitVariationIndex = 0;
 
-        if (outfitVariationIndex == outfitKitEntities[outfitIndex].outfitVariations.size())
+        if (outfitVariationIndex == m_Outfits[outfitIndex].m_OutfitVariations.size())
         {
             ++outfitIndex;
             outfitVariationIndex = 0;
         }
 
-        if (outfitIndex == outfitKitEntities.size())
+        if (outfitIndex == m_Outfits.size())
         {
             outfitIndex = 0;
         }
@@ -403,274 +217,179 @@ void Player::OnFrameUpdate(const SGameUpdateEvent& updateEvent)
         ++outfitVariationIndex;
     }
 
-    if (teleportAction.Digital())
+    if (m_TeleportAction.Digital())
     {
-        ZCheckPointManagerEntity* checkPointManagerEntity = CheckPointManager->GetCheckPointManagerEntity().GetRawPointer();
+        ZCheckPointManagerEntity* checkPointManagerEntity = Globals::CheckPointManager->m_pCheckPointManagerEntity.m_pInterfaceRef;
 
-        checkPointManagerEntity->ActivateJumpPoint(checkPointManagerEntity->GetCurrentJumpPoint() + 1, true);
+        checkPointManagerEntity->ActivateJumpPoint(checkPointManagerEntity->m_iCurrentJumpPoint + 1, true);
     }
 
-    if (spawnWeapon)
+    if (m_SpawnFirearm)
     {
-        SpawnWeapon(fireArmKitEntities[selectedWeaponIndex].runtimeResourceID, weaponCount, addWeaponToWorld);
+        SpawnFirearm();
 
-        if (!addWeaponToWorld)
+        if (!m_AddFirearmToWorld)
         {
-            spawnWeapon = false;
+            m_SpawnFirearm = false;
         }
     }
-    else if (spawnItem)
+    else if (m_SpawnItem)
     {
-        SpawnItem(propKitEntities[selectedItemIndex].runtimeResourceID, itemCount, addItemToWorld);
+        SpawnItem();
 
-        if (!addItemToWorld)
+        if (!m_AddItemToWorld)
         {
-            spawnItem = false;
+            m_SpawnItem = false;
         }
-    }
-    else if (spawnProp)
-    {
-        SpawnProp();
-    }
-    else if (spawnActor)
-    {
-        SpawnActor();
     }
 }
 
-void Player::RenderCheatsTabItem()
+void Player::DrawCheatsTab()
 {
-    bool isTabVisible = ImGui::BeginTabItem("Cheats");
-
-    if (isTabVisible)
+    if (ImGui::Checkbox("God mode", &m_IsGodModeEnabled))
     {
-        if (ImGui::Checkbox("God Mode", &isGodModeEnabled))
-        {
-            *godMode = static_cast<int>(isGodModeEnabled);
-        }
+        *Globals::GodMode = static_cast<int32_t>(m_IsGodModeEnabled);
+    }
 
-        if (ImGui::Checkbox("Invisible", &isInvisibilityEnabled))
-        {
-            *invisible = static_cast<int>(isInvisibilityEnabled);
-        }
+    if (ImGui::Checkbox("Invisible", &m_IsInvisibilityEnabled))
+    {
+        *Globals::Invisible = static_cast<int32_t>(m_IsInvisibilityEnabled);
+    }
 
-        if (ImGui::Checkbox("Infinite Ammo", &isInfiniteAmmoEnabled))
+    if (ImGui::Checkbox("Infinite ammo", &m_IsInfiniteAmmoEnabled))
+    {
+        if (m_IsInfiniteAmmoEnabled)
         {
-            if (isInfiniteAmmoEnabled)
+            SetInfiniteAmmo();
+        }
+    }
+
+    if (ImGui::Button("Refill focus"))
+    {
+        if (Globals::LevelManager)
+        {
+            ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+
+            if (hitman)
             {
-                SetInfiniteAmmo();
+                hitman->m_pFocusController->SetFocus(1.0f);
             }
         }
-
-        if (ImGui::Button("Refill Focus"))
-        {
-            if (LevelManager)
-            {
-                ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-                if (hitman)
-                {
-                    hitman->GetFocusController()->SetFocus(1.0f);
-                }
-            }
-        }
-
-        ImGui::EndTabItem();
     }
 }
 
-void Player::RenderOutfitsTabItem()
+void Player::DrawOutfitsTab()
 {
-    bool isTabVisible = ImGui::BeginTabItem("Outfits");
-
-    if (!isTabVisible)
-    {
-        return;
-    }
-
-    ImGui::BeginChild("OutfitList", ImVec2(600, 500), false, ImGuiWindowFlags_HorizontalScrollbar);
-
     static char outfitName[256]{ "" };
+    static char variation[256]{ "" };
     static bool showOnlyOutfitsOfCurrentScene = false;
 
+    static const Outfit* outfit = nullptr;
+
+    ImGui::Checkbox("Show only outfits of current scene", &showOnlyOutfitsOfCurrentScene);
+
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Outfit Name");
+    ImGui::Text("Oufit");
+
     ImGui::SameLine();
-    ImGui::InputText("##OutfitName", outfitName, sizeof(outfitName));
 
-    const float checkboxHeight = ImGui::GetFrameHeight();
-    static char currentOutfitVariationIndex[2]{ "0" };
-
-    for (size_t i = 0; i < outfitKitEntities.size(); ++i)
-    {
-        if (!StringUtility::Contains(outfitKitEntities[i].title, outfitName, false))
+    util::InputWithAutocomplete(
+        "##Outfit", outfitName, sizeof(outfitName), m_Outfits, [](const auto& p_Outfit) -> const std::string& { return p_Outfit.m_Title; },
+        [](const auto& p_Outfit) -> const std::string& { return p_Outfit.m_Title; },
+        [&](const std::string&, const std::string& p_Name, const Outfit& p_Outfit)
         {
-            continue;
-        }
-
-        if (showOnlyOutfitsOfCurrentScene && !outfitKitEntities[i].isOutfitForCurrentScene)
+            outfit = &p_Outfit;
+            variation[0] = '\0';
+        },
+        nullptr,
+        [&](const auto& p_Outfit)
         {
-            continue;
-        }
-
-        bool isOufitSelected = selectedOutfitIndex == i;
-
-        if (ImGui::Selectable(outfitKitEntities[i].title.c_str(), &isOufitSelected))
-        {
-            selectedOutfitIndex = i;
-
-            strcpy_s(currentOutfitVariationIndex, "0");
-
-            OutfitKitEntity& outfitKitEntity = outfitKitEntities[selectedOutfitIndex];
-
-            if (!outfitKitEntity.texture)
+            if (!showOnlyOutfitsOfCurrentScene)
             {
-                LoadDDSTexture(outfitKitEntity.hiResNotebookImage, &outfitKitEntity.texture, &outfitKitEntity.textureView, outfitKitEntity.width, outfitKitEntity.height);
+                return true;
             }
-        }
-    }
 
-    ImGui::EndChild();
-
-    ImGui::SameLine();
-    ImGui::BeginChild("ItemView", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
-
-    if (selectedOutfitIndex != -1)
-    {
-        const OutfitKitEntity& outfitKitEntity = outfitKitEntities[selectedOutfitIndex];
-
-        ImGui::Image(outfitKitEntity.textureView, ImVec2(outfitKitEntity.width, outfitKitEntity.height));
-        ImGui::SameLine();
-
-        ImGui::BeginChild("ItemView2", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
-
-        ImGui::TextWrapped(outfitKitEntity.description.c_str());
-
-        ImGui::Spacing();
-        ImGui::AlignTextToFramePadding();
-        ImGui::Text("Outfit Variation Index");
-        ImGui::SameLine();
-
-        if (ImGui::BeginCombo("##OutfitVariationIndex", currentOutfitVariationIndex))
-        {
-            for (size_t i = 0; i < outfitKitEntity.outfitVariations.size(); ++i)
+            for (const auto& entry : Globals::ContentKitManager->m_Outfits.m_List.m_List)
             {
-                const std::string outfitVariationIndex = std::to_string(i);
-                const bool isOutfitVarationSelected = currentOutfitVariationIndex == outfitVariationIndex.c_str();
+                const auto outfitKitEntity = static_cast<ZOutfitKitEntity*>(entry.GetFirstKit().m_pInterfaceRef);
 
-                if (ImGui::Selectable(outfitVariationIndex.c_str(), isOutfitVarationSelected))
+                if (p_Outfit.m_TokenID == outfitKitEntity->GetTokenID())
                 {
-                    strcpy_s(currentOutfitVariationIndex, outfitVariationIndex.c_str());
+                    return true;
                 }
             }
 
-            ImGui::EndCombo();
+            return false;
         }
+    );
 
-        ImGui::EndChild();
-    }
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Variation");
 
-    ImGui::EndChild();
+    ImGui::SameLine();
 
-    ImGui::Checkbox("Show only outfits of current scene", &showOnlyOutfitsOfCurrentScene);
-    ImGui::Spacing();
-
-    if (ImGui::Button("Equip Outfit"))
-    {
-        if (selectedOutfitIndex != -1)
-        {
-            EquipOutfit(selectedOutfitIndex, std::stoi(currentOutfitVariationIndex));
-        }
-    }
+    util::InputWithAutocomplete(
+        "##Variation", variation, sizeof(variation), outfit ? outfit->m_OutfitVariations : std::vector<std::pair<ZRuntimeResourceID, std::string>>{},
+        [](const auto& p_Pair) -> std::string { return p_Pair.second; }, [](const auto& p_Pair) -> std::string { return p_Pair.second; },
+        [&](const std::string&, const std::string&, const auto& p_Pair) { EquipOutfit(outfit->m_TokenID, p_Pair.first); }
+    );
 
     ImGui::Separator();
 
-    static int button = 1;
-
-    ImGui::Text("Get Outfit/Model From Actor");
+    ImGui::Text("Get outfit/model from actor");
     ImGui::Spacing();
 
-    if (ImGui::RadioButton("Oufit", button == 1))
+    static ActorResourceType resourceType = ActorResourceType::Outfit;
+
+    if (ImGui::RadioButton("Outfit", resourceType == ActorResourceType::Outfit))
     {
-        button = 1;
+        resourceType = ActorResourceType::Outfit;
     }
 
     ImGui::SameLine();
 
-    if (ImGui::RadioButton("Model", button == 2))
+    if (ImGui::RadioButton("Model", resourceType == ActorResourceType::Model))
     {
-        button = 2;
+        resourceType = ActorResourceType::Model;
     }
 
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Name");
     ImGui::SameLine();
 
-    static char actorName[100]{ "" };
-    const bool isInputTextEnterPressed = ImGui::InputText("##ActorName", actorName, sizeof(actorName), ImGuiInputTextFlags_EnterReturnsTrue);
-    const bool isInputTextActive = ImGui::IsItemActive();
-
-    if (ImGui::IsItemActivated())
-    {
-        ImGui::OpenPopup("##Popup"); 
-    }
-
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
-    ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
-
-    if (ImGui::BeginPopup("##Popup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
-    {
-        TArrayRef<TEntityRef<ZActor>> actors = ActorManager->GetAliveActors();
-
-        for (size_t i = 0; i < actors.Size(); ++i)
+    util::InputWithAutocomplete(
+        "##Name", m_ActorName, Globals::ActorManager->m_aliveActors,
+        [](const auto& p_Actor) -> std::string { return p_Actor.m_pInterfaceRef->m_sActorName.ToCString(); },
+        [](const auto& p_Actor) -> std::string { return p_Actor.m_pInterfaceRef->m_sActorName.ToCString(); },
+        [&](const std::string&, const std::string& p_Name, const auto& p_Actor)
         {
-            ZActor* actor = actors[i].GetRawPointer();
-            const ZString& actorName2 = actor->GetActorName();
-
-            if (!StringUtility::Contains(actorName2.ToCString(), actorName, false))
+            if (resourceType == ActorResourceType::Outfit)
             {
-                continue;
+                EquipOutfit(p_Actor.m_pInterfaceRef);
             }
-
-            if (ImGui::Selectable(actorName2.ToCString()))
+            else
             {
-                ImGui::ClearActiveID();
-                strcpy_s(actorName, actorName2.ToCString());
-
-                ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-                if (button == 1)
-                {
-                    EquipOutfit(actor);
-                }
-                else
-                {
-                    EquipModel(actor);
-                }
+                EquipModel(p_Actor.m_pInterfaceRef);
             }
         }
-
-        if (isInputTextEnterPressed || (!isInputTextActive && !ImGui::IsWindowFocused()))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
+    );
 
     ImGui::Separator();
 
-    static char resourceID[512]{ "" };
+    ImGui::Text("Equip model");
+    ImGui::Spacing();
+
+    static char actorType[512]{ "" };
 
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Resource ID");
+    ImGui::Text("Actor type");
     ImGui::SameLine();
-    ImGui::InputText("##ResourceID", resourceID, sizeof(resourceID), ImGuiInputTextFlags_EnterReturnsTrue);
 
-    if (ImGui::Button("Equip Model"))
-    {
-        EquipModel(resourceID);
-    }
+    util::InputWithAutocomplete(
+        "##ActorType", actorType, sizeof(actorType), m_ActorTypeToResourceID, [](const auto& p_Pair) -> const std::string& { return p_Pair.first; },
+        [](const auto& p_Pair) -> const std::string& { return p_Pair.first; },
+        [&](const std::string&, const std::string& p_Name, const auto& p_Pair) { EquipModel(p_Pair.second); }
+    );
 
     ImGui::Separator();
 
@@ -693,370 +412,97 @@ void Player::RenderOutfitsTabItem()
             EquipModel(actor);
         }
     }
-
-    ImGui::EndTabItem();
 }
 
-void Player::RenderWeaponsTabItem()
+void Player::DrawFirearmsTab()
 {
-    bool isTabVisible = ImGui::BeginTabItem("Weapons");
-
-    if (!isTabVisible)
-    {
-        return;
-    }
-
-    ImGui::BeginChild("WeaponList", ImVec2(600, 500), false, ImGuiWindowFlags_HorizontalScrollbar);
-
-    static char weaponName[256]{ "" };
+    static char firearm[256]{ "" };
+    static ItemDestination itemDestination = ItemDestination::World;
 
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Weapon Name");
-    ImGui::SameLine();
-    ImGui::InputText("##WeaponName", weaponName, sizeof(weaponName));
+    ImGui::Text("Firearm");
 
-    const float checkboxHeight = ImGui::GetFrameHeight();
-
-    for (size_t i = 0; i < fireArmKitEntities.size(); ++i)
-    {
-        if (!StringUtility::Contains(fireArmKitEntities[i].title, weaponName, false))
+    util::InputWithAutocomplete(
+        "##Weapon", firearm, sizeof(firearm), m_Firearms, [](const auto& p_Firearm) -> const std::string& { return p_Firearm.m_Title; },
+        [](const auto& p_Firearm) -> const std::string& { return p_Firearm.m_Title; },
+        [&](const std::string&, const std::string& p_Name, const Firearm& p_Firearm)
         {
-            continue;
+            m_SelectedFirearm = p_Firearm.m_RuntimeResourceID;
+            m_AddFirearmToWorld = itemDestination == ItemDestination::World;
+            m_SpawnFirearm = true;
         }
-
-        bool isWeaponSelected = selectedWeaponIndex == i;
-
-        if (ImGui::Selectable(fireArmKitEntities[i].title.c_str(), &isWeaponSelected))
-        {
-            selectedWeaponIndex = i;
-
-            FireArmKitEntity& fireArmKitEntity = fireArmKitEntities[selectedWeaponIndex];
-
-            if (!fireArmKitEntity.texture)
-            {
-                LoadDDSTexture(fireArmKitEntity.hiResNotebookImage, &fireArmKitEntity.texture, &fireArmKitEntity.textureView, fireArmKitEntity.width, fireArmKitEntity.height);
-            }
-        }
-    }
-
-    ImGui::EndChild();
-
-    ImGui::SameLine();
-    ImGui::BeginChild("ItemView", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
-
-    if (selectedWeaponIndex != -1)
-    {
-        const FireArmKitEntity& fireArmKitEntity = fireArmKitEntities[selectedWeaponIndex];
-
-        ImGui::Image(fireArmKitEntity.textureView, ImVec2(fireArmKitEntity.width, fireArmKitEntity.height));
-        ImGui::SameLine();
-        ImGui::TextWrapped(fireArmKitEntity.description.c_str());
-    }
-
-    ImGui::EndChild();
+    );
 
     ImGui::Spacing();
 
-    static int button = 1;
-
-    if (ImGui::RadioButton("Add To World", button == 1))
+    if (ImGui::RadioButton("Add To World", itemDestination == ItemDestination::World))
     {
-        button = 1;
+        itemDestination = ItemDestination::World;
     }
 
     ImGui::SameLine();
 
-    if (ImGui::RadioButton("Add To Inventory", button == 2))
+    if (ImGui::RadioButton("Add To Inventory", itemDestination == ItemDestination::Inventory))
     {
-        button = 2;
+        itemDestination = ItemDestination::Inventory;
     }
 
-    static char numberOfWeaponsToSpawn[4]{ "1" };
-
     ImGui::Spacing();
+
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Number of weapons to spawn");
+    ImGui::Text("Number of firearms to spawn");
+
     ImGui::SameLine();
-    ImGui::InputText("##NumberOfWeaponsToSpawn", numberOfWeaponsToSpawn, sizeof(numberOfWeaponsToSpawn));
-    ImGui::Spacing();
 
-    if (ImGui::Button("Spawn Weapon"))
-    {
-        if (selectedWeaponIndex != -1)
-        {
-            weaponCount = std::atoi(numberOfWeaponsToSpawn);
-            addWeaponToWorld = button == 1;
-            spawnWeapon = true;
-        }
-    }
+    ImGui::SetNextItemWidth(ImGui::GetFrameHeight() * 5.f);
 
-    ImGui::EndTabItem();
+    ImGui::InputInt("##NumberOfFirearmsToSpawn", &m_FirearmSpawnCount);
 }
 
-void Player::RenderItemsTabItem()
+void Player::DrawItemsTab()
 {
-    bool isTabVisible = ImGui::BeginTabItem("Items");
-
-    if (!isTabVisible)
-    {
-        return;
-    }
-
-    ImGui::BeginChild("ItemList", ImVec2(600, 500), false, ImGuiWindowFlags_HorizontalScrollbar);
-
-    static char itemName[256]{ "" };
+    static char item[256]{ "" };
+    static ItemDestination itemDestination = ItemDestination::World;
 
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Item Name");
-    ImGui::SameLine();
-    ImGui::InputText("##ItemName", itemName, sizeof(itemName));
+    ImGui::Text("Item");
 
-    const float checkboxHeight = ImGui::GetFrameHeight();
-
-    for (size_t i = 0; i < propKitEntities.size(); ++i)
-    {
-        if (!StringUtility::Contains(propKitEntities[i].title, itemName, false))
+    util::InputWithAutocomplete(
+        "##Weapon", item, sizeof(item), m_Items, [](const auto& p_Item) -> const std::string& { return p_Item.m_Title; },
+        [](const auto& p_Item) -> const std::string& { return p_Item.m_Title; },
+        [&](const std::string&, const std::string& p_Name, const Item& p_Item)
         {
-            continue;
+            m_SelectedItem = p_Item.m_RuntimeResourceID;
+            m_AddItemToWorld = itemDestination == ItemDestination::World;
+            m_SpawnItem = true;
         }
-
-        bool isItemSelected = selectedItemIndex == i;
-
-        if (ImGui::Selectable(propKitEntities[i].title.c_str(), &isItemSelected))
-        {
-            selectedItemIndex = i;
-
-            PropKitEntity& propKitEntity = propKitEntities[selectedItemIndex];
-
-            if (!propKitEntity.texture)
-            {
-                LoadDDSTexture(propKitEntity.hiResNotebookImage, &propKitEntity.texture, &propKitEntity.textureView, propKitEntity.width, propKitEntity.height);
-            }
-        }
-    }
-
-    ImGui::EndChild();
-
-    ImGui::SameLine();
-    ImGui::BeginChild("ItemView", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
-
-    if (selectedItemIndex != -1)
-    {
-        const PropKitEntity& propKitEntity = propKitEntities[selectedItemIndex];
-
-        ImGui::Image(propKitEntity.textureView, ImVec2(propKitEntity.width, propKitEntity.height));
-        ImGui::SameLine();
-        ImGui::TextWrapped(propKitEntity.description.c_str());
-    }
-
-    ImGui::EndChild();
+    );
 
     ImGui::Spacing();
 
-    static int button = 1;
-
-    if (ImGui::RadioButton("Add To World", button == 1))
+    if (ImGui::RadioButton("Add To World", itemDestination == ItemDestination::World))
     {
-        button = 1;
+        itemDestination = ItemDestination::World;
     }
 
     ImGui::SameLine();
 
-    if (ImGui::RadioButton("Add To Inventory", button == 2))
+    if (ImGui::RadioButton("Add To Inventory", itemDestination == ItemDestination::Inventory))
     {
-        button = 2;
+        itemDestination = ItemDestination::Inventory;
     }
 
-    static char numberOfItemsToSpawn[4]{ "1" };
-
     ImGui::Spacing();
+
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Number of items to spawn");
+
     ImGui::SameLine();
-    ImGui::InputText("##NumberOfItemsToSpawn", numberOfItemsToSpawn, sizeof(numberOfItemsToSpawn));
-    ImGui::Spacing();
 
-    if (ImGui::Button("Spawn Item"))
-    {
-        if (selectedItemIndex != -1)
-        {
-            itemCount = std::atoi(numberOfItemsToSpawn);
-            addItemToWorld = button == 1;
-            spawnItem = true;
-        }
-    }
-
-    ImGui::EndTabItem();
+    ImGui::InputInt("##NumberOfItemsToSpawn", &m_ItemSpawnCount);
 }
 
-void Player::RenderPropsTabItem()
-{
-    bool isTabVisible = ImGui::BeginTabItem("Props");
-
-    if (!isTabVisible)
-    {
-        return;
-    }
-
-    static char numberOfPropsToSpawn[4]{ "1" };
-
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Prop Resource ID");
-    ImGui::SameLine();
-    ImGui::InputText("##PropResourceID", propResourceID, sizeof(propResourceID));
-
-    ImGui::Spacing();
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Number of props to spawn");
-    ImGui::SameLine();
-    ImGui::InputText("##NumberOfPropsToSpawn", numberOfPropsToSpawn, sizeof(numberOfPropsToSpawn));
-    ImGui::Spacing();
-
-    if (ImGui::Button("Spawn Prop"))
-    {
-        propCount = std::atoi(numberOfPropsToSpawn);
-        spawnProp = true;
-    }
-
-    ImGui::EndTabItem();
-}
-
-void Player::RenderActorsTabItem()
-{
-    bool isTabVisible = ImGui::BeginTabItem("Actors");
-
-    if (!isTabVisible)
-    {
-        return;
-    }
-
-    static char numberOfActorsToSpawn[4]{ "1" };
-
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Actor Variation");
-    ImGui::SameLine();
-
-    static char actorVariation[128]{ "" };
-    const bool isInputTextEnterPressed = ImGui::InputText("##ActorVariation", actorVariation, sizeof(actorVariation), ImGuiInputTextFlags_EnterReturnsTrue);
-    const bool isInputTextActive = ImGui::IsItemActive();
-
-    if (ImGui::IsItemActivated())
-    {
-        ImGui::OpenPopup("##ActorVariationPopup");
-    }
-
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
-    ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
-
-    if (ImGui::BeginPopup("##ActorVariationPopup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
-    {
-        for (auto it = actorVariationsToResourceIDs.begin(); it != actorVariationsToResourceIDs.end(); ++it)
-        {
-            if (!StringUtility::Contains(it->first, actorVariation, false))
-            {
-                continue;
-            }
-
-            if (ImGui::Selectable(it->first.c_str()))
-            {
-                ImGui::ClearActiveID();
-                strcpy_s(actorVariation, it->first.c_str());
-
-                actorResourceID = it->second.c_str();
-            }
-        }
-
-        if (isInputTextEnterPressed || (!isInputTextActive && !ImGui::IsWindowFocused()))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
-
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Actor Name");
-    ImGui::SameLine();
-    ImGui::InputText("##ActorName", actorName, sizeof(actorName));
-
-    static int button = 1;
-
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Actor Type");
-    ImGui::Spacing();
-
-    if (ImGui::RadioButton("Civilian", button == 1))
-    {
-        button = 1;
-    }
-
-    ImGui::SameLine();
-
-    if (ImGui::RadioButton("Guard", button == 2))
-    {
-        button = 2;
-    }
-
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Weapon Name");
-    ImGui::SameLine();
-
-    static char actorWeaponName[50]{ "" };
-    const bool isInputTextEnterPressed2 = ImGui::InputText("##WeaponName", actorWeaponName, sizeof(actorWeaponName), ImGuiInputTextFlags_EnterReturnsTrue);
-    const bool isInputTextActive2 = ImGui::IsItemActive();
-
-    if (ImGui::IsItemActivated())
-    {
-        ImGui::OpenPopup("##WeaponNamePopup");
-    }
-
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
-    ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 300));
-
-    if (ImGui::BeginPopup("##WeaponNamePopup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
-    {
-        for (size_t i = 0; i < fireArmKitEntities.size(); ++i)
-        {
-            if (!StringUtility::Contains(fireArmKitEntities[i].title, actorWeaponName, false))
-            {
-                continue;
-            }
-
-            if (ImGui::Selectable(fireArmKitEntities[i].title.c_str()))
-            {
-                ImGui::ClearActiveID();
-                strcpy_s(actorWeaponName, fireArmKitEntities[i].title.c_str());
-
-                selectedActorWeaponIndex = i;
-            }
-        }
-
-        if (isInputTextEnterPressed2 || (!isInputTextActive2 && !ImGui::IsWindowFocused()))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
-
-    ImGui::Spacing();
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Number of actors to spawn");
-    ImGui::SameLine();
-    ImGui::InputText("##NumberOfActorsToSpawn", numberOfActorsToSpawn, sizeof(numberOfActorsToSpawn));
-    ImGui::Spacing();
-
-    if (ImGui::Button("Spawn Actor"))
-    {
-        actorCount = std::atoi(numberOfActorsToSpawn);
-        spawnActor = true;
-        spawnCivilianActor = button == 1;
-    }
-
-    ImGui::EndTabItem();
-}
-
-void Player::GetOufits()
+void Player::LoadOufits()
 {
     std::ifstream inputFile = std::ifstream("assets/Outfits.json");
     rapidjson::IStreamWrapper streamWrapper(inputFile);
@@ -1066,100 +512,61 @@ void Player::GetOufits()
 
     const rapidjson::Value& outfitsArray = document["outfits"].GetArray();
 
-    outfitKitEntities.resize(outfitsArray.Size());
-
-    unsigned int outfitKitEntityIndex = 0;
+    m_Outfits.reserve(outfitsArray.Size());
 
     for (rapidjson::Value::ConstValueIterator it = outfitsArray.Begin(); it != outfitsArray.End(); ++it)
     {
         const rapidjson::Value& object = it->GetObj();
-        OutfitKitEntity& outfitKitEntity = outfitKitEntities[outfitKitEntityIndex++];
+        Outfit& outfit = m_Outfits.emplace_back();
 
-        outfitKitEntity.title = object["title"].GetString();
-        outfitKitEntity.description = object["description"].GetString();
-        outfitKitEntity.tokenID = STokenID(object["hash"].GetUint());
-        outfitKitEntity.hiResNotebookImage = object["hiResNotebookImage"].GetUint64();
+        outfit.m_Title = object["title"].GetString();
+        outfit.m_TokenID = STokenID(object["hash"].GetUint());
     }
 
-    const ZContentKitList<ZOutfitKitEntity, ZOutfitKitMenuSetup, SOutfitKitSaveData, SOutfitKitState>& outfits = ContentKitManager->GetOutfits();
-    const ZShadowContentKitList& shadowContentKitList = outfits.GetShadowContentKitList();
-    const TArray<ZShadowContentKitList::SEntry>& entries = shadowContentKitList.GetEntries();
-
-    for (size_t i = 0; i < outfitKitEntities.size(); ++i)
+    for (auto& outfit : m_Outfits)
     {
-        OutfitKitEntity& outfitKitEntity = outfitKitEntities[i];
+        auto globalOutfitKitIt = Globals::ContentKitManager->m_GlobalOutfitKits.Find(outfit.m_TokenID);
 
-        for (size_t j = 0; j < entries.Size(); ++j)
+        if (globalOutfitKitIt == Globals::ContentKitManager->m_GlobalOutfitKits.End())
         {
-            const ZOutfitKitEntity* outfitKitEntity2 = static_cast<ZOutfitKitEntity*>(entries[j].GetFirstKit().GetRawPointer());
-
-            if (outfitKitEntity.tokenID == outfitKitEntity2->GetTokenID())
-            {
-                outfitKitEntity.isOutfitForCurrentScene = true;
-
-                break;
-            }
+            continue;
         }
-    }
 
-    outfitKitEntityIndex = 0;
-
-    const TMap<STokenID const, TEntityRef<ZGlobalOutfitKit>>& globalOutfitKits = ContentKitManager->GetGlobalOutfitKits();
-
-    for (auto it = globalOutfitKits.Begin(); it != globalOutfitKits.End(); ++it)
-    {
-        const STokenID key = it.Node().Data().Key();
-        ZGlobalOutfitKit* globalOutfitKit = it.Node().Data().Value().GetRawPointer();
-
-        for (size_t i = 0; i < outfitKitEntities.size(); ++i)
+        for (uint32_t i = 0; i < 12; ++i)
         {
-            OutfitKitEntity& outfitKitEntity = outfitKitEntities[i];
+            const ZRuntimeResourceID variationResource = globalOutfitKitIt->m_value.m_pInterfaceRef->GetVariationResource(i + 1);
 
-            if (outfitKitEntity.tokenID == key)
+            if (variationResource.GetID() != -1)
             {
-                for (unsigned int j = 0; j < 12; ++j)
-                {
-                    const ZRuntimeResourceID variationResource = globalOutfitKit->GetVariationResource(j + 1);
-
-                    if (variationResource.GetID() != -1)
-                    {
-                        outfitKitEntity.outfitVariations.push_back(variationResource);
-                    }
-                }
-
-                break;
+                outfit.m_OutfitVariations.push_back({ variationResource, SDK::GetInstance().GetResourceID(variationResource) });
             }
         }
     }
 }
 
-void Player::GetWeapons()
+void Player::LoadFirearms()
 {
-    std::ifstream inputFile = std::ifstream("assets/Weapons.json");
+    std::ifstream inputFile = std::ifstream("assets/Firearms.json");
     rapidjson::IStreamWrapper streamWrapper(inputFile);
     rapidjson::Document document;
 
     document.ParseStream(streamWrapper);
 
-    const rapidjson::Value& weaponsArray = document["weapons"].GetArray();
+    const rapidjson::Value& weaponsArray = document["firearms"].GetArray();
 
-    fireArmKitEntities.resize(weaponsArray.Size());
-
-    unsigned int fireArmKitEntityIndex = 0;
+    m_Firearms.reserve(weaponsArray.Size());
 
     for (rapidjson::Value::ConstValueIterator it = weaponsArray.Begin(); it != weaponsArray.End(); ++it)
     {
         const rapidjson::Value& object = it->GetObj();
-        FireArmKitEntity& fireArmKitEntity = fireArmKitEntities[fireArmKitEntityIndex++];
+        Firearm& firearm = m_Firearms.emplace_back();
 
-        fireArmKitEntity.title = object["title"].GetString();
-        fireArmKitEntity.description = object["description"].GetString();
-        fireArmKitEntity.hiResNotebookImage = object["hiResNotebookImage"].GetUint64();
-        fireArmKitEntity.runtimeResourceID = object["runtimeResourceID"].GetUint64();
+        firearm.m_Title = object["title"].GetString();
+        firearm.m_RuntimeResourceID = object["runtimeResourceID"].GetUint64();
     }
 }
 
-void Player::GetItems()
+void Player::LoadItems()
 {
     std::ifstream inputFile = std::ifstream("assets/Items.json");
     rapidjson::IStreamWrapper streamWrapper(inputFile);
@@ -1169,363 +576,16 @@ void Player::GetItems()
 
     const rapidjson::Value& itemsArray = document["items"].GetArray();
 
-    propKitEntities.resize(itemsArray.Size());
-
-    unsigned int propKitEntityIndex = 0;
+    m_Items.reserve(itemsArray.Size());
 
     for (rapidjson::Value::ConstValueIterator it = itemsArray.Begin(); it != itemsArray.End(); ++it)
     {
         const rapidjson::Value& object = it->GetObj();
-        PropKitEntity& propKitEntity = propKitEntities[propKitEntityIndex++];
+        Item& item = m_Items.emplace_back();
 
-        propKitEntity.title = object["title"].GetString();
-        propKitEntity.description = object["description"].GetString();
-        propKitEntity.hiResNotebookImage = object["hiResNotebookImage"].GetUint64();
-        propKitEntity.runtimeResourceID = object["runtimeResourceID"].GetUint64();
+        item.m_Title = object["title"].GetString();
+        item.m_RuntimeResourceID = object["runtimeResourceID"].GetUint64();
     }
-}
-
-void Player::EquipOutfit(ZActor* actor)
-{
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-    if (actor->IsWearingOutfit())
-    {
-        hitman->EquipOutfitResource(actor->GetHMAsResourceID(), actor->GetOutfit(), false, false);
-    }
-}
-
-void Player::EquipOutfit(const unsigned int outfitIndex, const unsigned int outfitVariationIndex)
-{
-    const OutfitKitEntity& outfitKitEntity = outfitKitEntities[outfitIndex];
-    const ZRuntimeResourceID outfitVariation = outfitKitEntity.outfitVariations[outfitVariationIndex];
-
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-    TEntityRef<ZHM5Outfit> outfit = LevelManager->GetOutfitManager().GetRawPointer()->GetOutfit(outfitKitEntity.tokenID);
-    TEntityRef<IHM5Outfit> outfit2;
-
-    if (outfit.GetRawPointer())
-    {
-        outfit2 = TEntityRef<IHM5Outfit>(outfit.GetEntityRef());
-    }
-
-    hitman->EquipOutfitResource(outfitVariation, outfit2, false, false);
-}
-
-void Player::EquipModel(ZActor* actor)
-{
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-    //If hitman has suit equip some other outfit so that suit doesn't stay after changing model
-    if (actor->IsWearingOutfit())
-    {
-        hitman->EquipOutfitResource(actor->GetHMAsResourceID(), actor->GetOutfit(), false, false);
-    }
-    else
-    {
-        const OutfitKitEntity& outfitKitEntity = outfitKitEntities[1];
-        const int outfitVariationIndex = 0;
-        const ZRuntimeResourceID outfitVariation = outfitKitEntity.outfitVariations[0];
-
-        ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-        TEntityRef<ZHM5Outfit> outfit = LevelManager->GetOutfitManager().GetRawPointer()->GetOutfit(outfitKitEntity.tokenID);
-        TEntityRef<IHM5Outfit> outfit2;
-
-        if (outfit.GetRawPointer())
-        {
-            outfit2 = TEntityRef<IHM5Outfit>(outfit.GetEntityRef());
-        }
-
-        hitman->EquipOutfitResource(outfitVariation, outfit2, false, false);
-    }
-
-    ZResourcePtr primResourcePtr = actor->GetGeomEntityPtr()->GetResourcePtr();
-
-    hitman->GetGeomEntityPtr()->ChangePrimitiveResourcePtr(primResourcePtr);
-}
-
-void Player::EquipModel(const std::string& resourceID)
-{
-    /*const OutfitKitEntity& outfitKitEntity = outfitKitEntities[1];
-    const int outfitVariationIndex = 0;
-    const ZRuntimeResourceID outfitVariation = outfitKitEntity.outfitVariations[0];
-
-    ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-    TEntityRef<ZHM5Outfit> outfit = LevelManager->GetOutfitManager().GetRawPointer()->GetOutfit(outfitKitEntity.tokenID);
-    TEntityRef<IHM5Outfit> outfit2;
-
-    if (outfit.GetRawPointer())
-    {
-        outfit2 = TEntityRef<IHM5Outfit>(outfit.GetEntityRef());
-    }
-
-    hitman->EquipOutfitResource(outfitVariation, outfit2, false, false);*/
-
-    ZDynamicResourceLibrary* dynamicResourceLibrary;
-    bool isDynamicResourceLibraryInstalled = ResourceUtility::CreateAndInstallDynamicResourceLibrary(dynamicResourceLibrary, resourceID, sourceResourceRuntimeResourceID);
-
-    if (isDynamicResourceLibraryInstalled)
-    {
-        ZEntityRef entityRef = dynamicResourceLibrary->GetEntity(0);
-        ZGeomEntity* geomEntity = entityRef.QueryInterfacePtr<ZGeomEntity>();
-        ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-        if (hitman)
-        {
-            const OutfitKitEntity& outfitKitEntity = outfitKitEntities[1];
-            const int outfitVariationIndex = 0;
-            const ZRuntimeResourceID outfitVariation = outfitKitEntity.outfitVariations[0];
-
-            TEntityRef<ZHM5Outfit> outfit = LevelManager->GetOutfitManager().GetRawPointer()->GetOutfit(outfitKitEntity.tokenID);
-            TEntityRef<IHM5Outfit> outfit2;
-
-            if (outfit.GetRawPointer())
-            {
-                outfit2 = TEntityRef<IHM5Outfit>(outfit.GetEntityRef());
-            }
-
-            hitman->EquipOutfitResource(outfitVariation, outfit2, false, false);
-
-            hitman->GetGeomEntityPtr()->ChangePrimitiveResourcePtr(geomEntity->GetResourcePtr());
-        }
-
-        dynamicResourceLibraries.push_back(dynamicResourceLibrary);
-    }
-}
-
-void Player::SpawnWeapon(const ZRuntimeResourceID& runtimeResourceID, const unsigned int weaponCount, const bool addToWorld)
-{
-    ZDynamicResourceLibrary* dynamicResourceLibrary;
-    bool isDynamicResourceLibraryInstalled = ResourceUtility::InstallDynamicResourceLibrary(dynamicResourceLibrary, runtimeResourceID, sourceResourceRuntimeResourceID, weaponCount);
-
-    if (isDynamicResourceLibraryInstalled)
-    {
-        for (unsigned int i = 0; i < dynamicResourceLibrary->GetEntityCount(); ++i)
-        {
-            ZEntityRef entityRef = dynamicResourceLibrary->GetEntity(i);
-            ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-            if (hitman && !addToWorld)
-            {
-                hitman->GetBaseInventory()->AddItemToInventory(entityRef, false, false);
-            }
-        }
-
-        dynamicResourceLibraries.push_back(dynamicResourceLibrary);
-    }
-}
-
-void Player::SpawnWeapon(const ZRuntimeResourceID& runtimeResourceID, ZActor* actor)
-{
-    ZDynamicResourceLibrary* dynamicResourceLibrary;
-    bool isDynamicResourceLibraryInstalled = ResourceUtility::InstallDynamicResourceLibrary(dynamicResourceLibrary, runtimeResourceID, sourceResourceRuntimeResourceID);
-
-    if (isDynamicResourceLibraryInstalled)
-    {
-        ZEntityRef entityRef = dynamicResourceLibrary->GetEntity(0);
-
-        if (actor)
-        {
-            actor->AddItemToInventory(entityRef);
-        }
-
-        dynamicResourceLibraries.push_back(dynamicResourceLibrary);
-    }
-}
-
-void Player::SpawnItem(const ZRuntimeResourceID& runtimeResourceID, const unsigned int itemCount, const bool addToWorld)
-{
-    ZDynamicResourceLibrary* dynamicResourceLibrary;
-    bool isDynamicResourceLibraryInstalled = false;
-
-    if (runtimeResourceID.IsLibraryResource())
-    {
-        const std::string resourceID = ZRuntimeResourceID::QueryResourceID(runtimeResourceID).GetURI().ToCString();
-
-        isDynamicResourceLibraryInstalled = ResourceUtility::CreateAndInstallDynamicResourceLibrary(dynamicResourceLibrary, resourceID, sourceResourceRuntimeResourceID, itemCount);
-    }
-    else
-    {
-        isDynamicResourceLibraryInstalled = ResourceUtility::InstallDynamicResourceLibrary(dynamicResourceLibrary, runtimeResourceID, sourceResourceRuntimeResourceID, itemCount);
-    }
-
-    if (isDynamicResourceLibraryInstalled)
-    {
-        for (unsigned int i = 0; i < dynamicResourceLibrary->GetEntityCount(); ++i)
-        {
-            ZEntityRef entityRef = dynamicResourceLibrary->GetEntity(i);
-            IHM5Item* item = entityRef.QueryInterfacePtr<IHM5Item>();
-            ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
-
-            if (hitman && !addToWorld)
-            {
-                hitman->GetBaseInventory()->AddItemToInventory(entityRef, false, false);
-            }
-        }
-
-        dynamicResourceLibraries.push_back(dynamicResourceLibrary);
-    }
-}
-
-void Player::SpawnProp()
-{
-    ZDynamicResourceLibrary* dynamicResourceLibrary;
-    bool isDynamicResourceLibraryInstalled = ResourceUtility::CreateAndInstallDynamicResourceLibrary(dynamicResourceLibrary, propResourceID, sourceResourceRuntimeResourceID, propCount);
-
-    if (isDynamicResourceLibraryInstalled)
-    {
-        for (unsigned int i = 0; i < dynamicResourceLibrary->GetEntityCount(); ++i)
-        {
-            ZEntityRef entityRef = dynamicResourceLibrary->GetEntity(i);
-
-            entityRef.SetProperty("m_eRoomBehaviour", ZSpatialEntity::ERoomBehaviour::ROOM_DYNAMIC);
-        }
-
-        dynamicResourceLibraries.push_back(dynamicResourceLibrary);
-    }
-}
-
-void Player::SpawnActor()
-{
-    ZDynamicResourceLibrary* dynamicResourceLibrary;
-    bool isDynamicResourceLibraryInstalled = ResourceUtility::CreateAndInstallDynamicResourceLibrary(dynamicResourceLibrary, actorResourceID, sourceResourceRuntimeResourceID, actorCount);
-
-    if (isDynamicResourceLibraryInstalled)
-    {
-        for (unsigned int i = 0; i < dynamicResourceLibrary->GetEntityCount(); ++i)
-        {
-            ZEntityRef entityRef = dynamicResourceLibrary->GetEntity(i);
-            ZHM5CCProfile* hm5CCProfile = nullptr;
-
-            if (spawnCivilianActor)
-            {
-                if (actorResourceID.contains("male civilian"))
-                {
-                    SetPropertiesForCivilianActor(entityRef);
-                }
-
-                hm5CCProfile = ZHM5CCProfile::GetDefaultCCProfile(ACCP_CivilianeMale);
-            }
-            else
-            {
-                if (actorResourceID.contains("male guard"))
-                {
-                    SetPropertiesForGuardActor(entityRef);
-                }
-
-                hm5CCProfile = ZHM5CCProfile::GetDefaultCCProfile(ACCP_GuardMale);
-            }
-
-            ZActor* actor = entityRef.QueryInterfacePtr<ZActor>();
-
-            actor->SetCCProfile(hm5CCProfile);
-            actor->SetActorName(actorName);
-
-            if (selectedActorWeaponIndex != -1)
-            {
-                SpawnWeapon(fireArmKitEntities[selectedActorWeaponIndex].runtimeResourceID, actor);
-            }
-        }
-
-        dynamicResourceLibraries.push_back(dynamicResourceLibrary);
-    }
-}
-
-void Player::LoadDDSTexture(const ZRuntimeResourceID& hiResNotebookImage, ID3D11Resource** texture, ID3D11ShaderResourceView** textureView, float& width, float& height)
-{
-    TResourcePtr<ZHeaderLibrary> headerLibraryResourcePtr = ResourceManager->LoadResource(hiResNotebookImage);
-    const ZResourcePtr tempResourcePtr = headerLibraryResourcePtr->GetSourceResource();
-    const ZRuntimeResourceID headerLibraryRuntimeResourceID = headerLibraryResourcePtr.GetResourceStub()->GetRuntimeResourceID();
-    const ZRuntimeResourceID libraryRuntimeResourceID = tempResourcePtr.GetResourceStub()->GetRuntimeResourceID().GetLibraryRuntimeResourceID();
-    const ZRuntimeResourceID swffRuntimeResourceID = ZRuntimeResourceID::CreateLibraryResourceID(libraryRuntimeResourceID, 2);
-    void* resourceData = nullptr;
-    unsigned int resourceDataSize = 0;
-
-    ResourceUtility::LoadResource(swffRuntimeResourceID, headerLibraryRuntimeResourceID, resourceData, resourceDataSize);
-
-    BinaryReader binaryReader = BinaryReader(resourceData, resourceDataSize);
-
-    binaryReader.Skip(1);
-
-    unsigned int fileOffset = binaryReader.Read<unsigned int>();
-
-    binaryReader.Seek(fileOffset - 4, SeekOrigin::Current);
-
-    void* ddsTextureData = binaryReader.GetBuffer(true);
-    unsigned int ddsTextureDataSize = resourceDataSize - binaryReader.GetPosition();
-
-    DirectXRenderer::CreateDDSTextureFromMemory(ddsTextureData, ddsTextureDataSize, texture, textureView, width, height);
-
-    FreeMemory(resourceData);
-}
-
-ZActor* Player::FindNearestActor()
-{
-    const ZSpatialEntity* hitmanSpatialEntity = LevelManager->GetHitman().GetEntityRef().QueryInterfacePtr<ZSpatialEntity>();
-    TArrayRef<TEntityRef<ZActor>> actors = ActorManager->GetAliveActors();
-
-    for (size_t i = 0; i < actors.Size(); ++i)
-    {
-        ZActor* actor = actors[i].GetRawPointer();
-        ZEntityRef entityRef = actors[i].GetEntityRef();
-        const ZSpatialEntity* actorSpatialEntity = entityRef.QueryInterfacePtr<ZSpatialEntity>();
-
-        const SVector3 temp = hitmanSpatialEntity->GetObjectToWorldMatrix().Trans - actorSpatialEntity->GetObjectToWorldMatrix().Trans;
-        const float distance = sqrt(temp.x * temp.x + temp.y * temp.y + temp.z * temp.z);
-
-        if (distance <= 3.0f)
-        {
-            return actor;
-        }
-    }
-
-    return nullptr;
-}
-
-void Player::SetPropertiesForCivilianActor(ZEntityRef& entityRef)
-{
-    const ZRuntimeResourceID aibzRuntimeResourceID = ZRuntimeResourceID::QueryRuntimeResourceID("[assembly:/ai/behaviortrees/civilian.aibt].pc_aibz");
-    const ZResourcePtr aizbResourcePtr = ResourceManager->GetResourcePtr(aibzRuntimeResourceID, 0);
-    TArray<ZString> statLabelList;
-
-    statLabelList.PushBack("CivilianStatKill");
-
-    entityRef.SetProperty("m_bZoneA", false);
-    entityRef.SetProperty("m_bZoneB", false);
-    entityRef.SetProperty("m_bZoneC", false);
-    entityRef.SetProperty("m_bZoneD", false);
-    entityRef.SetProperty("m_bZoneE", false);
-    entityRef.SetProperty("m_bZoneF", false);
-    entityRef.SetProperty("m_bZoneG", false);
-    entityRef.SetProperty("m_bZoneH", false);
-    entityRef.SetProperty("m_eActorType", EActorType::eAT_Civilian);
-    entityRef.SetProperty("m_pCompiledBehaviorTree", aizbResourcePtr);
-    entityRef.SetProperty("Oneliner_Mindistance", 5.f);
-    entityRef.SetProperty("Oneliner_Maxdistance", 30.f);
-    entityRef.SetProperty("m_fOcclusionAttenuation", -9.f);
-    entityRef.SetProperty("OnelinerOcclusionCutoffLow", 3000.f);
-    entityRef.SetProperty("m_fDialogueAttenuation", -6.f);
-    entityRef.SetProperty("Oneliner_Attenuation", -5.f);
-    entityRef.SetProperty("OnelinerOcclusionAttenuation", -12.f);
-}
-
-void Player::SetPropertiesForGuardActor(ZEntityRef& entityRef)
-{
-    const ZRuntimeResourceID aibzRuntimeResourceID = ZRuntimeResourceID::QueryRuntimeResourceID("[assembly:/ai/behaviortrees/guard.aibt].pc_aibz");
-    const ZResourcePtr aizbResourcePtr = ResourceManager->GetResourcePtr(aibzRuntimeResourceID, 0);
-
-    entityRef.SetProperty("m_bZoneA", true);
-    entityRef.SetProperty("m_bZoneB", true);
-    entityRef.SetProperty("m_bZoneC", true);
-    entityRef.SetProperty("m_bZoneD", true);
-    entityRef.SetProperty("m_bZoneE", true);
-    entityRef.SetProperty("m_bZoneF", true);
-    entityRef.SetProperty("m_bZoneG", true);
-    entityRef.SetProperty("m_bZoneH", true);
-    entityRef.SetProperty("m_eActorType", EActorType::eAT_Guard);
-    entityRef.SetProperty("m_pCompiledBehaviorTree", aizbResourcePtr);
-    entityRef.SetProperty("m_fOcclusionLowpassLow", 3000.f);
-    entityRef.SetProperty("Oneliner_Attenuation", -3.f);
 }
 
 void Player::LoadActorTypesAndResourceIDs()
@@ -1539,27 +599,275 @@ void Player::LoadActorTypesAndResourceIDs()
         const std::string actorType = line.substr(0, index);
         const std::string resourceID = line.substr(index + 1);
 
-        actorVariationsToResourceIDs.insert(std::make_pair(actorType, resourceID));
+        m_ActorTypeToResourceID.insert(std::make_pair(actorType, resourceID));
     }
 }
 
-ZEntityType** __fastcall ZEntityManager_ConstructUninitializedEntityHook(ZEntityManager* pThis, int edx, const ZString& sDebugName, IEntityFactory* pEntityFactory, unsigned char* pMemBlock)
+void Player::EquipOutfit(ZActor* p_Actor)
 {
-    ZEntityType** entityType = Hooks::ZEntityManager_ConstructUninitializedEntity.CallOriginalFunction(pThis, sDebugName, pEntityFactory, pMemBlock);
+    ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
-    GetModInstance()->OnConstructUninitializedEntity(pEntityFactory, entityType);
-
-    return entityType;
-}
-
-void __fastcall ZHM5ReloadController_EndReloadWeaponHook(ZHM5ReloadController* pThis, int edx)
-{
-    Hooks::ZHM5ReloadController_EndReloadWeapon.CallOriginalFunction(pThis);
-
-    if (GetModInstance()->IsInfiniteAmmoEnabled())
+    if (p_Actor->IsWearingOutfit())
     {
-        GetModInstance()->SetInfiniteAmmo();
+        hitman->EquipOutfitResource(p_Actor->m_pCharacterTemplate.m_pInterfaceRef->m_HMAsResID, p_Actor->GetOutfit(), false, false);
     }
+}
+
+void Player::EquipOutfit(const STokenID& p_TokenID, const ZRuntimeResourceID& p_OutfitVariation)
+{
+    ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+    TEntityRef<ZHM5Outfit> outfitEntity = Globals::LevelManager->m_pOutfitManager.m_pInterfaceRef->GetOutfit(p_TokenID);
+
+    hitman->EquipOutfitResource(p_OutfitVariation, outfitEntity.m_entityRef, false, false);
+}
+
+void Player::EquipModel(ZActor* p_Actor)
+{
+    ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+
+    // If hitman has suit equip some other outfit so that suit doesn't stay after changing model
+    if (p_Actor->IsWearingOutfit())
+    {
+        hitman->EquipOutfitResource(p_Actor->m_pCharacterTemplate.m_pInterfaceRef->m_HMAsResID, p_Actor->GetOutfit(), false, false);
+    }
+    else
+    {
+        const Outfit& outfit = m_Outfits[1];
+        const int outfitVariationIndex = 0;
+        const ZRuntimeResourceID outfitVariation = outfit.m_OutfitVariations[0].first;
+
+        ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+        TEntityRef<ZHM5Outfit> outfitEntity = Globals::LevelManager->m_pOutfitManager.m_pInterfaceRef->GetOutfit(outfit.m_TokenID);
+
+        hitman->EquipOutfitResource(outfitVariation, outfitEntity.m_entityRef, false, false);
+    }
+
+    ZResourcePtr primResourcePtr = p_Actor->GetGeomEntityPtr()->GetResourcePtr();
+
+    hitman->GetGeomEntityPtr()->ChangePrimitiveResourcePtr(primResourcePtr);
+}
+
+void Player::EquipModel(const std::string& p_ResourceID)
+{
+    ZDynamicResourceLibrary* dynamicResourceLibrary;
+    bool isDynamicResourceLibraryInstalled =
+        SDK::GetInstance().CreateAndInstallDynamicResourceLibrary(p_ResourceID, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID);
+
+    if (isDynamicResourceLibraryInstalled)
+    {
+        ZEntityRef entityRef = dynamicResourceLibrary->GetEntity(0);
+        ZGeomEntity* geomEntity = entityRef.QueryInterfacePtr<ZGeomEntity>();
+        ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+
+        if (hitman)
+        {
+            const Outfit& outfit = m_Outfits[1];
+            const int outfitVariationIndex = 0;
+            const ZRuntimeResourceID outfitVariation = outfit.m_OutfitVariations[0].first;
+
+            ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+            TEntityRef<ZHM5Outfit> outfitEntity = Globals::LevelManager->m_pOutfitManager.m_pInterfaceRef->GetOutfit(outfit.m_TokenID);
+
+            hitman->EquipOutfitResource(outfitVariation, outfitEntity.m_entityRef, false, false);
+
+            hitman->GetGeomEntityPtr()->ChangePrimitiveResourcePtr(geomEntity->GetResourcePtr());
+        }
+
+        m_DynamicResourceLibraries.push_back(dynamicResourceLibrary);
+    }
+}
+
+void Player::SpawnFirearm()
+{
+    ZDynamicResourceLibrary* dynamicResourceLibrary;
+    bool isDynamicResourceLibraryInstalled =
+        util::InstallDynamicResourceLibrary(m_SelectedFirearm, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID, m_FirearmSpawnCount);
+
+    if (isDynamicResourceLibraryInstalled)
+    {
+        for (unsigned int i = 0; i < dynamicResourceLibrary->m_Entities.Size(); ++i)
+        {
+            ZEntityRef entityRef = dynamicResourceLibrary->GetEntity(i);
+            ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+
+            if (hitman && !m_AddFirearmToWorld)
+            {
+                hitman->m_pBaseInventory->AddItemToInventory(entityRef, false, false);
+            }
+        }
+
+        m_DynamicResourceLibraries.push_back(dynamicResourceLibrary);
+    }
+}
+
+void Player::SpawnItem()
+{
+    ZDynamicResourceLibrary* dynamicResourceLibrary;
+    bool isDynamicResourceLibraryInstalled = false;
+
+    if (m_SelectedItem.IsLibraryResource())
+    {
+        const std::string resourceID = SDK::GetInstance().GetResourceID(m_SelectedItem);
+
+        isDynamicResourceLibraryInstalled = SDK::GetInstance().CreateAndInstallDynamicResourceLibrary(
+            resourceID, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID, m_ItemSpawnCount
+        );
+    }
+    else
+    {
+        isDynamicResourceLibraryInstalled =
+            util::InstallDynamicResourceLibrary(m_SelectedItem, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID, m_ItemSpawnCount);
+    }
+
+    if (isDynamicResourceLibraryInstalled)
+    {
+        for (unsigned int i = 0; i < dynamicResourceLibrary->m_Entities.Size(); ++i)
+        {
+            ZEntityRef entityRef = dynamicResourceLibrary->GetEntity(i);
+            IHM5Item* item = entityRef.QueryInterfacePtr<IHM5Item>();
+            ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+
+            if (hitman && !m_AddItemToWorld)
+            {
+                hitman->m_pBaseInventory->AddItemToInventory(entityRef, false, false);
+            }
+        }
+
+        m_DynamicResourceLibraries.push_back(dynamicResourceLibrary);
+    }
+}
+
+void Player::SetInfiniteAmmo()
+{
+    ZHitman5* hitman = Globals::Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+
+    if (hitman)
+    {
+        TFixedArray<uint32_t, 8> ammoInPocket;
+
+        for (uint32_t i = 0; i < 8; ++i)
+        {
+            ammoInPocket[i] = 999;
+        }
+
+        hitman->m_pBaseInventory->SetAmmoInPocket(ammoInPocket);
+    }
+}
+
+ZActor* Player::FindNearestActor()
+{
+    const ZSpatialEntity* hitmanSpatialEntity = Globals::LevelManager->m_rHitman.m_pInterfaceRef->GetSpatialEntityPtr();
+
+    for (size_t i = 0; i < Globals::ActorManager->m_aliveActors.Size(); ++i)
+    {
+        ZActor* actor = Globals::ActorManager->m_aliveActors[i].m_pInterfaceRef;
+        const ZSpatialEntity* actorSpatialEntity = actor->GetSpatialEntityPtr();
+
+        const SVector3 offset = hitmanSpatialEntity->GetObjectToWorldMatrix().Trans - actorSpatialEntity->GetObjectToWorldMatrix().Trans;
+        const float distance = sqrt(offset.x * offset.x + offset.y * offset.y + offset.z * offset.z);
+
+        if (distance <= 3.f)
+        {
+            return actor;
+        }
+    }
+
+    return nullptr;
+}
+
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Player, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene)
+{
+    m_ActorName.clear();
+
+    m_SpawnedFirearmCount = 0;
+    m_SpawnedItemCount = 0;
+
+    for (auto dynamicResourceLibrary : m_DynamicResourceLibraries)
+    {
+        dynamicResourceLibrary->~ZDynamicResourceLibrary();
+        (*Globals::MemoryManager)->m_pNormalAllocator->Free(dynamicResourceLibrary);
+    }
+
+    m_DynamicResourceLibraries.clear();
+
+    return { HookAction::Continue() };
+}
+
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+    Player, ZEntityType**, ZEntityManager_ConstructUninitializedEntity, ZEntityManager* p_EntityManager, const ZString& p_DebugName,
+    IEntityFactory* p_EntityFactory, uint8_t* p_MemBlock
+)
+{
+    ZEntityType** entityType = p_Hook->CallOriginal(p_EntityManager, p_DebugName, p_EntityFactory, p_MemBlock);
+
+    if ((m_AddFirearmToWorld || m_AddItemToWorld) && Globals::ZTemplateEntityFactoryVFTbl == *reinterpret_cast<void**>(p_EntityFactory))
+    {
+        ZTemplateEntityFactory* templateEntityFactory = static_cast<ZTemplateEntityFactory*>(p_EntityFactory);
+        const ZRuntimeResourceID templateRuntimeResourceID = templateEntityFactory->m_ridResource;
+
+        if (templateRuntimeResourceID == m_SourceResourceRuntimeResourceID)
+        {
+            ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
+
+            if (hitman)
+            {
+                ZEntityRef entityRef = ZEntityRef(entityType);
+                ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntityPtr();
+                SMatrix43 transform;
+
+                transform.Trans = hitmanSpatialEntity->GetWorldPosition() - float4(0.f, 0.5f, 0.f, 0.f);
+
+                entityRef.SetProperty("m_mTransform", transform);
+            }
+        }
+
+        if (m_SpawnFirearm)
+        {
+            if (m_SpawnedFirearmCount == m_FirearmSpawnCount)
+            {
+                m_SpawnedFirearmCount = 1;
+
+                if (m_SpawnFirearm)
+                {
+                    m_SpawnFirearm = false;
+                }
+            }
+            else
+            {
+                ++m_SpawnedFirearmCount;
+            }
+        }
+        else if (m_SpawnItem)
+        {
+            if (m_SpawnedItemCount == m_ItemSpawnCount)
+            {
+                m_SpawnedItemCount = 1;
+
+                if (m_SpawnItem)
+                {
+                    m_SpawnItem = false;
+                }
+            }
+            else
+            {
+                ++m_SpawnedItemCount;
+            }
+        }
+    }
+
+    return { HookAction::Return(), entityType };
+}
+
+DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Player, void, ZHM5ReloadController_EndReloadWeapon, ZHM5ReloadController* p_HM5ReloadController)
+{
+    p_Hook->CallOriginal(p_HM5ReloadController);
+
+    if (m_IsInfiniteAmmoEnabled)
+    {
+        SetInfiniteAmmo();
+    }
+
+    return { HookAction::Return() };
 }
 
 DEFINE_MOD(Player);

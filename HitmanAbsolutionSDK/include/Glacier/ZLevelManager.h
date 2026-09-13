@@ -1,28 +1,41 @@
 #pragma once
 
 #include "IComponentInterface.h"
-#include "Templates/TEntityRef.h"
-#include "Player/ZHitman5.h"
-#include "SSceneParameters.h"
-#include "Outfit/ZOutfitManagerEntity.h"
+#include "ZEntity.h"
+#include "ZHitman5.h"
+#include "ZOutfit.h"
 
-#include <Common.h>
-
-class HitmanAbsolutionSDK_API ZLevelManager : public IComponentInterface
+enum ECheckpointGameMode
 {
-public:
-	const SSceneParameters& GetSceneParameters() const;
-	SSceneParameters& GetSceneParameters();
-	const TEntityRef<ZHitman5>& GetHitman() const;
-	TEntityRef<ZOutfitManagerEntity> GetOutfitManager() const;
+    eCGM_CONTRACT = 0,
+    eCGM_STORYMODE = 1,
+    eCGM_MAINMENU = 2,
+    eCGM_DLC = 3,
+    eCGM_BENCHMARK = 4
+};
 
-private:
-	SSceneParameters m_SceneTransitionData; //0x4
-	PAD(0x10);
-	TEntityRef<ZHitman5> m_rHitman; //0x44
-	PAD(0x10);
-	TEntityRef<ZOutfitManagerEntity> m_pOutfitManager; //0x5C
-	PAD(0xDC);
+struct SSceneParameters
+{
+    ZString sSceneResource;
+    ECheckpointGameMode eGameMode;
+    STokenID BonusWeapon;
+    STokenID BonusOutfit;
+    int32_t nCheckpointIndex;
+    bool bRestoring;
+    bool bUseSaveGame;
+    STokenID sStartCheckpointID;
+    bool bGameCompleted;
+};
+
+class ZLevelManager : public IComponentInterface
+{
+  public:
+    SSceneParameters m_SceneTransitionData;            // 0x4
+    PAD(0x10);                                         // 0x34
+    TEntityRef<ZHitman5> m_rHitman;                    // 0x44
+    PAD(0x10);                                         // 0x4C
+    TEntityRef<ZOutfitManagerEntity> m_pOutfitManager; // 0x5C
+    PAD(0xDC);                                         // 0x64
 };
 
 static_assert(sizeof(ZLevelManager) == 0x140);

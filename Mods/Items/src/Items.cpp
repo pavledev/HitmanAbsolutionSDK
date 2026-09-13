@@ -1,9 +1,9 @@
 #include <IconsMaterialDesign.h>
 
-#include <Glacier/Action/ZHM5ActionManager.h>
-#include <Glacier/Item/IHM5Item.h>
+#include <Glacier/ZAction.h>
+#include <Glacier/ZItem.h>
 #include <Glacier/ZLevelManager.h>
-#include <Glacier/Actor/ZActor.h>
+#include <Glacier/ZActor.h>
 
 #include <Items.h>
 
@@ -39,19 +39,18 @@ void Items::OnDrawUI(const bool hasFocus)
     {
         ImGui::BeginChild("left pane", ImVec2(600, 500), false, ImGuiWindowFlags_HorizontalScrollbar);
 
-        static char itemName[256]{ "" };
+        static char itemName[256]{""};
 
         ImGui::AlignTextToFramePadding();
         ImGui::Text("Item Name");
         ImGui::SameLine();
         ImGui::InputText("##ItemName", itemName, sizeof(itemName));
 
-        TSList<ZHM5ActionManager::SActionTreeEntry>& actions = HM5ActionManager->GetActions();
         unsigned int index = 0;
 
-        for (auto it = actions.Begin(); it != actions.End(); ++it)
+        for (auto it = Globals::HM5ActionManager->m_Actions.Begin(); it != Globals::HM5ActionManager->m_Actions.End(); ++it)
         {
-            EActionType actionType = it.Node().m_data.m_pNodeAction->GetActionType();
+            EActionType actionType = it.Node().m_data.m_pNodeAction->m_eActionType;
 
             if (actionType != EActionType::AT_PICKUP)
             {
@@ -60,11 +59,11 @@ void Items::OnDrawUI(const bool hasFocus)
                 continue;
             }
 
-            TEntityRef<IEntity> object = it.Node().m_data.m_pNodeAction->GetActionObject();
-            IHM5Item* item = object.GetEntityRef().QueryInterfacePtr<IHM5Item>();
+            TEntityRef<IEntity> object = it.Node().m_data.m_pNodeAction->m_Object;
+            IHM5Item* item = object.m_entityRef.QueryInterfacePtr<IHM5Item>();
             std::string itemName2 = std::format("{} ({})", item->GetItemName().ToCString(), index);
 
-            if (!StringUtility::Contains(itemName2, itemName, false))
+            if (!util::Contains(itemName2, itemName, false))
             {
                 ++index;
 
@@ -90,25 +89,25 @@ void Items::OnDrawUI(const bool hasFocus)
         {
             if (ImGui::Button("Add item to inventory"))
             {
-                TEntityRef<IEntity> object = actions[selectedItemIndex].m_pNodeAction->GetActionObject();
-                ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+                TEntityRef<IEntity> object = Globals::HM5ActionManager->m_Actions[selectedItemIndex].m_pNodeAction->m_Object;
+                ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
                 if (hitman)
                 {
-                    hitman->GetBaseInventory()->AddItemToInventory(object.GetEntityRef(), false, false);
+                    hitman->m_pBaseInventory->AddItemToInventory(object.m_entityRef, false, false);
                 }
             }
 
             if (ImGui::Button("Teleport item to hitman"))
             {
-                TEntityRef<IEntity> object = actions[selectedItemIndex].m_pNodeAction->GetActionObject();
-                IHM5Item* item = object.GetEntityRef().QueryInterfacePtr<IHM5Item>();
-                ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+                TEntityRef<IEntity> object = Globals::HM5ActionManager->m_Actions[selectedItemIndex].m_pNodeAction->m_Object;
+                IHM5Item* item = object.m_entityRef.QueryInterfacePtr<IHM5Item>();
+                ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
                 if (hitman)
                 {
-                    ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntity().GetRawPointer();
-                    ZSpatialEntity* itemSpatialEntity = item->GetSpatialEntity().GetRawPointer();
+                    ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntityPtr();
+                    ZSpatialEntity* itemSpatialEntity = item->GetSpatialEntity().m_pInterfaceRef;
 
                     itemSpatialEntity->SetWorldPosition(hitmanSpatialEntity->GetWorldPosition());
                 }
@@ -119,30 +118,30 @@ void Items::OnDrawUI(const bool hasFocus)
 
         if (ImGui::Button("Teleport all items to hitman"))
         {
-            for (auto it = actions.Begin(); it != actions.End(); ++it)
+            for (auto it = Globals::HM5ActionManager->m_Actions.Begin(); it != Globals::HM5ActionManager->m_Actions.End(); ++it)
             {
-                const EActionType actionType = it.Node().m_data.m_pNodeAction->GetActionType();
+                const EActionType actionType = it.Node().m_data.m_pNodeAction->m_eActionType;
 
                 if (actionType != EActionType::AT_PICKUP)
                 {
                     continue;
                 }
 
-                const TEntityRef<IEntity> object = it.Node().m_data.m_pNodeAction->GetActionObject();
-                const IHM5Item* item = object.GetEntityRef().QueryInterfacePtr<IHM5Item>();
+                const TEntityRef<IEntity> object = it.Node().m_data.m_pNodeAction->m_Object;
+                const IHM5Item* item = object.m_entityRef.QueryInterfacePtr<IHM5Item>();
                 const ZEntityRef ownerEntityRef = item->GetOwner();
 
-                if (ownerEntityRef.GetEntityTypePtrPtr())
+                if (ownerEntityRef.m_pEntityTypePtrPtr)
                 {
                     continue;
                 }
 
-                ZHitman5* hitman = LevelManager->GetHitman().GetRawPointer();
+                ZHitman5* hitman = Globals::LevelManager->m_rHitman.m_pInterfaceRef;
 
                 if (hitman)
                 {
-                    ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntity().GetRawPointer();
-                    ZSpatialEntity* itemSpatialEntity = item->GetSpatialEntity().GetRawPointer();
+                    ZSpatialEntity* hitmanSpatialEntity = hitman->GetSpatialEntityPtr();
+                    ZSpatialEntity* itemSpatialEntity = item->GetSpatialEntity().m_pInterfaceRef;
 
                     itemSpatialEntity->SetWorldPosition(hitmanSpatialEntity->GetWorldPosition());
                 }
