@@ -14,7 +14,7 @@ ResourceIDRegistry& ResourceIDRegistry::GetInstance()
 
 void ResourceIDRegistry::Load()
 {
-    std::ifstream ifstream = std::ifstream("assets/HashMap.txt");
+    std::ifstream ifstream = std::ifstream("HashMap.txt");
 
     if (!ifstream.is_open())
     {

@@ -1,3 +1,7 @@
 .vs/
-build/
-install/
+_build/
+_install/
+
+# Visual Studio resource files
+*.aps
+**/RC[0-9A-Fa-f]*

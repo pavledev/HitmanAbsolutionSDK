@@ -21,6 +21,7 @@
 #include <Utils/ResourceUtils.h>
 #include <Utils/ImGuiUtils.h>
 #include <Hooks.h>
+#include <Resources.h>
 
 Player::Player()
 {
@@ -504,19 +505,29 @@ void Player::DrawItemsTab()
 
 void Player::LoadOufits()
 {
-    std::ifstream inputFile = std::ifstream("assets/Outfits.json");
-    rapidjson::IStreamWrapper streamWrapper(inputFile);
-    rapidjson::Document document;
+    const std::string_view outfitsJson = SDK::GetInstance().GetTextResource(IDR_OUTFITS);
 
-    document.ParseStream(streamWrapper);
-
-    const rapidjson::Value& outfitsArray = document["outfits"].GetArray();
-
-    m_Outfits.reserve(outfitsArray.Size());
-
-    for (rapidjson::Value::ConstValueIterator it = outfitsArray.Begin(); it != outfitsArray.End(); ++it)
+    if (outfitsJson.empty())
     {
-        const rapidjson::Value& object = it->GetObj();
+        Logger::Error("Failed to load outfits resource.");
+        return;
+    }
+
+    rapidjson::Document document;
+    document.Parse(outfitsJson.data(), outfitsJson.size());
+
+    if (document.HasParseError())
+    {
+        Logger::Error("Failed to parse outfits resource.");
+        return;
+    }
+
+    const auto& outfits = document["outfits"].GetArray();
+
+    m_Outfits.reserve(outfits.Size());
+
+    for (const auto& object : outfits)
+    {
         Outfit& outfit = m_Outfits.emplace_back();
 
         outfit.m_Title = object["title"].GetString();
@@ -546,19 +557,29 @@ void Player::LoadOufits()
 
 void Player::LoadFirearms()
 {
-    std::ifstream inputFile = std::ifstream("assets/Firearms.json");
-    rapidjson::IStreamWrapper streamWrapper(inputFile);
-    rapidjson::Document document;
+    const std::string_view firearmsJson = SDK::GetInstance().GetTextResource(IDR_FIREARMS);
 
-    document.ParseStream(streamWrapper);
-
-    const rapidjson::Value& weaponsArray = document["firearms"].GetArray();
-
-    m_Firearms.reserve(weaponsArray.Size());
-
-    for (rapidjson::Value::ConstValueIterator it = weaponsArray.Begin(); it != weaponsArray.End(); ++it)
+    if (firearmsJson.empty())
     {
-        const rapidjson::Value& object = it->GetObj();
+        Logger::Error("Failed to load firearms resource.");
+        return;
+    }
+
+    rapidjson::Document document;
+    document.Parse(firearmsJson.data(), firearmsJson.size());
+
+    if (document.HasParseError())
+    {
+        Logger::Error("Failed to parse firearms resource.");
+        return;
+    }
+
+    const auto& firearms = document["firearms"].GetArray();
+
+    m_Firearms.reserve(firearms.Size());
+
+    for (const auto& object : firearms)
+    {
         Firearm& firearm = m_Firearms.emplace_back();
 
         firearm.m_Title = object["title"].GetString();
@@ -568,19 +589,29 @@ void Player::LoadFirearms()
 
 void Player::LoadItems()
 {
-    std::ifstream inputFile = std::ifstream("assets/Items.json");
-    rapidjson::IStreamWrapper streamWrapper(inputFile);
-    rapidjson::Document document;
+    const std::string_view itemsJson = SDK::GetInstance().GetTextResource(IDR_ITEMS);
 
-    document.ParseStream(streamWrapper);
-
-    const rapidjson::Value& itemsArray = document["items"].GetArray();
-
-    m_Items.reserve(itemsArray.Size());
-
-    for (rapidjson::Value::ConstValueIterator it = itemsArray.Begin(); it != itemsArray.End(); ++it)
+    if (itemsJson.empty())
     {
-        const rapidjson::Value& object = it->GetObj();
+        Logger::Error("Failed to load items resource.");
+        return;
+    }
+
+    rapidjson::Document document;
+    document.Parse(itemsJson.data(), itemsJson.size());
+
+    if (document.HasParseError())
+    {
+        Logger::Error("Failed to parse items resource.");
+        return;
+    }
+
+    const auto& items = document["items"].GetArray();
+
+    m_Items.reserve(items.Size());
+
+    for (const auto& object : items)
+    {
         Item& item = m_Items.emplace_back();
 
         item.m_Title = object["title"].GetString();
@@ -590,16 +621,42 @@ void Player::LoadItems()
 
 void Player::LoadActorTypesAndResourceIDs()
 {
-    std::ifstream ifstream = std::ifstream("assets/Actors.txt");
-    std::string line;
+    const std::string_view actors = SDK::GetInstance().GetTextResource(IDR_ACTORS);
 
-    while (getline(ifstream, line))
+    if (actors.empty())
     {
-        const size_t index = line.find("#");
-        const std::string actorType = line.substr(0, index);
-        const std::string resourceID = line.substr(index + 1);
+        Logger::Error("Failed to load actors resource.");
+        return;
+    }
 
-        m_ActorTypeToResourceID.insert(std::make_pair(actorType, resourceID));
+    size_t start = 0;
+
+    while (start < actors.size())
+    {
+        const size_t end = actors.find('\n', start);
+        std::string_view line = actors.substr(start, end - start);
+
+        if (!line.empty() && line.back() == '\r')
+        {
+            line.remove_suffix(1);
+        }
+
+        const size_t separator = line.find('#');
+
+        if (separator != std::string_view::npos)
+        {
+            const std::string_view actorType = line.substr(0, separator);
+            const std::string_view resourceID = line.substr(separator + 1);
+
+            m_ActorTypeToResourceID.emplace(std::string(actorType), std::string(resourceID));
+        }
+
+        if (end == std::string_view::npos)
+        {
+            break;
+        }
+
+        start = end + 1;
     }
 }
 

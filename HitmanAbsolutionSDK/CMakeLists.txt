@@ -34,6 +34,10 @@ target_compile_definitions(HitmanAbsolutionSDK PRIVATE
 	EXPORTS
 )
 
+target_sources(HitmanAbsolutionSDK PRIVATE
+  Resources/Resources.rc
+)
+
 install(TARGETS HitmanAbsolutionSDK
 	RUNTIME DESTINATION bin
 	LIBRARY DESTINATION lib

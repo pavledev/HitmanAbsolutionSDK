@@ -1,0 +1,9 @@
+#include "../Include/Resources.h"
+
+IDR_ACTORS               RCDATA "Actors.txt"
+IDR_ENUMS                RCDATA "Enums.json"
+IDR_FIREARMS             RCDATA "Firearms.json"
+IDR_ITEMS                RCDATA "Items.json"
+IDR_OUTFITS              RCDATA "Outfits.json"
+IDR_PROPERTIES           RCDATA "Properties.json"
+IDR_BLUEPRINT_BACKGROUND RCDATA "Images/BlueprintBackground.png"

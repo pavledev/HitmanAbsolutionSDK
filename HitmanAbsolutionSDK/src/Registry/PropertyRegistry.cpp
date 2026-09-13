@@ -5,6 +5,8 @@
 
 #include "Registry/PropertyRegistry.h"
 #include "Logging.h"
+#include "SDK.h"
+#include "Resources.h"
 
 PropertyRegistry& PropertyRegistry::GetInstance()
 {
@@ -15,24 +17,29 @@ PropertyRegistry& PropertyRegistry::GetInstance()
 
 void PropertyRegistry::Load()
 {
-    std::ifstream inputFileStream = std::ifstream("assets/Properties.json");
-    rapidjson::IStreamWrapper streamWrapper(inputFileStream);
-    rapidjson::Document document;
+    const std::string_view propertiesJson = SDK::GetInstance().GetTextResource(IDR_PROPERTIES);
 
-    document.ParseStream(streamWrapper);
-
-    const rapidjson::Value& properties2 = document["properties"];
-
-    for (rapidjson::Value::ConstValueIterator it = properties2.Begin(); it != properties2.End(); ++it)
+    if (propertiesJson.empty())
     {
-        const rapidjson::Value& object = it->GetObj();
-        std::string name = object["name"].GetString();
-        uint32_t hash = object["hash"].GetUint();
-
-        m_Properties.insert(std::make_pair(hash, name));
+        Logger::Error("Failed to load properties resource.");
+        return;
     }
 
-    Logger::Info("Sucessfully loaded properties.");
+    rapidjson::Document document;
+    document.Parse(propertiesJson.data(), propertiesJson.size());
+
+    if (document.HasParseError())
+    {
+        Logger::Error("Failed to parse properties resource.");
+        return;
+    }
+
+    for (const auto& property : document["properties"].GetArray())
+    {
+        m_Properties.emplace(property["hash"].GetUint(), property["name"].GetString());
+    }
+
+    Logger::Info("Successfully loaded properties.");
 }
 
 const std::string& PropertyRegistry::GetPropertyName(const uint32_t p_PropertyID) const

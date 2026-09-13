@@ -33,6 +33,11 @@ foreach(MOD IN LISTS MODS)
 	add_subdirectory("Mods/${MOD}")
 endforeach()
 
+install(
+  FILES "${CMAKE_SOURCE_DIR}/HitmanAbsolutionSDK/Resources/HashMap.txt"
+  DESTINATION bin
+)
+
 if (EXISTS ${GAME_INSTALL_PATH})
 	install(FILES "$<TARGET_FILE:DirectInputProxy>" DESTINATION ${GAME_INSTALL_PATH})
 	install(FILES "$<TARGET_FILE:HitmanAbsolutionSDK>" DESTINATION ${GAME_INSTALL_PATH})
@@ -41,8 +46,10 @@ if (EXISTS ${GAME_INSTALL_PATH})
 		install(FILES "$<TARGET_FILE:${MOD}>" DESTINATION "${GAME_INSTALL_PATH}/mods")
     endforeach()
 
-	file(TO_CMAKE_PATH "${GAME_INSTALL_PATH}" GAME_INSTALL_PATH_CMAKE)
-	install(DIRECTORY "${CMAKE_SOURCE_DIR}/assets/" DESTINATION "${GAME_INSTALL_PATH_CMAKE}/assets")
+	install(
+    FILES "${CMAKE_SOURCE_DIR}/HitmanAbsolutionSDK/Resources/HashMap.txt"
+    DESTINATION "${GAME_INSTALL_PATH}"
+  )
 endif()
 
 # Collect all licenses from ${VCPKG_BUILD_ROOT}/share/<lib>/copyright into licenses/<lib>.txt

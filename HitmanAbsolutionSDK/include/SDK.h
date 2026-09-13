@@ -1,5 +1,7 @@
 #pragma once
 
+#include <span>
+
 #include <imgui.h>
 
 #include "ModManager.h"
@@ -38,6 +40,9 @@ class SDK
     HitmanAbsolutionSDK_API const std::map<int, std::string>& GetEnum(const std::string& p_TypeName);
 
     HitmanAbsolutionSDK_API const std::string& GetPropertyName(uint32_t p_PropertyID) const;
+
+    HitmanAbsolutionSDK_API std::span<const std::byte> GetResource(int32_t p_ResourceID) const;
+    HitmanAbsolutionSDK_API std::string_view GetTextResource(int32_t p_ResourceID) const;
 
     HitmanAbsolutionSDK_API bool CreateAndInstallDynamicResourceLibrary(
         const std::string& p_ResourceID, ZDynamicResourceLibrary*& p_DynamicResourceLibrary, ZRuntimeResourceID& p_TempRuntimeResourceID,

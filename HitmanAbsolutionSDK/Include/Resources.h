@@ -1,0 +1,9 @@
+#pragma once
+
+#define IDR_ACTORS 101
+#define IDR_ENUMS 102
+#define IDR_FIREARMS 103
+#define IDR_ITEMS 104
+#define IDR_OUTFITS 105
+#define IDR_PROPERTIES 106
+#define IDR_BLUEPRINT_BACKGROUND 107

@@ -15,6 +15,7 @@
 #include "Hooks.h"
 #include "Connection/PipeServer.h"
 #include "SDK.h"
+#include "Fonts.h"
 
 DirectXRenderer::DirectXRenderer()
 {
@@ -66,9 +67,7 @@ bool DirectXRenderer::Setup()
         return false;
     }
 
-    constexpr const wchar_t* robotoRegularFontPath = L"assets/fonts/Roboto-Regular.spritefont";
-
-    m_Font = std::make_unique<DirectX::SpriteFont>(device, robotoRegularFontPath);
+    m_Font = std::make_unique<DirectX::SpriteFont>(device, RobotoRegularSpritefontData, RobotoRegularSpritefontSize);
     m_SpriteBatch = std::make_unique<DirectX::SpriteBatch>(immediateContext);
 
     D3D11_VIEWPORT viewport = { 0.0f, 0.0f, m_WindowWidth, m_WindowHeight, D3D11_MIN_DEPTH, D3D11_MAX_DEPTH };

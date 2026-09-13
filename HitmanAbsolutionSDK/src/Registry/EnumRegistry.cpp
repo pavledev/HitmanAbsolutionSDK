@@ -5,6 +5,8 @@
 
 #include "Registry/EnumRegistry.h"
 #include "Logging.h"
+#include "SDK.h"
+#include "Resources.h"
 
 EnumRegistry& EnumRegistry::GetInstance()
 {
@@ -15,31 +17,42 @@ EnumRegistry& EnumRegistry::GetInstance()
 
 void EnumRegistry::Load()
 {
-    std::ifstream inputFileStream = std::ifstream("assets/Enums.json");
-    rapidjson::IStreamWrapper streamWrapper(inputFileStream);
+    const std::string_view enumsJson = SDK::GetInstance().GetTextResource(IDR_ENUMS);
+
+    if (enumsJson.empty())
+    {
+        Logger::Error("Failed to load enums resource.");
+        return;
+    }
+
     rapidjson::Document document;
+    document.Parse(enumsJson.data(), enumsJson.size());
 
-    document.ParseStream(streamWrapper);
+    if (document.HasParseError())
+    {
+        Logger::Error("Failed to parse enums resource.");
+        return;
+    }
 
-    const rapidjson::Value& enums2 = document["enums"];
+    const rapidjson::Value& enums = document["enums"];
 
-    for (rapidjson::Value::ConstValueIterator it = enums2.Begin(); it != enums2.End(); ++it)
+    for (auto it = enums.Begin(); it != enums.End(); ++it)
     {
         const rapidjson::Value& object = it->GetObj();
         const rapidjson::Value& items = object["items"];
-        std::map<int32_t, std::string> items2;
+        std::map<int32_t, std::string> enumItems;
 
-        for (rapidjson::Value::ConstValueIterator it2 = items.Begin(); it2 != items.End(); ++it2)
+        for (auto it2 = items.Begin(); it2 != items.End(); ++it2)
         {
-            const rapidjson::Value& object2 = it2->GetObj();
+            const rapidjson::Value& item = it2->GetObj();
 
-            items2.insert(std::make_pair(object2["value"].GetInt(), object2["name"].GetString()));
+            enumItems.emplace(item["value"].GetInt(), item["name"].GetString());
         }
 
-        m_Enums.insert(std::make_pair(object["name"].GetString(), items2));
+        m_Enums.emplace(object["name"].GetString(), std::move(enumItems));
     }
 
-    Logger::Info("Sucessfully loaded enums.");
+    Logger::Info("Successfully loaded enums.");
 }
 
 const std::map<int32_t, std::string>& EnumRegistry::GetEnum(const std::string& p_TypeName)

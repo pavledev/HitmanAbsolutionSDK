@@ -18,6 +18,7 @@
 #include "Globals.h"
 #include "Hooks.h"
 #include "SDK.h"
+#include "Fonts.h"
 
 ImGuiRenderer::ImGuiRenderer()
 {
@@ -132,16 +133,13 @@ void ImGuiRenderer::AddFonts()
     iconsConfig.GlyphOffset = { 0.f, 6.f };
 
     static constexpr ImWchar iconRanges[] = { ICON_MIN_MD, ICON_MAX_16_MD, 0 };
-    static constexpr const char* regularFontPath = "assets/fonts/Roboto-Regular.ttf";
-    static constexpr const char* boldFontPath = "assets/fonts/Roboto-Bold.ttf";
-    static constexpr const char* materialIconsRegularFontPath = "assets/fonts/MaterialIcons-Regular.ttf";
 
-    m_RegularFont = io.Fonts->AddFontFromFileTTF(regularFontPath, 32.f);
-    io.Fonts->AddFontFromFileTTF(materialIconsRegularFontPath, 32.f, &iconsConfig, iconRanges);
+    m_RegularFont = io.Fonts->AddFontFromMemoryCompressedTTF(RobotoRegularCompressedData, RobotoRegularCompressedSize, 32.f);
+    io.Fonts->AddFontFromMemoryCompressedTTF(MaterialIconsRegularCompressedData, MaterialIconsRegularCompressedSize, 28.f, &iconsConfig, iconRanges);
     io.Fonts->Build();
 
-    m_BoldFont = io.Fonts->AddFontFromFileTTF(boldFontPath, 32.f);
-    io.Fonts->AddFontFromFileTTF(materialIconsRegularFontPath, 32.f, &iconsConfig, iconRanges);
+    m_BoldFont = io.Fonts->AddFontFromMemoryCompressedTTF(RobotoBoldCompressedData, RobotoBoldCompressedSize, 28.f);
+    io.Fonts->AddFontFromMemoryCompressedTTF(MaterialIconsRegularCompressedData, MaterialIconsRegularCompressedSize, 28.f, &iconsConfig, iconRanges);
     io.Fonts->Build();
 
     io.FontDefault = m_RegularFont;

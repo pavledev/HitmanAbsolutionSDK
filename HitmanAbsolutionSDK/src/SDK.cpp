@@ -227,6 +227,46 @@ const std::string& SDK::GetPropertyName(const uint32_t p_PropertyID) const
     return PropertyRegistry::GetInstance().GetPropertyName(p_PropertyID);
 }
 
+std::span<const std::byte> SDK::GetResource(int32_t p_ResourceID) const
+{
+    const HMODULE module = GetModuleHandleA("HitmanAbsolutionSDK.dll");
+
+    if (!module)
+    {
+        return {};
+    }
+
+    const HRSRC resource = FindResource(module, MAKEINTRESOURCE(p_ResourceID), RT_RCDATA);
+
+    if (!resource)
+    {
+        return {};
+    }
+
+    const HGLOBAL loadedResource = LoadResource(module, resource);
+
+    if (!loadedResource)
+    {
+        return {};
+    }
+
+    const void* data = LockResource(loadedResource);
+
+    if (!data)
+    {
+        return {};
+    }
+
+    return { static_cast<const std::byte*>(data), SizeofResource(module, resource) };
+}
+
+std::string_view SDK::GetTextResource(int32_t p_ResourceID) const
+{
+    const auto resource = GetResource(p_ResourceID);
+
+    return { reinterpret_cast<const char*>(resource.data()), resource.size() };
+}
+
 bool SDK::CreateAndInstallDynamicResourceLibrary(
     const std::string& p_ResourceID, ZDynamicResourceLibrary*& p_DynamicResourceLibrary, ZRuntimeResourceID& p_TempRuntimeResourceID,
     const uint32_t p_EntityCount
