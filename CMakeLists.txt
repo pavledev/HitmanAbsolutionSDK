@@ -31,6 +31,9 @@ set(MODS
 
 foreach(MOD IN LISTS MODS)
 	add_subdirectory("Mods/${MOD}")
+
+  install(TARGETS ${MOD} RUNTIME DESTINATION bin/mods)
+  install(FILES $<TARGET_PDB_FILE:${MOD}> DESTINATION bin/mods)
 endforeach()
 
 install(
