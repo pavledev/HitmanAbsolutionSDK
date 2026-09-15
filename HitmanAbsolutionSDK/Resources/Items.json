@@ -219,6 +219,10 @@
         {
             "title": "Coffee Mug",
             "runtimeResourceID": 18795143373862416
+        },
+		{
+            "title": "Detonator",
+            "runtimeResourceID": 9223372091850564148
         }
     ]
 }

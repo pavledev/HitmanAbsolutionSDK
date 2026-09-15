@@ -532,6 +532,20 @@ void Player::LoadOufits()
 
         outfit.m_Title = object["title"].GetString();
         outfit.m_TokenID = STokenID(object["hash"].GetUint());
+
+        // Hope Cougar outfit isn't registered in ZContentKitManager::m_GlobalOutfitKits
+        if (object.HasMember("outfitVariations"))
+        {
+            for (const auto& variation : object["outfitVariations"].GetArray())
+            {
+                const std::string resourceID = variation.GetString();
+                const ZRuntimeResourceID runtimeResourceID = SDK::GetInstance().GetRuntimeResourceID(resourceID);
+
+                outfit.m_OutfitVariations.push_back({ runtimeResourceID, resourceID });
+            }
+
+            continue;
+        }
     }
 
     for (auto& outfit : m_Outfits)

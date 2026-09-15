@@ -184,6 +184,26 @@
             "title": "Black Kazo TRG",
             "runtimeResourceID": 13012191870414396,
 			"hash": 3731704541
+        },
+		{
+            "title": "Bartoli Custom (DLC)",
+            "runtimeResourceID": 18303662609866464,
+			"hash": 1984785995
+        },
+		{
+            "title": "Bronson M1928 (DLC)",
+            "runtimeResourceID": 23752129656946032,
+			"hash": 2852645145
+        },
+		{
+            "title": "Krugermeier 2-2 (DLC)",
+            "runtimeResourceID": 15049346694057448,
+			"hash": 3051547039
+        },
+		{
+            "title": "Steiner-Bisley Zenith (Deus Ex Handgun - Adam Jensen) (DLC)",
+            "runtimeResourceID": 21941607744801273,
+			"hash": 4044888282
         }
     ]
 }
