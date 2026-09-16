@@ -1,0 +1,15 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "dll",
+      "exe": "C:\\Program Files (x86)\\GOG Galaxy\\Games\\Hitman Absolution\\retail\\HMA.exe",
+      "cwd": "C:\\Program Files (x86)\\GOG Galaxy\\Games\\Hitman Absolution\\retail",
+      "args": [],
+      "project": "CMakeLists.txt",
+      "projectTarget": "HitmanAbsolutionSDK.dll (Install)",
+      "name": "Hitman Absolution"
+    }
+  ]
+}

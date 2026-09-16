@@ -1,0 +1,20 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "dll",
+      "exe": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Hitman Absolution\\HMA.exe",
+      "cwd": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Hitman Absolution",
+      "args": [],
+      "project": "CMakeLists.txt",
+      "projectTarget": "HitmanAbsolutionSDK.dll (Install)",
+      "name": "Hitman Absolution",
+      "env": {
+        "SteamGameId": "203140",
+        "SteamAppId": "203140",
+        "SteamOverlayGameId": "203140"
+      }
+    }
+  ]
+}
