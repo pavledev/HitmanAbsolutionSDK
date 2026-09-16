@@ -134,7 +134,7 @@ void ImGuiRenderer::AddFonts()
 
     static constexpr ImWchar iconRanges[] = { ICON_MIN_MD, ICON_MAX_16_MD, 0 };
 
-    m_RegularFont = io.Fonts->AddFontFromMemoryCompressedTTF(RobotoRegularCompressedData, RobotoRegularCompressedSize, 32.f);
+    m_RegularFont = io.Fonts->AddFontFromMemoryCompressedTTF(RobotoRegularCompressedData, RobotoRegularCompressedSize, 28.f);
     io.Fonts->AddFontFromMemoryCompressedTTF(MaterialIconsRegularCompressedData, MaterialIconsRegularCompressedSize, 28.f, &iconsConfig, iconRanges);
     io.Fonts->Build();
 
