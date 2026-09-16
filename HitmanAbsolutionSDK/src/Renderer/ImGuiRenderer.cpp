@@ -240,7 +240,7 @@ void ImGuiRenderer::SetScale()
     GetClientRect(hwnd, &rect);
 
     io.DisplaySize = ImVec2(static_cast<float>(rect.right - rect.left), static_cast<float>(rect.bottom - rect.top));
-    io.FontGlobalScale = io.DisplaySize.y / 2048.f;
+    io.FontGlobalScale = io.DisplaySize.y / 1800.f;
 }
 
 ImGuiContext* ImGuiRenderer::GetImGuiContext()
