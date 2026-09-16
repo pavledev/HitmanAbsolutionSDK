@@ -27,6 +27,7 @@ set(MODS
 	Noclip
 	HUD
 	Camera
+	SkipIntro
 )
 
 foreach(MOD IN LISTS MODS)
