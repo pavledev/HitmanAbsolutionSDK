@@ -71,6 +71,7 @@ jobs:
                     Remove-Item _sdk/release/bin/dinput8.dll
                     Remove-Item _sdk/release/bin/dinput8.pdb
                     Remove-Item _sdk/release/bin/HashMap.txt
+                    Remove-Item _sdk/release/bin/HMA.ini
                     
                     mkdir _sdk/debug
                     Copy-Item _install/x86-Debug/lib -Destination _sdk/debug/ -Recurse
@@ -79,6 +80,7 @@ jobs:
                     Remove-Item _sdk/debug/bin/dinput8.dll
                     Remove-Item _sdk/debug/bin/dinput8.pdb
                     Remove-Item _sdk/debug/bin/HashMap.txt
+                    Remove-Item _sdk/debug/bin/HMA.ini
                     
                     mkdir _sdk/cmake
                     Copy-Item cmake/hma-mod.cmake -Destination _sdk/cmake/hma-mod.cmake

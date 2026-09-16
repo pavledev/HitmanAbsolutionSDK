@@ -37,7 +37,9 @@ foreach(MOD IN LISTS MODS)
 endforeach()
 
 install(
-  FILES "${CMAKE_SOURCE_DIR}/HitmanAbsolutionSDK/Resources/HashMap.txt"
+  FILES
+    "${CMAKE_SOURCE_DIR}/HitmanAbsolutionSDK/Resources/HashMap.txt"
+    "${CMAKE_SOURCE_DIR}/HMA.ini"
   DESTINATION bin
 )
 
@@ -50,7 +52,9 @@ if (EXISTS ${GAME_INSTALL_PATH})
     endforeach()
 
 	install(
-    FILES "${CMAKE_SOURCE_DIR}/HitmanAbsolutionSDK/Resources/HashMap.txt"
+    FILES
+      "${CMAKE_SOURCE_DIR}/HitmanAbsolutionSDK/Resources/HashMap.txt"
+      "${CMAKE_SOURCE_DIR}/HMA.ini"
     DESTINATION "${GAME_INSTALL_PATH}"
   )
 endif()
