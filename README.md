@@ -2,6 +2,8 @@
 
 SDK for Hitman Absolution, supporting both Steam and GOG versions.
 
+Based on the [Hitman 3 SDK](https://github.com/OrfeasZ/ZHMModSDK) and [007 SDK](https://github.com/OrfeasZ/ZKntSDK) by [OrfeasZ](https://github.com/OrfeasZ), and adapted for Hitman Absolution.
+
 <a href="https://discord.gg/6UDtuYhZP6" title="Join the absolution-modding channel">
 	<img src="https://img.shields.io/badge/discord-join-7289DA.svg?logo=discord&longCache=true&style=flat" />
 </a>
