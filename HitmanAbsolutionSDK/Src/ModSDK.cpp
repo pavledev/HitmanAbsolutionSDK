@@ -155,10 +155,21 @@ void ModSDK::Cleanup()
     // Close the hook gate and drain in-flight detours before tearing MinHook down.
     g_HookGate.BeginReload();
 
-    m_ModManager.reset();
+    const MH_STATUS status = MH_DisableHook(MH_ALL_HOOKS);
 
-    m_DirectXRenderer->TeardownRenderer();
+    if (status != MH_OK)
+    {
+        Logger::Error("Failed to disable hooks: {}.", static_cast<int>(status));
+    }
+
+    // Destroy renderer state while mods are still loaded.
     m_ImGuiRenderer->TeardownRenderer();
+    m_DirectXRenderer->TeardownRenderer();
+
+    m_ImGuiRenderer.reset();
+    m_DirectXRenderer.reset();
+
+    m_ModManager.reset();
 
     HookRegistry::ClearAllDetours();
     HookRegistry::DestroyHooks();
@@ -188,7 +199,7 @@ void ModSDK::OnEngineInitialized()
 
 void ModSDK::OnEngineUninitialized()
 {
-    Cleanup();
+    RequestCleanup();
 }
 
 void ModSDK::OnModLoaded(const std::string& p_Name, IModInterface* p_Mod, bool p_LiveLoad)

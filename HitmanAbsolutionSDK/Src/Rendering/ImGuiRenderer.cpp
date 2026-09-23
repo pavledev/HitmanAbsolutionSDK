@@ -75,11 +75,17 @@ ImGuiRenderer::~ImGuiRenderer()
 {
     TeardownRenderer();
 
-    ImGui::DestroyContext(m_ImGuiContext);
-    ImPlot::DestroyContext(m_ImPlotContext);
+    if (m_ImGuiContext)
+    {
+        ImGui::DestroyContext(m_ImGuiContext);
+        m_ImGuiContext = nullptr;
+    }
 
-    m_ImGuiContext = nullptr;
-    m_ImPlotContext = nullptr;
+    if (m_ImPlotContext)
+    {
+        ImPlot::DestroyContext(m_ImPlotContext);
+        m_ImPlotContext = nullptr;
+    }
 }
 
 void ImGuiRenderer::OnEngineInitialized()

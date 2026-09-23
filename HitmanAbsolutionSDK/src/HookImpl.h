@@ -334,7 +334,7 @@ class HookImpl<ReturnType(Args...), Convention> : public Hook<ReturnType(Args...
 
         if (m_Target != nullptr)
         {
-            MH_DisableHook(m_Target);
+            // MH_DisableHook(m_Target);
             MH_RemoveHook(m_Target);
 
             this->m_OriginalFunc = m_Target;

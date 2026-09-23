@@ -2,7 +2,16 @@
 
 DWORD WINAPI StartupProc(LPVOID)
 {
-    ModSDK::GetInstance().Startup();
+    ModSDK& sdk = ModSDK::GetInstance();
+
+    sdk.Startup();
+
+    while (!sdk.IsCleanupRequested())
+    {
+        Sleep(10);
+    }
+
+    sdk.Cleanup();
 
     return 0;
 }

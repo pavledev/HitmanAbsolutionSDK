@@ -175,6 +175,16 @@ class ModSDK : public IModSDK
         return m_ImageSize;
     }
 
+    bool IsCleanupRequested() const
+    {
+        return m_CleanupRequested.load(std::memory_order_acquire);
+    }
+
+    void RequestCleanup()
+    {
+        m_CleanupRequested.store(true, std::memory_order_release);
+    }
+
   private:
     ModSDK();
     ModSDK(const ModSDK& other) = delete;
@@ -232,4 +242,6 @@ class ModSDK : public IModSDK
 
     std::string m_IgnoredVersion;
     bool m_DisableUpdateCheck = false;
+
+    std::atomic<bool> m_CleanupRequested = false;
 };
