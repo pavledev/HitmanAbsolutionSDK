@@ -55,8 +55,8 @@ class IModSDK
     ) = 0;
 
     /**
-     * Get a plugin setting string value for the given name.
-     * @param p_Mod The plugin to get the setting for.
+     * Get a mod setting string value for the given name.
+     * @param p_Mod The mod to get the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @param p_DefaultValue The default value to use if the setting does not exist.
@@ -66,8 +66,8 @@ class IModSDK
     GetModSetting(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name, const ZString& p_DefaultValue, ZString& p_OutValue) = 0;
 
     /**
-     * Get a plugin setting integer value for the given name.
-     * @param p_Mod The plugin to get the setting for.
+     * Get a mod setting integer value for the given name.
+     * @param p_Mod The mod to get the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @param p_DefaultValue The default value to return if the setting does not exist or is not an integer.
@@ -76,8 +76,8 @@ class IModSDK
     virtual int64_t GetModSettingInt(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name, int64_t p_DefaultValue) = 0;
 
     /**
-     * Get a plugin setting unsigned integer value for the given name.
-     * @param p_Mod The plugin to get the setting for.
+     * Get a mod setting unsigned integer value for the given name.
+     * @param p_Mod The mod to get the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @param p_DefaultValue The default value to return if the setting does not exist or is not an unsigned integer.
@@ -86,8 +86,8 @@ class IModSDK
     virtual uint64_t GetModSettingUInt(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name, uint64_t p_DefaultValue) = 0;
 
     /**
-     * Get a plugin setting double value for the given name.
-     * @param p_Mod The plugin to get the setting for.
+     * Get a mod setting double value for the given name.
+     * @param p_Mod The mod to get the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @param p_DefaultValue The default value to return if the setting does not exist or is not a double.
@@ -96,8 +96,8 @@ class IModSDK
     virtual double GetModSettingDouble(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name, double p_DefaultValue) = 0;
 
     /**
-     * Get a plugin setting boolean value for the given name.
-     * @param p_Mod The plugin to get the setting for.
+     * Get a mod setting boolean value for the given name.
+     * @param p_Mod The mod to get the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @param p_DefaultValue The default value to return if the setting does not exist or is not a boolean.
@@ -106,8 +106,8 @@ class IModSDK
     virtual bool GetModSettingBool(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name, bool p_DefaultValue) = 0;
 
     /**
-     * Set a plugin setting value for the given name.
-     * @param p_Mod The plugin to set the setting for.
+     * Set a mod setting value for the given name.
+     * @param p_Mod The mod to set the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @param p_Value The value of the setting.
@@ -115,8 +115,8 @@ class IModSDK
     virtual void SetModSetting(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name, const ZString& p_Value) = 0;
 
     /**
-     * Set a plugin setting integer value for the given name.
-     * @param p_Mod The plugin to set the setting for.
+     * Set a mod setting integer value for the given name.
+     * @param p_Mod The mod to set the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @param p_Value The value of the setting.
@@ -124,8 +124,8 @@ class IModSDK
     virtual void SetModSettingInt(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name, int64_t p_Value) = 0;
 
     /**
-     * Set a plugin setting unsigned integer value for the given name.
-     * @param p_Mod The plugin to set the setting for.
+     * Set a mod setting unsigned integer value for the given name.
+     * @param p_Mod The mod to set the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @param p_Value The value of the setting.
@@ -133,8 +133,8 @@ class IModSDK
     virtual void SetModSettingUInt(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name, uint64_t p_Value) = 0;
 
     /**
-     * Set a plugin setting double value for the given name.
-     * @param p_Mod The plugin to set the setting for.
+     * Set a mod setting double value for the given name.
+     * @param p_Mod The mod to set the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @param p_Value The value of the setting.
@@ -142,8 +142,8 @@ class IModSDK
     virtual void SetModSettingDouble(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name, double p_Value) = 0;
 
     /**
-     * Set a plugin setting boolean value for the given name.
-     * @param p_Mod The plugin to set the setting for.
+     * Set a mod setting boolean value for the given name.
+     * @param p_Mod The mod to set the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @param p_Value The value of the setting.
@@ -151,8 +151,8 @@ class IModSDK
     virtual void SetModSettingBool(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name, bool p_Value) = 0;
 
     /**
-     * Check if a plugin setting with the given name exists.
-     * @param p_Mod The plugin to check the setting for.
+     * Check if a mod setting with the given name exists.
+     * @param p_Mod The mod to check the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      * @return True if the setting exists, false otherwise.
@@ -160,16 +160,16 @@ class IModSDK
     virtual bool HasModSetting(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name) = 0;
 
     /**
-     * Remove a plugin setting with the given name.
-     * @param p_Mod The plugin to remove the setting for.
+     * Remove a mod setting with the given name.
+     * @param p_Mod The mod to remove the setting for.
      * @param p_Section The section of the setting in the INI file.
      * @param p_Name The name of the setting.
      */
     virtual void RemoveModSetting(IModInterface* p_Mod, const ZString& p_Section, const ZString& p_Name) = 0;
 
     /**
-     * Reload the settings for the given plugin.
-     * @param p_Mod The plugin to reload the settings for.
+     * Reload the settings for the given mod.
+     * @param p_Mod The mod to reload the settings for.
      */
     virtual void ReloadModSettings(IModInterface* p_Mod) = 0;
 
