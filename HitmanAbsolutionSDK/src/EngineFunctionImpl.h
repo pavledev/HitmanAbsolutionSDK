@@ -6,7 +6,7 @@
 #include <fmt/format.h>
 
 #include "EngineFunction.h"
-#include "SDK.h"
+#include "ModSDK.h"
 #include "Utils/ProcessUtils.h"
 #include "Logging.h"
 
@@ -16,7 +16,7 @@ namespace Detail
     {
         const auto* pattern = reinterpret_cast<const uint8_t*>(p_Pattern);
 
-        return util::ProcessUtils::SearchPattern(SDK::GetInstance().GetModuleBase(), SDK::GetInstance().GetSizeOfCode(), pattern, p_Mask);
+        return util::ProcessUtils::SearchPattern(ModSDK::GetInstance().GetModuleBase(), ModSDK::GetInstance().GetSizeOfCode(), pattern, p_Mask);
     }
 
     inline void LogFunctionAddressNotFound(const char* p_FunctionName)

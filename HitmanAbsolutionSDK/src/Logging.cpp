@@ -6,61 +6,109 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/msvc_sink.h"
 
-#include "SDK.h"
+#include "ModSDK.h"
 #include "UI/Console.h"
+
+static std::vector<spdlog::logger*>* g_Loggers;
 
 template<class Mutex> class ConsoleSink : public spdlog::sinks::base_sink<Mutex>
 {
   public:
-    ConsoleSink() = default;
+    ConsoleSink() {}
 
-    void sink_it_(const spdlog::details::log_msg& p_Msg) override
+    void sink_it_(const spdlog::details::log_msg& p_Message) override
     {
         spdlog::memory_buf_t formatted;
-        this->formatter_->format(p_Msg, formatted);
+        spdlog::sinks::base_sink<Mutex>::formatter_->format(p_Message, formatted);
 
-        SDK::GetInstance().GetConsole()->AddLogLine(p_Msg.level, std::string(formatted.data(), formatted.size()));
+        ModSDK::GetInstance().GetUIConsole()->AddLogLine(p_Message.level, std::string(formatted.data(), formatted.size()));
     }
 
     void flush_() override {}
 };
 
-using ConsoleSink_mt = ConsoleSink<std::mutex>;
+using ConsoleSinkST = ConsoleSink<spdlog::details::null_mutex>;
+using ConsoleSinkMT = ConsoleSink<std::mutex>;
+
+void DispatchLog(spdlog::level::level_enum p_Level, std::string_view p_Msg)
+{
+    if (g_Loggers == nullptr)
+    {
+        return;
+    }
+
+    for (auto* logger : *g_Loggers)
+    {
+        logger->log(p_Level, fmt::string_view(p_Msg.data(), p_Msg.size()));
+    }
+}
+
+void ClearLoggers()
+{
+    if (g_Loggers == nullptr)
+    {
+        return;
+    }
+
+    for (auto& logger : *g_Loggers)
+    {
+        delete logger;
+    }
+
+    g_Loggers->clear();
+
+    delete g_Loggers;
+    g_Loggers = nullptr;
+}
 
 void SetupLogging(spdlog::level::level_enum p_LogLevel)
 {
-    spdlog::drop_all();
+    ClearLoggers();
 
-    auto distSink = std::make_shared<spdlog::sinks::dist_sink_mt>();
+    if (g_Loggers == nullptr)
+    {
+        g_Loggers = new std::vector<spdlog::logger*>();
+    }
 
+    auto consoleDistSink = std::make_shared<spdlog::sinks::dist_sink_mt>();
     auto stdoutSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-
-    distSink->add_sink(stdoutSink);
-
-    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("HitmanAbsolutionSDK.log", true);
-
-    distSink->add_sink(fileSink);
-
-    auto uiSink = std::make_shared<ConsoleSink_mt>();
-
-    distSink->add_sink(uiSink);
+    auto uiConsoleSink = std::make_shared<ConsoleSinkMT>();
 
 #if _DEBUG
     auto debugSink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
-
-    distSink->add_sink(debugSink);
+    consoleDistSink->add_sink(debugSink);
 #endif
 
-    auto mainLogger = std::make_shared<spdlog::logger>("main", distSink);
+    consoleDistSink->add_sink(stdoutSink);
+    consoleDistSink->add_sink(uiConsoleSink);
 
-    mainLogger->set_level(p_LogLevel);
-    mainLogger->set_pattern("%v");
+    auto consoleLogger = new spdlog::logger("con", consoleDistSink);
 
-    spdlog::register_logger(mainLogger);
-    spdlog::set_default_logger(mainLogger);
+    consoleLogger->set_level(p_LogLevel);
+    consoleLogger->set_pattern("%v");
+
+    g_Loggers->push_back(consoleLogger);
+
+    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("HitmanAbsolutionSDK.log", true);
+
+    auto fileLogger = new spdlog::logger("file", fileSink);
+
+    fileLogger->set_level(p_LogLevel);
+    fileLogger->set_pattern("%v");
+    fileLogger->flush_on(spdlog::level::trace);
+
+    g_Loggers->push_back(fileLogger);
 }
 
-std::shared_ptr<spdlog::logger> GetMainLogger()
+void FlushLoggers()
 {
-    return spdlog::get("main");
+    if (g_Loggers == nullptr)
+    {
+        return;
+    }
+
+    for (auto* logger : *g_Loggers)
+    {
+        logger->flush();
+    }
 }

@@ -6,12 +6,12 @@ class Items : public IModInterface
 {
   public:
     Items();
-    void OnDrawMenu() override;
-    void OnDrawUI(const bool hasFocus) override;
+    void OnDrawMenu(IImGuiRenderer* p_Renderer) override;
+    void OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus) override;
 
   private:
     bool isOpen;
     int selectedItemIndex;
 };
 
-DECLARE_MOD(Items)
+DECLARE_HMASDK_MOD(Items)

@@ -12,8 +12,8 @@ class HUD : public IModInterface
     ~HUD();
 
     void OnEngineInitialized() override;
-    void OnDrawMenu() override;
-    void OnDrawUI(const bool hasFocus) override;
+    void OnDrawMenu(IImGuiRenderer* p_Renderer) override;
+    void OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus) override;
 
     const bool IsHUDItemVisible(const char* p_Name);
     void ToggleHUDItem(const char* p_Name, bool p_Show);
@@ -38,4 +38,4 @@ class HUD : public IModInterface
     ZInputAction m_ToggleHUDAction{ "ToggleHUD" };
 };
 
-DECLARE_MOD(HUD)
+DECLARE_HMASDK_MOD(HUD)

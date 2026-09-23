@@ -32,6 +32,9 @@ template<typename TKey> class TDefaultHashMapPolicy;
 template<typename TKey, typename TValue, typename THashMapPolicy> class THashMap;
 class ZHM5CCProfile;
 class LocalResourceIDsResolver;
+struct SReasoningGrid;
+class ZPathfinder2;
+class ZHM5GridManager;
 
 class HitmanAbsolutionSDK_API Globals
 {
@@ -68,4 +71,7 @@ class HitmanAbsolutionSDK_API Globals
     static ZHM5CCProfile** PresetCCProfiles;
     static int32_t* UIDisableHUD;
     static LocalResourceIDsResolver** LocalResourceResolver;
+    static SReasoningGrid** ActiveGrid;
+    static ZPathfinder2* Pathfinder2;
+    static ZHM5GridManager* HM5GridManager;
 };

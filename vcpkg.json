@@ -1,11 +1,26 @@
 {
-    "name": "hitmanabsolutionsdk",
-    "version": "1.0.0",
-    "dependencies": [
-      "directxtk",
-      "minhook",
-      "rapidjson",
-      "stb",
-      "spdlog"
+  "name": "hitmanabsolutionsdk",
+  "version": "1.0.0",
+  "dependencies": [
+    "directxtk",
+    "minhook",
+    "rapidjson",
+    "spdlog",
+    {
+      "name": "imgui",
+      "features": [
+        "dx11-binding",
+        "win32-binding"
+      ]
+    },
+    "imguizmo",
+    "imgui-node-editor",
+    "implot",
+    "neargye-semver"
+  ],
+  "vcpkg-configuration": {
+    "overlay-ports": [
+      "./cmake/vcpkg-ports"
     ]
+  }
 }

@@ -206,4 +206,6 @@ class HitmanAbsolutionSDK_API Functions
 
     static ThiscallEngineFunction<void(LocalResourceIDsResolver* th, const ZRuntimeResourceID& ridResource, const ZResourceID& idResource)>*
         LocalResourceIDsResolver_RecordMapping;
+
+    static CdeclEngineFunction<ZConfigCommand*(const ZString& pszName)>* ZConfigCommand_GetConfigVariable;
 };

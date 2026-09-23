@@ -126,3 +126,11 @@ PATTERN_THISCALL_HOOK(
     "\x55\x8B\xEC\x83\xEC\x00\x56\xC7\x45\xF8", "xxxxx?xxxx", ZLevelSelectManager_GetBootMovie,
     ZRuntimeResourceID*(ZLevelSelectManager* th, ZRuntimeResourceID& result)
 );
+
+PATTERN_THISCALL_HOOK(
+    "\x55\x8B\xEC\x51\x8B\x45\x08\x56\x57\x89\x4D\xFC\x8D\xB0\x60\x01\x00\x00", "xxxxxxxxxxxxxxxxxx", ZRenderGraphNodeRenderer_DrawOSDAndScaleform,
+    void(
+        ZRenderGraphNodeRenderer* th, ZRenderContext* pRenderContext, ZRenderTargetView* pRTV, ZRenderDepthStencilView* pDSV,
+        TArray<ZRenderGraphNode*>& OSDNodes, ZRenderGraphTraversal* pRenderGraphTraversal
+    )
+);

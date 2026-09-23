@@ -30,6 +30,7 @@ struct SRenderDeviceCaps;
 class ZRenderTexture3D;
 struct SRenderTexture3DDesc;
 struct SRenderSubResourceData;
+class ZAnimationBoneData;
 
 enum ERenderDestinationType
 {
@@ -468,8 +469,8 @@ class ZPrimitiveContainerEntity : public ZRenderableEntity
     virtual void PrimitiveUpdated(const TRefCountPtr<IRenderPrimitive>& pPrimitive, bool bUpdateBounds) = 0;
     virtual TEnumerator<TRefCountPtr<IRenderPrimitive> const> GetPrimitiveEnumerator() const = 0;
     virtual TEnumerator<TRefCountPtr<IRenderPrimitive>> GetPrimitiveEnumerator() = 0;
-    virtual unsigned int GetPrimitivesCount() const = 0;
-    virtual unsigned int GetPrimitiveChangeCounter() const = 0;
+    virtual uint32_t GetPrimitivesCount() const = 0;
+    virtual uint32_t GetPrimitiveChangeCounter() const = 0;
     virtual bool GetCastShadows() const = 0;
     virtual float GetLODScale() const = 0;
     virtual float GetLODOffset() const = 0;
@@ -668,19 +669,25 @@ static_assert(alignof(ZRenderDevice) == 0x8);
 class ZRenderGBuffer
 {
   public:
-    PAD(0x10);
-    ZRenderDevice* m_pRenderDevice; // 0x10
-    PAD(0x8);
+    PAD(0x10);                            // 0x0
+    ZRenderDevice* m_pRenderDevice;       // 0x10
+    PAD(0x8);                             // 0x14
     ZRenderDepthStencilView* m_pDepthDSV; // 0x1C
 };
 
 class ZRenderContext
 {
   public:
-    PAD(0x40);
+    PAD(0x40);                      // 0x0
     ZRenderDevice* m_pRenderDevice; // 0x40
-    PAD(0x2C);
-    ZRenderGBuffer* m_pGBuffer; // 0x70
+    PAD(0x2C);                      // 0x44
+    ZRenderGBuffer* m_pGBuffer;     // 0x70
+    PAD(0x2C);                      // 0x74
+    SMatrix m_mViewToWorld;         // 0xA0
+    SMatrix m_mWorldToView;         // 0xE0
+    SMatrix m_mWorldToViewPrev;     // 0x120
+    SMatrix m_mViewToProjection;    // 0x160
+    SMatrix m_mFPSViewToProjection; // 0x1A0
 };
 
 class alignas(8) ZRenderManager : public IComponentInterface
@@ -721,4 +728,61 @@ class ZRenderPostfilterControllerEntity : public ZRenderableEntity, public IRend
 };
 
 class ZRenderPostfilterParametersEntity : public ZEntityImpl, public IRenderPostfilterParametersEntity, public ICurveChanged
+{};
+
+class ZRenderPrimitiveResource
+{
+  public:
+    virtual ~ZRenderPrimitiveResource() = 0;
+
+    TArray<TRefCountPtr<IRenderPrimitive>> m_Primitives;
+    SVector3 m_vMin;
+    SVector3 m_vMax;
+    ZAnimationBoneData* m_pBoneData;
+    bool m_bIsInitialized;
+    TResourcePtr<ZAnimationBoneData> m_pBoneDataResourcePtr;
+};
+
+class RenderReferencedCountedBaseStub
+{
+  public:
+    virtual ~RenderReferencedCountedBaseStub() = 0;
+};
+
+struct SRenderBufferDescription
+{
+    uint32_t nSize;
+    uint32_t nBindingFlags;
+    ERenderResourceUsage eUsage;
+    uint32_t nCPUAccessFlags;
+    uint32_t nStride;
+};
+
+class ZSubRenderBufferManager
+{
+  public:
+    class Bin;
+    struct Block;
+
+    ZRenderDevice* m_pRenderDevice;
+    TArray<Bin*> m_bins;
+};
+
+class ZRenderBuffer : public TRenderReferencedCountedImpl<RenderReferencedCountedBaseStub, 0>
+{
+  public:
+    SRenderBufferDescription m_Description;
+    ID3D11Buffer* m_pBuffer;
+    ZRenderDevice* m_pRenderDevice;
+    ID3D11DeviceContext* m_pDeviceContext;
+    uint32_t m_nOffset;
+    ZSubRenderBufferManager::Block* m_pPoolBlock;
+    char* m_pCPUBuffer;
+    bool m_bCPUBufferMapped;
+};
+
+class ZRenderVertexBuffer : public ZRenderBuffer
+{};
+
+class ZRenderIndexBuffer : public ZRenderBuffer
 {};

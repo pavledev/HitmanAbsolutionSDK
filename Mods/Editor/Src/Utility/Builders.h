@@ -7,13 +7,10 @@
 // CREDITS
 //   Written by Michal Cichon
 //------------------------------------------------------------------------------
-# pragma once
-
-#include <imgui.h>
+#pragma once
 
 //------------------------------------------------------------------------------
-# include <imgui_node_editor.h>
-
+#include <imgui-node-editor/imgui_node_editor.h>
 
 //------------------------------------------------------------------------------
 namespace ax
@@ -23,11 +20,10 @@ namespace ax
         namespace Utilities
         {
 
-
             //------------------------------------------------------------------------------
             struct BlueprintNodeBuilder
             {
-                BlueprintNodeBuilder(ImTextureID texture = nullptr, int textureWidth = 0, int textureHeight = 0);
+                BlueprintNodeBuilder(ImTextureID texture = ImTextureID{}, int textureWidth = 0, int textureHeight = 0);
 
                 void Begin(NodeId id);
                 void End();
@@ -43,8 +39,7 @@ namespace ax
                 void Output(PinId id);
                 void EndOutput();
 
-
-            private:
+              private:
                 enum class Stage
                 {
                     Invalid,
@@ -63,21 +58,19 @@ namespace ax
                 void EndPin();
 
                 ImTextureID HeaderTextureId;
-                int         HeaderTextureWidth;
-                int         HeaderTextureHeight;
-                NodeId      CurrentNodeId;
-                Stage       CurrentStage;
-                ImU32       HeaderColor;
-                ImVec2      NodeMin;
-                ImVec2      NodeMax;
-                ImVec2      HeaderMin;
-                ImVec2      HeaderMax;
-                ImVec2      ContentMin;
-                ImVec2      ContentMax;
-                bool        HasHeader;
+                int HeaderTextureWidth;
+                int HeaderTextureHeight;
+                NodeId CurrentNodeId;
+                Stage CurrentStage;
+                ImU32 HeaderColor;
+                ImVec2 NodeMin;
+                ImVec2 NodeMax;
+                ImVec2 HeaderMin;
+                ImVec2 HeaderMax;
+                ImVec2 ContentMin;
+                ImVec2 ContentMax;
+                bool HasHeader;
             };
-
-
 
             //------------------------------------------------------------------------------
         } // namespace Utilities

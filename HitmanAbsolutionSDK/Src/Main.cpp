@@ -1,10 +1,8 @@
-#include "SDK.h"
+#include "ModSDK.h"
 
-DWORD WINAPI MainThread(LPVOID)
+DWORD WINAPI StartupProc(LPVOID)
 {
-    SDK& sdk = SDK::GetInstance();
-
-    sdk.Setup();
+    ModSDK::GetInstance().Startup();
 
     return 0;
 }
@@ -13,7 +11,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
-        HANDLE handle = CreateThread(nullptr, 0, MainThread, hModule, 0, nullptr);
+        HANDLE handle = CreateThread(nullptr, 0, StartupProc, nullptr, 0, nullptr);
 
         if (handle)
         {

@@ -195,6 +195,28 @@ class ZPropKitEntity : public ZContentKitEntity
     ZRuntimeResourceID m_sHiResNotebookImage;
     bool m_bIsNewPickup;
 };
+class ZRuntimeResourceIDEntity;
+class ZMetaContentAccessEntity;
+class ZDLCDescriptor : ZEntityImpl
+{
+  public:
+    enum EWhenToShowDiscoverMessage : __int32
+    {
+        OnEveryDiscovery = 0x0,
+        OnFirstDiscoveryOnly = 0x1,
+        IgnoreDiscovery = 0x2,
+    };
+
+    ZString m_sTitleID;
+    ZString m_sDiscoveredDescriptionID;
+    EWhenToShowDiscoverMessage m_eShowDiscoverMessage;
+    TResourcePtr<ZTextListData> m_pTextListResource;
+    TArray<TEntityRef<ZRuntimeResourceIDEntity>> m_MenuEntities2;
+    TArray<TEntityRef<ZMetaContentAccessEntity>> m_MetaContent;
+    TArray<TEntityRef<ZGlobalItemKit>> m_GlobalKits;
+    TEntityRef<ZTokenIDEntity> m_TokenID;
+    TArray<ZDynamicResourceLibrary*> m_aMenuEntityLibraries;
+};
 
 class ZContentKitManager : public IComponentInterface
 {

@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <format>
 
-#include "Registry/ResourceIDRegistry.h"
+#include "ResourceIDRegistry.h"
 #include "Logging.h"
 
 ResourceIDRegistry& ResourceIDRegistry::GetInstance()
@@ -75,7 +75,7 @@ const char* ResourceIDRegistry::GetResourceID(const uint64_t p_RuntimeResourceID
         return it->second.c_str();
     }
 
-    return "";
+    return nullptr;
 }
 
 uint64_t ResourceIDRegistry::GetRuntimeResourceID(const std::string& p_ResourceID) const

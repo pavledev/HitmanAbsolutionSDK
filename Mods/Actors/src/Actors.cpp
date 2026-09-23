@@ -12,9 +12,7 @@
 #include <Glacier/ZDynamicResourceLibrary.h>
 
 #include <Actors.h>
-#include <Utils/ResourceUtils.h>
 #include <Hooks.h>
-#include <Renderer/DirectXRenderer.h>
 
 Actors::Actors()
 {
@@ -45,7 +43,7 @@ void Actors::OnEngineInitialized()
     Globals::GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 }
 
-void Actors::OnDrawMenu()
+void Actors::OnDrawMenu(IImGuiRenderer* p_Renderer)
 {
     if (ImGui::Button(ICON_MD_MAN " Actors"))
     {
@@ -53,19 +51,19 @@ void Actors::OnDrawMenu()
     }
 }
 
-void Actors::OnDrawUI(const bool hasFocus)
+void Actors::OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    if (!hasFocus || !isOpen)
+    if (!p_HasFocus || !isOpen)
     {
         return;
     }
 
-    ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+    ImGui::PushFont(p_Renderer->GetBlackFont());
     ImGui::SetNextWindowSize(ImVec2(600, 600), ImGuiCond_FirstUseEver);
 
     const bool isWindowVisible = ImGui::Begin(ICON_MD_TOKEN " Actors", &isOpen, ImGuiWindowFlags_NoScrollbar);
 
-    ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+    ImGui::PushFont(p_Renderer->GetRegularFont());
 
     if (isWindowVisible)
     {
@@ -245,10 +243,8 @@ void Actors::OnDrawUI(const bool hasFocus)
     ImGui::PopFont();
 }
 
-void Actors::OnDraw3D()
+void Actors::OnDraw3D(IDirectXRenderer* p_Renderer)
 {
-    SDK& sdk = SDK::GetInstance();
-
     if (renderActorNames)
     {
         for (size_t i = 0; i < Globals::ActorManager->m_aliveActors.Size(); ++i)
@@ -256,9 +252,9 @@ void Actors::OnDraw3D()
             float4 worldPosition = Globals::ActorManager->m_aliveActors[i].m_pInterfaceRef->GetWorldPosition();
             SVector2 screenPosition;
 
-            if (sdk.GetDirectXRenderer()->WorldToScreen(SVector3(worldPosition.x, worldPosition.y, worldPosition.z + 2.05f), screenPosition))
+            if (p_Renderer->WorldToScreen(SVector3(worldPosition.x, worldPosition.y, worldPosition.z + 2.05f), screenPosition))
             {
-                sdk.GetDirectXRenderer()->DrawText2D(
+                p_Renderer->DrawText2D(
                     Globals::ActorManager->m_aliveActors[i].m_pInterfaceRef->m_sActorName, screenPosition, SVector4(1.f, 0.f, 0.f, 1.f), 0.f, 0.5f
                 );
             }
@@ -302,7 +298,7 @@ void Actors::SpawnWeapon(const ZRuntimeResourceID& runtimeResourceID)
     ZDynamicResourceLibrary* dynamicResourceLibrary;
     ZRuntimeResourceID sourceResourceRuntimeResourceID;
     bool isDynamicResourceLibraryInstalled =
-        util::InstallDynamicResourceLibrary(runtimeResourceID, dynamicResourceLibrary, sourceResourceRuntimeResourceID);
+        SDK().InstallDynamicResourceLibrary(runtimeResourceID, dynamicResourceLibrary, sourceResourceRuntimeResourceID);
 
     if (isDynamicResourceLibraryInstalled)
     {
@@ -343,4 +339,4 @@ void Actors::GetWeapons()
     }
 }
 
-DEFINE_MOD(Actors);
+DEFINE_HMASDK_MOD(Actors);

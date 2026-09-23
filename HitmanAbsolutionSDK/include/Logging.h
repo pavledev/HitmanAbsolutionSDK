@@ -1,40 +1,43 @@
 #pragma once
 
+#include <utility>
+
 #include "spdlog/spdlog.h"
 
-#include "Common.h"
-
-HitmanAbsolutionSDK_API std::shared_ptr<spdlog::logger> GetMainLogger();
+#include "IModSDK.h"
 
 namespace Logger
 {
-    template<typename... Args> inline void Error(spdlog::format_string_t<Args...> format, Args&&... args)
+    namespace detail
     {
-        GetMainLogger()->error(format, std::forward<Args>(args)...);
+        inline void Dispatch(spdlog::level::level_enum p_Level, std::string_view p_Msg)
+        {
+            SDK().Log(p_Level, p_Msg);
+        }
     }
 
-    template<typename... Args> inline void Warn(spdlog::format_string_t<Args...> format, Args&&... args)
+    template<typename... Args> void Error(spdlog::format_string_t<Args...> p_Format, Args&&... p_Args)
     {
-        GetMainLogger()->warn(format, std::forward<Args>(args)...);
+        detail::Dispatch(spdlog::level::err, fmt::format(p_Format, std::forward<Args>(p_Args)...));
     }
 
-    template<typename... Args> inline void Info(spdlog::format_string_t<Args...> format, Args&&... args)
+    template<typename... Args> void Warn(spdlog::format_string_t<Args...> p_Format, Args&&... p_Args)
     {
-        GetMainLogger()->info(format, std::forward<Args>(args)...);
+        detail::Dispatch(spdlog::level::warn, fmt::format(p_Format, std::forward<Args>(p_Args)...));
     }
 
-    template<typename... Args> inline void Debug(spdlog::format_string_t<Args...> format, Args&&... args)
+    template<typename... Args> void Info(spdlog::format_string_t<Args...> p_Format, Args&&... p_Args)
     {
-        GetMainLogger()->debug(format, std::forward<Args>(args)...);
+        detail::Dispatch(spdlog::level::info, fmt::format(p_Format, std::forward<Args>(p_Args)...));
     }
 
-    template<typename... Args> inline void Trace(spdlog::format_string_t<Args...> format, Args&&... args)
+    template<typename... Args> void Debug(spdlog::format_string_t<Args...> p_Format, Args&&... p_Args)
     {
-        GetMainLogger()->trace(format, std::forward<Args>(args)...);
+        detail::Dispatch(spdlog::level::debug, fmt::format(p_Format, std::forward<Args>(p_Args)...));
     }
 
-    inline void Flush()
+    template<typename... Args> void Trace(spdlog::format_string_t<Args...> p_Format, Args&&... p_Args)
     {
-        GetMainLogger()->flush();
+        detail::Dispatch(spdlog::level::trace, fmt::format(p_Format, std::forward<Args>(p_Args)...));
     }
 }

@@ -2,7 +2,7 @@
 
 #include "ZResource.h"
 
-#include "SDK.h"
+#include "IModSDK.h"
 
 class ZResourceHeaderReader
 {
@@ -63,7 +63,7 @@ class ZResourceHeaderReader
                 resourceID = binaryReader.ReadString();
             }
 
-            result = SDK::GetInstance().GetRuntimeResourceID(resourceID.c_str());
+            result = SDK().GetRuntimeResourceID(resourceID.c_str());
         }
 
         return result;

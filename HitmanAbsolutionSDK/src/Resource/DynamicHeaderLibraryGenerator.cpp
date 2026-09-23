@@ -46,7 +46,7 @@ void DynamicHeaderLibraryGenerator::ExtractResourceToHeaderLibrary(
         util::ReplaceAll(resourceID, " ", "");
     }
 
-    m_SourceResourceRuntimeResourceID = SDK::GetInstance().GetRuntimeResourceID(p_ResourceID.c_str());
+    m_SourceResourceRuntimeResourceID = SDK().GetRuntimeResourceID(p_ResourceID.c_str());
 
     ZBinaryDeserializer binaryDeserializer;
     BinaryReader headerBinaryReader = BinaryReader(p_HeaderLibraryFilePath);
@@ -163,7 +163,7 @@ void DynamicHeaderLibraryGenerator::AddReferencesToChunks(TArray<unsigned char>*
             if ((resourceReferenceFlags & EResourceReferenceFlags::RESOURCE_REFERENCE_INSTALL_DEPENDENCY)
                 == EResourceReferenceFlags::RESOURCE_REFERENCE_INSTALL_DEPENDENCY)
             {
-                m_GlobalResourceIDs.insert(SDK::GetInstance().GetResourceID(runtimeResourceID2));
+                m_GlobalResourceIDs.insert(SDK().GetResourceID(runtimeResourceID2));
             }
 
             continue;

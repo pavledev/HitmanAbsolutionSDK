@@ -1,11 +1,10 @@
 #include <fstream>
 
-#include "rapidjson/istreamwrapper.h"
 #include "rapidjson/document.h"
 
-#include "Registry/EnumRegistry.h"
+#include "EnumRegistry.h"
 #include "Logging.h"
-#include "SDK.h"
+#include "ModSDK.h"
 #include "Resources.h"
 
 EnumRegistry& EnumRegistry::GetInstance()
@@ -17,7 +16,7 @@ EnumRegistry& EnumRegistry::GetInstance()
 
 void EnumRegistry::Load()
 {
-    const std::string_view enumsJson = SDK::GetInstance().GetTextResource(IDR_ENUMS);
+    const std::string_view enumsJson = ModSDK::GetInstance().GetTextResource(IDR_ENUMS);
 
     if (enumsJson.empty())
     {
@@ -55,7 +54,7 @@ void EnumRegistry::Load()
     Logger::Info("Successfully loaded enums.");
 }
 
-const std::map<int32_t, std::string>& EnumRegistry::GetEnum(const std::string& p_TypeName)
+const std::map<int32_t, std::string>& EnumRegistry::GetEnum(const std::string& p_TypeName) const
 {
     auto it = m_Enums.find(p_TypeName);
 

@@ -6,7 +6,7 @@
 
 #include <MinHook.h>
 
-#include "SDK.h"
+#include "ModSDK.h"
 #include "Hook.h"
 #include "Logging.h"
 #include "ReloadGate.h"
@@ -142,8 +142,9 @@ class Trampolines
             SYSTEM_INFO sysInfo{};
             GetSystemInfo(&sysInfo);
 
-            auto allocAddress =
-                ALIGN_TO(reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr)) + SDK::GetInstance().GetImageSize(), sysInfo.dwAllocationGranularity);
+            auto allocAddress = ALIGN_TO(
+                reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr)) + ModSDK::GetInstance().GetImageSize(), sysInfo.dwAllocationGranularity
+            );
             uintptr_t allocEnd = allocAddress + sizeof(DetourTrampoline) * MAX_TRAMPOLINES;
 
             // Iterate through memory regions until we find one that's free and fits our data.
@@ -264,8 +265,6 @@ class HookImpl<ReturnType(Args...), Convention> : public Hook<ReturnType(Args...
             return;
         }
 
-        // Create the detour. Enable is deferred to Hooks::EnableAll() so no
-        // detour fires before the owning Hooks object is reachable via SDK.
         void* original = nullptr;
         auto result = MH_CreateHook(m_Target, reinterpret_cast<void*>(p_Detour), &original);
 
@@ -275,17 +274,26 @@ class HookImpl<ReturnType(Args...), Convention> : public Hook<ReturnType(Args...
             return;
         }
 
+        this->m_OriginalFunc = original;
+
         /*result = MH_EnableHook(m_Target);
 
-        if (result != MH_OK) {
+        if (result != MH_OK)
+        {
             Logger::Error(
-                "Could install detour for hook '{}' at address {}. Error code: {}.", p_HookName, fmt::ptr(p_Target),
-                static_cast<int>(result)
+                "Could install detour for hook '{}' at address {}. Error code: {}.", p_HookName, fmt::ptr(p_Target), static_cast<int>(result)
             );
             return;
         }*/
 
-        this->m_OriginalFunc = original;
+        const auto queueResult = MH_QueueEnableHook(m_Target);
+
+        if (queueResult != MH_OK)
+        {
+            Logger::Error("Could not queue hook '{}' at address {}. Error code: {}.", p_HookName, fmt::ptr(m_Target), static_cast<int>(queueResult));
+
+            return;
+        }
 
         Logger::Debug("Created hook '{}' at address {}.", p_HookName, fmt::ptr(p_Target));
     }
@@ -463,7 +471,7 @@ class PatternHook<ReturnType(Args...), Convention> final : public HookImpl<Retur
     {
         const auto* pattern = reinterpret_cast<const uint8_t*>(p_Pattern);
         return reinterpret_cast<void*>(
-            util::ProcessUtils::SearchPattern(SDK::GetInstance().GetModuleBase(), SDK::GetInstance().GetSizeOfCode(), pattern, p_Mask)
+            util::ProcessUtils::SearchPattern(ModSDK::GetInstance().GetModuleBase(), ModSDK::GetInstance().GetSizeOfCode(), pattern, p_Mask)
         );
     }
 };
@@ -518,7 +526,7 @@ class PatternCallHook<ReturnType(Args...), Convention> final : public HookImpl<R
     )
     {
         const auto* pattern = reinterpret_cast<const uint8_t*>(p_Pattern);
-        m_Target = util::ProcessUtils::SearchPattern(SDK::GetInstance().GetModuleBase(), SDK::GetInstance().GetSizeOfCode(), pattern, p_Mask);
+        m_Target = util::ProcessUtils::SearchPattern(ModSDK::GetInstance().GetModuleBase(), ModSDK::GetInstance().GetSizeOfCode(), pattern, p_Mask);
 
         // We expect this to be a CALL (0xE8) instruction.
         if (m_Target != 0 && *reinterpret_cast<uint8_t*>(m_Target) != 0xE8)
@@ -601,7 +609,8 @@ class PatternRelativeCallHook<ReturnType(Args...), Convention> final : public Ho
     void* GetTarget(const char* p_HookName, const char* p_Pattern, const char* p_Mask) const
     {
         const auto* pattern = reinterpret_cast<const uint8_t*>(p_Pattern);
-        auto target = util::ProcessUtils::SearchPattern(SDK::GetInstance().GetModuleBase(), SDK::GetInstance().GetSizeOfCode(), pattern, p_Mask);
+        auto target =
+            util::ProcessUtils::SearchPattern(ModSDK::GetInstance().GetModuleBase(), ModSDK::GetInstance().GetSizeOfCode(), pattern, p_Mask);
 
         // We expect this to be a CALL (0xE8) instruction.
         if (target != 0 && *reinterpret_cast<uint8_t*>(target) != 0xE8)
@@ -646,7 +655,7 @@ class ThiscallPatternVtableHook<ReturnType(Args...)> final : public HookImpl<Ret
         const auto* pattern = reinterpret_cast<const uint8_t*>(p_Pattern);
 
         const auto target =
-            util::ProcessUtils::SearchPattern(SDK::GetInstance().GetModuleBase(), SDK::GetInstance().GetSizeOfCode(), pattern, p_Mask);
+            util::ProcessUtils::SearchPattern(ModSDK::GetInstance().GetModuleBase(), ModSDK::GetInstance().GetSizeOfCode(), pattern, p_Mask);
 
         if (target == 0)
         {

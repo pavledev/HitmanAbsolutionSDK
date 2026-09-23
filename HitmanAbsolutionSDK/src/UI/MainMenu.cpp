@@ -4,35 +4,29 @@
 
 #include "MainMenu.h"
 #include "ModSelector.h"
-#include "Settings.h"
-#include <SDK.h>
+#include "ModSDK.h"
 
 namespace UI
 {
-    void MainMenu::Draw(bool hasFocus)
+    void MainMenu::Draw(IImGuiRenderer* p_Renderer, bool p_HasFocus)
     {
-        if (!hasFocus)
+        if (!p_HasFocus)
         {
             return;
         }
 
         ImGui::BeginMainMenuBar();
 
-        ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+        ImGui::PushFont(p_Renderer->GetBoldFont());
         ImGui::Text("Hitman Absolution SDK");
         ImGui::PopFont();
 
         if (ImGui::Button(ICON_MD_TOKEN " MODS"))
         {
-            SDK::GetInstance().GetModSelector()->Show();
+            ModSDK::GetInstance().GetUIModSelector()->Show();
         }
 
-        if (ImGui::Button(ICON_MD_SETTINGS " Settings"))
-        {
-            SDK::GetInstance().GetSettings()->Show();
-        }
-
-        SDK::GetInstance().OnDrawMenu();
+        ModSDK::GetInstance().OnDrawMenu();
 
         ImGui::EndMainMenuBar();
     }

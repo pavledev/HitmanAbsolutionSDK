@@ -44,7 +44,7 @@ void Noclip::OnEngineInitialized()
     Globals::InputActionManager->AddBindings(bindings);
 }
 
-void Noclip::OnDrawMenu()
+void Noclip::OnDrawMenu(IImGuiRenderer* p_Renderer)
 {
     if (ImGui::Checkbox(ICON_MD_SELF_IMPROVEMENT " Noclip", &m_IsNoclipEnabled))
     {
@@ -113,22 +113,22 @@ void Noclip::OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent)
 
     if (m_LeftAction.Digital())
     {
-        m_PlayerPosition += cameraTransform.Left * -moveSpeed * gameTimeDelta;
+        m_PlayerPosition += cameraTransform.Right * -moveSpeed * gameTimeDelta;
     }
 
     if (m_RightAction.Digital())
     {
-        m_PlayerPosition += cameraTransform.Left * moveSpeed * gameTimeDelta;
+        m_PlayerPosition += cameraTransform.Right * moveSpeed * gameTimeDelta;
     }
 
     hitman->GetSpatialEntityPtr()->SetWorldPosition(m_PlayerPosition);
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Noclip, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene)
+DEFINE_THISCALL_MOD_DETOUR(Noclip, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene)
 {
     m_IsNoclipEnabled = false;
 
     return { HookAction::Continue() };
 }
 
-DEFINE_MOD(Noclip);
+DEFINE_HMASDK_MOD(Noclip);

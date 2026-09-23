@@ -8,7 +8,7 @@
 
 #include <ImGuizmo.h>
 
-#include <imgui_node_editor.h>
+#include <imgui-node-editor/imgui_node_editor.h>
 
 #include <Glacier/ZEntity.h>
 #include <Glacier/ZResource.h>
@@ -25,9 +25,9 @@ class Editor : public IModInterface
     ~Editor();
     void Initialize() override;
     void OnEngineInitialized() override;
-    void OnDrawMenu() override;
-    void OnDrawUI(const bool hasFocus) override;
-    void OnDraw3D() override;
+    void OnDrawMenu(IImGuiRenderer* p_Renderer) override;
+    void OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus) override;
+    void OnDraw3D(IDirectXRenderer* p_Renderer) override;
 
   private:
     struct PinConnection
@@ -111,12 +111,12 @@ class Editor : public IModInterface
         ImColor color;
     };
 
-    void RenderEntityTree(const bool hasFocus);
+    void RenderEntityTree(IImGuiRenderer* p_Renderer, bool p_HasFocus);
     void RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode, const bool isTreeFiltered);
-    void RenderEntityProperties(const bool hasFocus);
+    void RenderEntityProperties(IImGuiRenderer* p_Renderer, bool p_HasFocus);
     void RenderGizmo(const bool hasFocus);
-    void RenderEntityAABB();
-    void RenderBlueprintNodesAndPins(const bool hasFocus);
+    void RenderEntityAABB(IDirectXRenderer* p_Renderer);
+    void RenderBlueprintNodesAndPins(IImGuiRenderer* p_Renderer, bool p_HasFocus);
 
     void AddChildren(
         std::shared_ptr<EntityTreeNode> entityTreeNode, ZEntityRef rootEntity, ZTemplateEntityBlueprintFactory* templateEntityBlueprintFactory,
@@ -182,14 +182,12 @@ class Editor : public IModInterface
 
     void AddBlueprintNodesAndPins(const ZRuntimeResourceID& tbluRuntimeResourceID, unsigned int& rootEntityNodeIndex);
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
+    DECLARE_THISCALL_MOD_DETOUR(
         Editor, void, ZEntitySceneContext_CreateScene, ZEntitySceneContext* p_EntitySceneContext, const ZString& p_StreamingState
     );
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
-        Editor, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene
-    );
+    DECLARE_THISCALL_MOD_DETOUR(Editor, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene);
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
+    DECLARE_THISCALL_MOD_DETOUR(
         Editor, void, ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory,
         ZTemplateEntityBlueprintFactory* p_TemplateEntityBlueprintFactory, STemplateEntityBlueprint* p_TemplateEntityBlueprint,
         ZResourcePending& p_ResourcePending
@@ -221,4 +219,4 @@ class Editor : public IModInterface
     unsigned int headerBackgroundTextureHeight;
 };
 
-DECLARE_MOD(Editor)
+DECLARE_HMASDK_MOD(Editor)

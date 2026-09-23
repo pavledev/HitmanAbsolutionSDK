@@ -39,41 +39,24 @@ struct SVector3
 
     SVector3(const DirectX::XMFLOAT3& p_Vector) : x(p_Vector.x), y(p_Vector.y), z(p_Vector.z) {}
 
-    SVector3 operator+(const SVector3& p_Other)
+    SVector3 operator+(const SVector3& p_Other) const
     {
-        SVector3 result;
-
-        result.x = x + p_Other.x;
-        result.y = y + p_Other.y;
-        result.z = z + p_Other.z;
-
-        return result;
+        return SVector3(x + p_Other.x, y + p_Other.y, z + p_Other.z);
     }
 
-    SVector3 operator-(const SVector3& p_Other)
+    SVector3 operator-(const SVector3& p_Other) const
     {
-        SVector3 result;
+        return SVector3(x - p_Other.x, y - p_Other.y, z - p_Other.z);
+    }
 
-        result.x = x - p_Other.x;
-        result.y = y - p_Other.y;
-        result.z = z - p_Other.z;
-
-        return result;
+    SVector3 operator*(const SVector3& p_Other) const
+    {
+        return SVector3(x * p_Other.x, y * p_Other.y, z * p_Other.z);
     }
 
     SVector3 operator*(float p_Value) const
     {
         return SVector3(x * p_Value, y * p_Value, z * p_Value);
-    }
-
-    const bool operator==(const SVector3& p_Other) const
-    {
-        return x == p_Other.x && y == p_Other.y && z == p_Other.z;
-    }
-
-    const bool operator!=(const SVector3& p_Other) const
-    {
-        return !(x == p_Other.x && y == p_Other.y && z == p_Other.z);
     }
 
     SVector3 operator/(const SVector3& p_Other) const
@@ -86,9 +69,29 @@ struct SVector3
         return SVector3(x / p_Other, y / p_Other, z / p_Other);
     }
 
+    const bool operator==(const SVector3& p_Other) const
+    {
+        return x == p_Other.x && y == p_Other.y && z == p_Other.z;
+    }
+
+    const bool operator!=(const SVector3& p_Other) const
+    {
+        return !(x == p_Other.x && y == p_Other.y && z == p_Other.z);
+    }
+
     float Length() const
     {
         return std::sqrt(x * x + y * y + z * z);
+    }
+
+    SVector3 Cross(const SVector3& p_Other) const
+    {
+        return SVector3(y * p_Other.z - z * p_Other.y, z * p_Other.x - x * p_Other.z, x * p_Other.y - y * p_Other.x);
+    }
+
+    float Dot(const SVector3& p_Other) const
+    {
+        return x * p_Other.x + y * p_Other.y + z * p_Other.z;
     }
 
     union
@@ -639,7 +642,7 @@ struct SMatrix
 
         struct
         {
-            float4 Left;
+            float4 Right;
             float4 Backward;
             float4 Up;
             float4 Pos;

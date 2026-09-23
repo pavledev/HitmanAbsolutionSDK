@@ -18,7 +18,6 @@
 #include <Glacier/TFixedArray.h>
 #include <Glacier/ZDynamicResourceLibrary.h>
 
-#include <Utils/ResourceUtils.h>
 #include <Utils/ImGuiUtils.h>
 #include <Hooks.h>
 #include <Resources.h>
@@ -80,7 +79,7 @@ void Player::OnEngineInitialized()
     Globals::InputActionManager->AddBindings(bindings);
 }
 
-void Player::OnDrawMenu()
+void Player::OnDrawMenu(IImGuiRenderer* p_Renderer)
 {
     if (ImGui::Button(ICON_MD_MAN " Player"))
     {
@@ -88,19 +87,19 @@ void Player::OnDrawMenu()
     }
 }
 
-void Player::OnDrawUI(const bool hasFocus)
+void Player::OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    if (!hasFocus || !m_ShowWindow)
+    if (!p_HasFocus || !m_ShowWindow)
     {
         return;
     }
 
-    ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+    ImGui::PushFont(p_Renderer->GetBlackFont());
     ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
 
     const bool isWindowExpanded = ImGui::Begin(ICON_MD_TOKEN " Player", &m_ShowWindow);
 
-    ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+    ImGui::PushFont(p_Renderer->GetRegularFont());
 
     if (isWindowExpanded)
     {
@@ -172,7 +171,7 @@ void Player::OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent)
         return;
     }
 
-    if (m_GetOutfitAction.Digital())
+    /*if (m_GetOutfitAction.Digital())
     {
         ZActor* actor = FindNearestActor();
 
@@ -223,7 +222,7 @@ void Player::OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent)
         ZCheckPointManagerEntity* checkPointManagerEntity = Globals::CheckPointManager->m_pCheckPointManagerEntity.m_pInterfaceRef;
 
         checkPointManagerEntity->ActivateJumpPoint(checkPointManagerEntity->m_iCurrentJumpPoint + 1, true);
-    }
+    }*/
 
     if (m_SpawnFirearm)
     {
@@ -505,7 +504,7 @@ void Player::DrawItemsTab()
 
 void Player::LoadOufits()
 {
-    const std::string_view outfitsJson = SDK::GetInstance().GetTextResource(IDR_OUTFITS);
+    const std::string_view outfitsJson = SDK().GetTextResource(IDR_OUTFITS);
 
     if (outfitsJson.empty())
     {
@@ -539,7 +538,7 @@ void Player::LoadOufits()
             for (const auto& variation : object["outfitVariations"].GetArray())
             {
                 const std::string resourceID = variation.GetString();
-                const ZRuntimeResourceID runtimeResourceID = SDK::GetInstance().GetRuntimeResourceID(resourceID);
+                const ZRuntimeResourceID runtimeResourceID = SDK().GetRuntimeResourceID(resourceID);
 
                 outfit.m_OutfitVariations.push_back({ runtimeResourceID, resourceID });
             }
@@ -563,7 +562,7 @@ void Player::LoadOufits()
 
             if (variationResource.GetID() != -1)
             {
-                outfit.m_OutfitVariations.push_back({ variationResource, SDK::GetInstance().GetResourceID(variationResource) });
+                outfit.m_OutfitVariations.push_back({ variationResource, SDK().GetResourceID(variationResource) });
             }
         }
     }
@@ -571,7 +570,7 @@ void Player::LoadOufits()
 
 void Player::LoadFirearms()
 {
-    const std::string_view firearmsJson = SDK::GetInstance().GetTextResource(IDR_FIREARMS);
+    const std::string_view firearmsJson = SDK().GetTextResource(IDR_FIREARMS);
 
     if (firearmsJson.empty())
     {
@@ -603,7 +602,7 @@ void Player::LoadFirearms()
 
 void Player::LoadItems()
 {
-    const std::string_view itemsJson = SDK::GetInstance().GetTextResource(IDR_ITEMS);
+    const std::string_view itemsJson = SDK().GetTextResource(IDR_ITEMS);
 
     if (itemsJson.empty())
     {
@@ -635,7 +634,7 @@ void Player::LoadItems()
 
 void Player::LoadActorTypesAndResourceIDs()
 {
-    const std::string_view actors = SDK::GetInstance().GetTextResource(IDR_ACTORS);
+    const std::string_view actors = SDK().GetTextResource(IDR_ACTORS);
 
     if (actors.empty())
     {
@@ -722,7 +721,7 @@ void Player::EquipModel(const std::string& p_ResourceID)
 {
     ZDynamicResourceLibrary* dynamicResourceLibrary;
     bool isDynamicResourceLibraryInstalled =
-        SDK::GetInstance().CreateAndInstallDynamicResourceLibrary(p_ResourceID, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID);
+        SDK().CreateAndInstallDynamicResourceLibrary(p_ResourceID, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID);
 
     if (isDynamicResourceLibraryInstalled)
     {
@@ -752,7 +751,7 @@ void Player::SpawnFirearm()
 {
     ZDynamicResourceLibrary* dynamicResourceLibrary;
     bool isDynamicResourceLibraryInstalled =
-        util::InstallDynamicResourceLibrary(m_SelectedFirearm, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID, m_FirearmSpawnCount);
+        SDK().InstallDynamicResourceLibrary(m_SelectedFirearm, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID, m_FirearmSpawnCount);
 
     if (isDynamicResourceLibraryInstalled)
     {
@@ -778,16 +777,15 @@ void Player::SpawnItem()
 
     if (m_SelectedItem.IsLibraryResource())
     {
-        const std::string resourceID = SDK::GetInstance().GetResourceID(m_SelectedItem);
+        const std::string resourceID = SDK().GetResourceID(m_SelectedItem);
 
-        isDynamicResourceLibraryInstalled = SDK::GetInstance().CreateAndInstallDynamicResourceLibrary(
-            resourceID, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID, m_ItemSpawnCount
-        );
+        isDynamicResourceLibraryInstalled =
+            SDK().CreateAndInstallDynamicResourceLibrary(resourceID, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID, m_ItemSpawnCount);
     }
     else
     {
         isDynamicResourceLibraryInstalled =
-            util::InstallDynamicResourceLibrary(m_SelectedItem, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID, m_ItemSpawnCount);
+            SDK().InstallDynamicResourceLibrary(m_SelectedItem, dynamicResourceLibrary, m_SourceResourceRuntimeResourceID, m_ItemSpawnCount);
     }
 
     if (isDynamicResourceLibraryInstalled)
@@ -846,7 +844,7 @@ ZActor* Player::FindNearestActor()
     return nullptr;
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Player, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene)
+DEFINE_THISCALL_MOD_DETOUR(Player, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene)
 {
     m_ActorName.clear();
 
@@ -864,7 +862,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Player, void, ZEntitySceneContext_ClearScene
     return { HookAction::Continue() };
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+DEFINE_THISCALL_MOD_DETOUR(
     Player, ZEntityType**, ZEntityManager_ConstructUninitializedEntity, ZEntityManager* p_EntityManager, const ZString& p_DebugName,
     IEntityFactory* p_EntityFactory, uint8_t* p_MemBlock
 )
@@ -929,7 +927,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
     return { HookAction::Return(), entityType };
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Player, void, ZHM5ReloadController_EndReloadWeapon, ZHM5ReloadController* p_HM5ReloadController)
+DEFINE_THISCALL_MOD_DETOUR(Player, void, ZHM5ReloadController_EndReloadWeapon, ZHM5ReloadController* p_HM5ReloadController)
 {
     p_Hook->CallOriginal(p_HM5ReloadController);
 
@@ -941,4 +939,4 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Player, void, ZHM5ReloadController_EndReload
     return { HookAction::Return() };
 }
 
-DEFINE_MOD(Player);
+DEFINE_HMASDK_MOD(Player);

@@ -18,8 +18,8 @@ target_include_directories(Editor PRIVATE
 
 target_link_libraries(Editor PRIVATE
 	HitmanAbsolutionSDK
-	imguizmo
-	imgui-node-editor
+	imguizmo::imguizmo
+	unofficial::imgui-node-editor::imgui-node-editor
 )
 
 target_compile_definitions(Editor PRIVATE IMGUI_DEFINE_MATH_OPERATORS)

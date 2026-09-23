@@ -14,14 +14,12 @@ class Noclip : public IModInterface
 
     void Initialize() override;
     void OnEngineInitialized() override;
-    void OnDrawMenu() override;
+    void OnDrawMenu(IImGuiRenderer* p_Renderer) override;
 
   private:
     void OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent);
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
-        Noclip, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene
-    );
+    DECLARE_THISCALL_MOD_DETOUR(Noclip, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene);
 
     bool m_IsNoclipEnabled;
 
@@ -35,4 +33,4 @@ class Noclip : public IModInterface
     float4 m_PlayerPosition;
 };
 
-DECLARE_MOD(Noclip)
+DECLARE_HMASDK_MOD(Noclip)

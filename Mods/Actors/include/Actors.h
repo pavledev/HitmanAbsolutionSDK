@@ -13,9 +13,9 @@ class Actors : public IModInterface
     Actors();
     ~Actors() override;
     void OnEngineInitialized() override;
-    void OnDrawMenu() override;
-    void OnDrawUI(const bool hasFocus) override;
-    void OnDraw3D() override;
+    void OnDrawMenu(IImGuiRenderer* p_Renderer) override;
+    void OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus) override;
+    void OnDraw3D(IDirectXRenderer* p_Renderer) override;
 
   private:
     void OnFrameUpdate(const SGameUpdateEvent& updateEvent);
@@ -42,4 +42,4 @@ class Actors : public IModInterface
     int selectedActorWeaponIndex;
 };
 
-DECLARE_MOD(Actors)
+DECLARE_HMASDK_MOD(Actors)

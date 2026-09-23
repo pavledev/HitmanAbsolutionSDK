@@ -35,7 +35,7 @@ class EventDispatcherRegistry
         g_Dispatchers->erase(p_Dispatcher);
     }
 
-    static void ClearPluginListeners(IModInterface* p_Plugin)
+    static void ClearModListeners(IModInterface* p_Mod)
     {
         if (g_Dispatchers == nullptr)
         {
@@ -44,7 +44,7 @@ class EventDispatcherRegistry
 
         for (auto dispatcher : *g_Dispatchers)
         {
-            dispatcher->RemoveListenersWithContext(p_Plugin);
+            dispatcher->RemoveListenersWithContext(p_Mod);
         }
     }
 };

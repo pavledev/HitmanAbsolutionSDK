@@ -13,7 +13,7 @@ Items::Items()
     selectedItemIndex = -1;
 }
 
-void Items::OnDrawMenu()
+void Items::OnDrawMenu(IImGuiRenderer* p_Renderer)
 {
     if (ImGui::Button(ICON_MD_BUILD " Items"))
     {
@@ -21,25 +21,25 @@ void Items::OnDrawMenu()
     }
 }
 
-void Items::OnDrawUI(const bool hasFocus)
+void Items::OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    if (!hasFocus || !isOpen)
+    if (!p_HasFocus || !isOpen)
     {
         return;
     }
 
-    ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+    ImGui::PushFont(p_Renderer->GetBlackFont());
     ImGui::SetNextWindowSize(ImVec2(600, 600), ImGuiCond_FirstUseEver);
 
     const bool isWindowVisible = ImGui::Begin(ICON_MD_TOKEN " Items", &isOpen, ImGuiWindowFlags_NoScrollbar);
 
-    ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+    ImGui::PushFont(p_Renderer->GetRegularFont());
 
     if (isWindowVisible)
     {
         ImGui::BeginChild("left pane", ImVec2(600, 500), false, ImGuiWindowFlags_HorizontalScrollbar);
 
-        static char itemName[256]{""};
+        static char itemName[256]{ "" };
 
         ImGui::AlignTextToFramePadding();
         ImGui::Text("Item Name");
@@ -154,4 +154,4 @@ void Items::OnDrawUI(const bool hasFocus)
     ImGui::PopFont();
 }
 
-DEFINE_MOD(Items);
+DEFINE_HMASDK_MOD(Items);

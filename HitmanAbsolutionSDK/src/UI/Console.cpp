@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 
-#include "SDK.h"
+#include "ModSDK.h"
 #include "Events.h"
 
 namespace UI
@@ -12,17 +12,19 @@ namespace UI
         InitializeSRWLock(&m_Lock);
     }
 
-    void Console::Draw(bool hasFocus)
+    void Console::Draw(IImGuiRenderer* p_Renderer, bool p_HasFocus)
     {
-        if (!hasFocus)
+        if (!p_HasFocus)
         {
             return;
         }
 
-        ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+        ImGui::PushFont(p_Renderer->GetBlackFont());
+
         const auto isWindowExpanded =
             ImGui::Begin("CONSOLE", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
-        ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+
+        ImGui::PushFont(p_Renderer->GetRegularFont());
 
         ImGui::SetWindowCollapsed(true, ImGuiCond_Once);
 

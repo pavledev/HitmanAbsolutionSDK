@@ -4,6 +4,10 @@
 
 #include <Functions.h>
 
+class ZConfigFloat;
+class ZConfigInt;
+class ZConfigString;
+
 class ZConfigCommand
 {
   public:
@@ -28,6 +32,36 @@ class ZConfigCommand
         Functions::ZConfigCommand_ExecuteCommand->Call(p_CommandName, p_Argv);
     }
 
+    static ZConfigCommand* GetConfigVariable(const ZString& pszName)
+    {
+        return Functions::ZConfigCommand_GetConfigVariable->Call(pszName);
+    }
+
+    template<typename T> T* As()
+    {
+        return GetType() == GetClassType<T>() ? static_cast<T*>(this) : nullptr;
+    }
+
+  private:
+    template<typename T> static ECLASSTYPE GetClassType()
+    {
+        if (std::is_same<T, ZConfigFloat>::value)
+        {
+            return ECLASSTYPE::ECLASS_FLOAT;
+        }
+        else if (std::is_same<T, ZConfigInt>::value)
+        {
+            return ECLASSTYPE::ECLASS_INT;
+        }
+        else if (std::is_same<T, ZConfigString>::value)
+        {
+            return ECLASSTYPE::ECLASS_STRING;
+        }
+
+        return ECLASSTYPE::ECLASS_UNKNOWN;
+    }
+
+  public:
     const char* m_pszName;
     ZConfigCommand* m_pNext;
 };
@@ -39,13 +73,7 @@ class ZConfigFloatBase : public ZConfigCommand
 };
 
 class ZConfigFloat : public ZConfigFloatBase
-{
-  public:
-    float GetVal() const
-    {
-        return m_Value;
-    }
-};
+{};
 
 class ZConfigIntBase : public ZConfigCommand
 {
@@ -54,10 +82,13 @@ class ZConfigIntBase : public ZConfigCommand
 };
 
 class ZConfigInt : public ZConfigIntBase
+{};
+
+class ZConfigStringBase : public ZConfigCommand
 {
   public:
-    int32_t GetVal() const
-    {
-        return m_Value;
-    }
+    char m_szValue[256];
 };
+
+class ZConfigString : public ZConfigStringBase
+{};

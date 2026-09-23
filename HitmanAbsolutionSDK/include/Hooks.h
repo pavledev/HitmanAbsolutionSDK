@@ -50,6 +50,12 @@ class ZLevelDescriptor;
 class ZMenuManager;
 enum EMenuStartupState;
 class ZLevelSelectManager;
+class ZRenderGraphNodeRenderer;
+class ZRenderContext;
+class ZRenderTargetView;
+class ZRenderDepthStencilView;
+class ZRenderGraphNode;
+class ZRenderGraphTraversal;
 
 class HitmanAbsolutionSDK_API Hooks
 {
@@ -112,4 +118,9 @@ class HitmanAbsolutionSDK_API Hooks
     static ThiscallHook<void(ZMenuManager* th, EMenuStartupState eNewState)>* ZMenuManager_SetStartupState;
 
     static ThiscallHook<ZRuntimeResourceID*(ZLevelSelectManager* th, ZRuntimeResourceID& result)>* ZLevelSelectManager_GetBootMovie;
+
+    static ThiscallHook<void(
+        ZRenderGraphNodeRenderer* th, ZRenderContext* pRenderContext, ZRenderTargetView* pRTV, ZRenderDepthStencilView* pDSV,
+        TArray<ZRenderGraphNode*>& OSDNodes, ZRenderGraphTraversal* pRenderGraphTraversal
+    )>* ZRenderGraphNodeRenderer_DrawOSDAndScaleform;
 };

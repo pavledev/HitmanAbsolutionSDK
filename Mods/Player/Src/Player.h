@@ -29,8 +29,8 @@ class Player : public IModInterface
 
     void Initialize() override;
     void OnEngineInitialized() override;
-    void OnDrawMenu() override;
-    void OnDrawUI(const bool hasFocus) override;
+    void OnDrawMenu(IImGuiRenderer* p_Renderer) override;
+    void OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus) override;
 
   private:
     struct Outfit
@@ -89,16 +89,14 @@ class Player : public IModInterface
 
     ZActor* FindNearestActor();
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
-        Player, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene
-    );
+    DECLARE_THISCALL_MOD_DETOUR(Player, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene);
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
+    DECLARE_THISCALL_MOD_DETOUR(
         Player, ZEntityType**, ZEntityManager_ConstructUninitializedEntity, ZEntityManager* p_EntityManager, const ZString& p_DebugName,
         IEntityFactory* p_EntityFactory, uint8_t* p_MemBlock
     );
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(Player, void, ZHM5ReloadController_EndReloadWeapon, ZHM5ReloadController* p_HM5ReloadController);
+    DECLARE_THISCALL_MOD_DETOUR(Player, void, ZHM5ReloadController_EndReloadWeapon, ZHM5ReloadController* p_HM5ReloadController);
 
     bool m_ShowWindow;
 
@@ -134,4 +132,4 @@ class Player : public IModInterface
     int32_t m_SpawnedItemCount;
 };
 
-DECLARE_MOD(Player)
+DECLARE_HMASDK_MOD(Player)

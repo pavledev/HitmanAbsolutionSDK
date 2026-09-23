@@ -18,10 +18,13 @@ void HUD::OnEngineInitialized()
     const ZMemberDelegate<HUD, void(const SGameUpdateEvent&)> delegate(this, &HUD::OnFrameUpdate);
     Globals::GameLoopManager->RegisterForFrameUpdate(delegate, 1);
 
-    AddBindings();
+    const char* bindings = "HUDInput={"
+                           "ToggleHUD=tap(kb,f8);};";
+
+    Globals::InputActionManager->AddBindings(bindings);
 }
 
-void HUD::OnDrawMenu()
+void HUD::OnDrawMenu(IImGuiRenderer* p_Renderer)
 {
     if (ImGui::Button(ICON_MD_MONITOR " HUD"))
     {
@@ -29,19 +32,19 @@ void HUD::OnDrawMenu()
     }
 }
 
-void HUD::OnDrawUI(const bool hasFocus)
+void HUD::OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    if (!hasFocus || !m_ShowWindow)
+    if (!p_HasFocus || !m_ShowWindow)
     {
         return;
     }
 
-    ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+    ImGui::PushFont(p_Renderer->GetBlackFont());
     ImGui::SetNextWindowSize(ImVec2(1250, 850), ImGuiCond_FirstUseEver);
 
     const bool isWindowExpanded = ImGui::Begin(ICON_MD_MONITOR " HUD", &m_ShowWindow, ImGuiWindowFlags_NoScrollbar);
 
-    ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+    ImGui::PushFont(p_Renderer->GetRegularFont());
 
     if (isWindowExpanded)
     {
@@ -170,4 +173,4 @@ void HUD::OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent)
     }
 }
 
-DEFINE_MOD(HUD);
+DEFINE_HMASDK_MOD(HUD);

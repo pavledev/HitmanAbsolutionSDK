@@ -20,7 +20,7 @@ void Camera::Initialize()
     Hooks::ZCameraEntity_SetFovYDeg->AddDetour(this, &Camera::ZCameraEntity_SetFovYDeg);
 }
 
-void Camera::OnDrawMenu()
+void Camera::OnDrawMenu(IImGuiRenderer* p_Renderer)
 {
     if (ImGui::Button(ICON_MD_CAMERA " Camera"))
     {
@@ -28,19 +28,19 @@ void Camera::OnDrawMenu()
     }
 }
 
-void Camera::OnDrawUI(const bool hasFocus)
+void Camera::OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    if (!hasFocus || !m_ShowWindow)
+    if (!p_HasFocus || !m_ShowWindow)
     {
         return;
     }
 
-    ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+    ImGui::PushFont(p_Renderer->GetBlackFont());
     ImGui::SetNextWindowSize(ImVec2(500, 300), ImGuiCond_FirstUseEver);
 
     const bool isWindowExpanded = ImGui::Begin(ICON_MD_CAMERA " Camera", &m_ShowWindow);
 
-    ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+    ImGui::PushFont(p_Renderer->GetRegularFont());
 
     if (isWindowExpanded)
     {
@@ -102,7 +102,7 @@ void Camera::OnDrawUI(const bool hasFocus)
     ImGui::PopFont();
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Camera, void, ZCameraEntity_SetFovYDeg, ZCameraEntity* p_CameraEntity, float p_FovYDeg)
+DEFINE_THISCALL_MOD_DETOUR(Camera, void, ZCameraEntity_SetFovYDeg, ZCameraEntity* p_CameraEntity, float p_FovYDeg)
 {
     if (m_FOV > 0)
     {
@@ -111,12 +111,10 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Camera, void, ZCameraEntity_SetFovYDeg, ZCam
 
     p_CameraEntity->SetFovYDeg(p_FovYDeg);
 
-    return {HookAction::Return()};
+    return { HookAction::Return() };
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
-    Camera, void, ZEntitySceneContext_CreateScene, ZEntitySceneContext* p_EntitySceneContext, const ZString& p_StreamingState
-)
+DEFINE_THISCALL_MOD_DETOUR(Camera, void, ZEntitySceneContext_CreateScene, ZEntitySceneContext* p_EntitySceneContext, const ZString& p_StreamingState)
 {
     p_Hook->CallOriginal(p_EntitySceneContext, p_StreamingState);
 
@@ -124,7 +122,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
 
     if (!hitman)
     {
-        return {HookAction::Return()};
+        return { HookAction::Return() };
     }
 
     ZHM5MainCamera* mainCamera = hitman->m_rMainCamera.m_pInterfaceRef;
@@ -135,10 +133,10 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
     currentPostfilterParametersEntity.SetProperty("m_bDepthRemapEnabled", m_DepthRemapEnabled);
     currentPostfilterParametersEntity.SetProperty("m_bVignetteEnabled", m_VignetteEnabled);
 
-    return {HookAction::Return()};
+    return { HookAction::Return() };
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+DEFINE_THISCALL_MOD_DETOUR(
     Camera, void, ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection,
     ZRenderPostfilterParametersEntity* p_RenderPostfilterParametersEntity, SRenderPostfilterParametersColorCorrection* p_Parameters,
     SRenderPostfilterParametersMisc* p_MiscParams
@@ -165,7 +163,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
         entityRef.SetProperty("m_bVignetteEnabled", m_VignetteEnabled);
     }
 
-    return {HookAction::Continue()};
+    return { HookAction::Continue() };
 }
 
 bool Camera::SliderFloatWithSteps(const char* p_Label, float* p_Value, float p_Min, float p_Max, float p_Step, const char* p_Format)
@@ -189,4 +187,4 @@ bool Camera::SliderFloatWithSteps(const char* p_Label, float* p_Value, float p_M
     return valueChanged;
 }
 
-DEFINE_MOD(Camera);
+DEFINE_HMASDK_MOD(Camera);

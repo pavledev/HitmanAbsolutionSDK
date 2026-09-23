@@ -332,3 +332,8 @@ PATTERN_THISCALL_FUNCTION(
     "\x55\x8B\xEC\x51\x53\x56\x57\x8B\xF9\xE8\x00\x00\x00\x00\x8B\x45\x08", "xxxxxxxxxx????xxx", LocalResourceIDsResolver_RecordMapping,
     void(LocalResourceIDsResolver* th, const ZRuntimeResourceID& ridResource, const ZResourceID& idResource)
 );
+
+PATTERN_CDECL_FUNCTION(
+    "\x55\x8B\xEC\x83\xEC\x00\x53\x56\x57\xE8\x00\x00\x00\x00\x68", "xxxxx?xxxx????x", ZConfigCommand_GetConfigVariable,
+    ZConfigCommand*(const ZString& pszName)
+);

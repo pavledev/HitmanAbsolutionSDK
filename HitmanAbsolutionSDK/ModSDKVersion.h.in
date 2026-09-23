@@ -1,0 +1,4 @@
+#pragma once
+
+#define HMASDK_VERSION "@HitmanAbsolutionSDK_VERSION_STR@"
+#define HMASDK_ABI_VERSION @HitmanAbsolutionSDK_ABI_VER@

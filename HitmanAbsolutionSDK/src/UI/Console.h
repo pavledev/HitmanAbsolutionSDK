@@ -5,6 +5,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <IImGuiRenderer.h>
+
 namespace UI
 {
     class Console
@@ -19,7 +21,7 @@ namespace UI
       public:
         Console();
 
-        void Draw(bool hasFocus);
+        void Draw(IImGuiRenderer* p_Renderer, bool p_HasFocus);
         void AddLogLine(spdlog::level::level_enum p_Level, const std::string& p_Text);
 
       private:

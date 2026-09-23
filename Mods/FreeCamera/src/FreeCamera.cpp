@@ -15,9 +15,6 @@
 #include <Glacier/ZScaleform.h>
 #include <Glacier/ZGameTimeManager.h>
 
-#include "SDK.h"
-#include "Hooks.h"
-
 FreeCamera::FreeCamera()
     : m_IsFreeCameraActive(false)
     , m_ShouldToggle(false)
@@ -46,57 +43,53 @@ FreeCamera::FreeCamera()
     , m_PersistentTranslationSpeedMultiplier(0x3F800000)
     , m_PersistentRotationSpeedMultiplier(0x3F800000)
 {
-    m_PcControls = {
-        {"K", "Toggle freecam"},
-        {"F3", "Freeze camera and enable player input"},
+    m_PcControls = { { "K", "Toggle freecam" },
+                     { "F3", "Freeze camera and enable player input" },
 
-        {"W / S", "Move camera forward/backward"},
-        {"A / D", "Move camera left/right"},
-        {"Q / E", "Move camera down/up"},
-        {"Arrow Keys", "Move camera"},
+                     { "W / S", "Move camera forward/backward" },
+                     { "A / D", "Move camera left/right" },
+                     { "Q / E", "Move camera down/up" },
+                     { "Arrow Keys", "Move camera" },
 
-        {"Mouse", "Rotate camera"},
+                     { "Mouse", "Rotate camera" },
 
-        {"Ctrl + A/D", "Roll camera"},
-        {"Ctrl + W/S", "Change FOV"},
+                     { "Ctrl + A/D", "Roll camera" },
+                     { "Ctrl + W/S", "Change FOV" },
 
-        {"Alt + W/S", "Change camera speed"},
-        {"Alt + A/D", "Change rotation speed"},
+                     { "Alt + W/S", "Change camera speed" },
+                     { "Alt + A/D", "Change rotation speed" },
 
-        {"Ctrl + X", "Reset roll"},
-        {"Ctrl + Z", "Reset FOV"},
-        {"Alt + Z", "Reset camera speed"},
+                     { "Ctrl + X", "Reset roll" },
+                     { "Ctrl + Z", "Reset FOV" },
+                     { "Alt + Z", "Reset camera speed" },
 
-        {"Space + W/A/S/D", "Move camera in world space"},
-        {"Space + Q/E", "Move camera vertically in world space"},
+                     { "Space + W/A/S/D", "Move camera in world space" },
+                     { "Space + Q/E", "Move camera vertically in world space" },
 
-        {"Shift", "Temporary speed boost"},
-        {"F", "Fixed-degree camera rotation"},
+                     { "Shift", "Temporary speed boost" },
+                     { "F", "Fixed-degree camera rotation" },
 
-        {"Ctrl + F6", "Teleport player"},
-        {"F9", "Kill humanoid"},
+                     { "Ctrl + F6", "Teleport player" },
+                     { "F9", "Kill humanoid" },
 
-        {"F8", "Pause/Resume game"}
-    };
+                     { "F8", "Pause/Resume game" } };
 
-    m_ControllerControls = {
-        {"Right Stick", "Rotate camera"},
-        {"Left Stick", "Move camera"},
+    m_ControllerControls = { { "Right Stick", "Rotate camera" },
+                             { "Left Stick", "Move camera" },
 
-        {"RB", "Move camera vertically"},
-        {"RT", "Temporary speed boost"},
+                             { "RB", "Move camera vertically" },
+                             { "RT", "Temporary speed boost" },
 
-        {"A + Left Stick", "Roll camera"},
-        {"Y + Left Stick", "Change FOV"},
-        {"B + Left Stick", "Change camera speed"},
+                             { "A + Left Stick", "Roll camera" },
+                             { "Y + Left Stick", "Change FOV" },
+                             { "B + Left Stick", "Change camera speed" },
 
-        {"Left Stick Press", "Reset roll/FOV/speed"},
+                             { "Left Stick Press", "Reset roll/FOV/speed" },
 
-        {"LT + Left Stick", "Move camera in world space"},
-        {"LT + Right Stick Vertical", "Move camera vertically in world space"},
+                             { "LT + Left Stick", "Move camera in world space" },
+                             { "LT + Right Stick Vertical", "Move camera vertically in world space" },
 
-        {"LB", "Freeze camera and enable player input"}
-    };
+                             { "LB", "Freeze camera and enable player input" } };
 }
 
 FreeCamera::~FreeCamera()
@@ -151,7 +144,7 @@ void FreeCamera::OnEngineInitialized()
     Globals::InputActionManager->AddBindings(bindings);
 }
 
-void FreeCamera::OnDrawMenu()
+void FreeCamera::OnDrawMenu(IImGuiRenderer* p_Renderer)
 {
     if (ImGui::Button(ICON_MD_PHOTO_CAMERA " Free camera"))
     {
@@ -159,9 +152,9 @@ void FreeCamera::OnDrawMenu()
     }
 }
 
-void FreeCamera::OnDrawUI(const bool hasFocus)
+void FreeCamera::OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    if (!hasFocus)
+    if (!p_HasFocus)
     {
         return;
     }
@@ -171,9 +164,9 @@ void FreeCamera::OnDrawUI(const bool hasFocus)
         const auto center = ImGui::GetMainViewport()->GetCenter();
         ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
-        ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+        ImGui::PushFont(p_Renderer->GetBlackFont());
         const auto isWindowExpanded = ImGui::Begin(ICON_MD_PHOTO_CAMERA " FreeCam", &m_ShowFreeCameraWindow);
-        ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+        ImGui::PushFont(p_Renderer->GetRegularFont());
 
         if (isWindowExpanded)
         {
@@ -214,11 +207,11 @@ void FreeCamera::OnDrawUI(const bool hasFocus)
 
     if (m_ShowControlsWindow)
     {
-        ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+        ImGui::PushFont(p_Renderer->GetBlackFont());
 
         const auto areControlsExpanded = ImGui::Begin(ICON_MD_PHOTO_CAMERA " Free Camera Controls", &m_ShowControlsWindow);
 
-        ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+        ImGui::PushFont(p_Renderer->GetRegularFont());
 
         if (areControlsExpanded)
         {
@@ -584,9 +577,7 @@ void FreeCamera::KillActor()
     }
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
-    FreeCamera, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene
-)
+DEFINE_THISCALL_MOD_DETOUR(FreeCamera, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene)
 {
     if (m_IsFreeCameraActive)
     {
@@ -596,10 +587,10 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
     m_IsFreeCameraActive = false;
     m_ShouldToggle = false;
 
-    return {HookAction::Continue()};
+    return { HookAction::Continue() };
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(FreeCamera, void, ZEngineAppCommon_ResetSceneCallback, ZEngineAppCommon* p_EngineAppCommon)
+DEFINE_THISCALL_MOD_DETOUR(FreeCamera, void, ZEngineAppCommon_ResetSceneCallback, ZEngineAppCommon* p_EngineAppCommon)
 {
     p_Hook->CallOriginal(p_EngineAppCommon);
 
@@ -608,21 +599,19 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(FreeCamera, void, ZEngineAppCommon_ResetScen
 
     applicationEngineWin32->m_common.m_pFreeCamera = freeCamera;
 
-    return {HookAction::Return()};
+    return { HookAction::Return() };
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
-    FreeCamera, void, ZFreeCameraControlEntity_UpdateCamera, ZFreeCameraControlEntity* p_FreeCameraControlEntity, float p_Dt
-)
+DEFINE_THISCALL_MOD_DETOUR(FreeCamera, void, ZFreeCameraControlEntity_UpdateCamera, ZFreeCameraControlEntity* p_FreeCameraControlEntity, float p_Dt)
 {
     if (!m_IsFreeCameraActive)
     {
-        return {HookAction::Return()};
+        return { HookAction::Return() };
     }
 
     if (Globals::HUDManager->m_bPauseMenuActive)
     {
-        return {HookAction::Return()};
+        return { HookAction::Return() };
     }
 
     ZApplicationEngineWin32* applicationEngineWin32 = *Globals::ApplicationEngineWin32;
@@ -630,7 +619,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
 
     if (!freeCameraControlEntity)
     {
-        return {HookAction::Return()};
+        return { HookAction::Return() };
     }
 
     if (freeCameraControlEntity->m_pControlledCameraEntity)
@@ -682,21 +671,19 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
         }
     }
 
-    return {HookAction::Return()};
+    return { HookAction::Return() };
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
-    FreeCamera, void, ZFreeCameraControlEntity_UpdateMovementFromInput, ZFreeCameraControlEntity* p_FreeCameraControlEntity
-)
+DEFINE_THISCALL_MOD_DETOUR(FreeCamera, void, ZFreeCameraControlEntity_UpdateMovementFromInput, ZFreeCameraControlEntity* p_FreeCameraControlEntity)
 {
     if (!m_IsFreeCameraActive)
     {
-        return {HookAction::Return()};
+        return { HookAction::Return() };
     }
 
     if (Globals::HUDManager->m_bPauseMenuActive)
     {
-        return {HookAction::Return()};
+        return { HookAction::Return() };
     }
 
     ZApplicationEngineWin32* applicationEngineWin32 = *Globals::ApplicationEngineWin32;
@@ -704,7 +691,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
 
     if (!freeCameraControlEntity)
     {
-        return {HookAction::Return()};
+        return { HookAction::Return() };
     }
 
     freeCameraControlEntity->m_fMoveX = 0;
@@ -723,7 +710,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
     {
         freeCameraControlEntity->m_bIsGameControlActive = true;
 
-        return {HookAction::Return()};
+        return { HookAction::Return() };
     }
 
     float moveX = m_MoveXAction.Analog() + m_AnalogLeftXAction[freeCameraControlEntity->m_nControllerId].Analog();
@@ -860,7 +847,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
         freeCameraControlEntity->m_fDeltaYaw = deltaYaw;
     }
 
-    return {HookAction::Return()};
+    return { HookAction::Return() };
 }
 
-DEFINE_MOD(FreeCamera);
+DEFINE_HMASDK_MOD(FreeCamera);

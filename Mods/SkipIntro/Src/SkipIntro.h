@@ -8,11 +8,11 @@ class SkipIntro : public IModInterface
     void Initialize() override;
 
   private:
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(SkipIntro, void, ZMenuManager_SetStartupState, ZMenuManager* p_MenuManager, EMenuStartupState p_NewState);
+    DECLARE_THISCALL_MOD_DETOUR(SkipIntro, void, ZMenuManager_SetStartupState, ZMenuManager* p_MenuManager, EMenuStartupState p_NewState);
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
+    DECLARE_THISCALL_MOD_DETOUR(
         SkipIntro, ZRuntimeResourceID*, ZLevelSelectManager_GetBootMovie, ZLevelSelectManager* p_LevelSelectManager, ZRuntimeResourceID& p_Result
     );
 };
 
-DECLARE_MOD(SkipIntro)
+DECLARE_HMASDK_MOD(SkipIntro)

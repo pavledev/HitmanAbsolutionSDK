@@ -6,7 +6,7 @@
 
 #include <fmt/format.h>
 
-#include "SDK.h"
+#include "ModSDK.h"
 #include "Utils/ProcessUtils.h"
 #include "Logging.h"
 
@@ -17,7 +17,7 @@ template<class T> T PatternGlobal(const char* p_GlobalName, const char* p_Patter
     const auto* pattern = reinterpret_cast<const uint8_t*>(p_Pattern);
 
     const uintptr_t target =
-        util::ProcessUtils::SearchPattern(SDK::GetInstance().GetModuleBase(), SDK::GetInstance().GetSizeOfCode(), pattern, p_Mask);
+        util::ProcessUtils::SearchPattern(ModSDK::GetInstance().GetModuleBase(), ModSDK::GetInstance().GetSizeOfCode(), pattern, p_Mask);
 
     if (target == 0)
     {

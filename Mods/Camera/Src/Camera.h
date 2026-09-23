@@ -12,14 +12,14 @@ class Camera : public IModInterface
 {
   public:
     void Initialize() override;
-    void OnDrawMenu() override;
-    void OnDrawUI(const bool hasFocus) override;
+    void OnDrawMenu(IImGuiRenderer* p_Renderer) override;
+    void OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus) override;
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(Camera, void, ZCameraEntity_SetFovYDeg, ZCameraEntity* p_CameraEntity, float p_FovYDeg);
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
+    DECLARE_THISCALL_MOD_DETOUR(Camera, void, ZCameraEntity_SetFovYDeg, ZCameraEntity* p_CameraEntity, float p_FovYDeg);
+    DECLARE_THISCALL_MOD_DETOUR(
         Camera, void, ZEntitySceneContext_CreateScene, ZEntitySceneContext* p_EntitySceneContext, const ZString& p_StreamingState
     );
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
+    DECLARE_THISCALL_MOD_DETOUR(
         Camera, void, ZRenderPostfilterParametersEntity_UpdateParametersColorCorrection,
         ZRenderPostfilterParametersEntity* p_RenderPostfilterParametersEntity, SRenderPostfilterParametersColorCorrection* p_Parameters,
         SRenderPostfilterParametersMisc* p_MiscParams
@@ -36,4 +36,4 @@ class Camera : public IModInterface
     bool m_VignetteEnabled = true;
 };
 
-DECLARE_MOD(Camera)
+DECLARE_HMASDK_MOD(Camera)

@@ -1,11 +1,10 @@
 #include <fstream>
 
-#include "rapidjson/istreamwrapper.h"
 #include "rapidjson/document.h"
 
-#include "Registry/PropertyRegistry.h"
+#include "PropertyRegistry.h"
 #include "Logging.h"
-#include "SDK.h"
+#include "ModSDK.h"
 #include "Resources.h"
 
 PropertyRegistry& PropertyRegistry::GetInstance()
@@ -17,7 +16,7 @@ PropertyRegistry& PropertyRegistry::GetInstance()
 
 void PropertyRegistry::Load()
 {
-    const std::string_view propertiesJson = SDK::GetInstance().GetTextResource(IDR_PROPERTIES);
+    const std::string_view propertiesJson = ModSDK::GetInstance().GetTextResource(IDR_PROPERTIES);
 
     if (propertiesJson.empty())
     {

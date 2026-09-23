@@ -10,8 +10,8 @@ class StartingLoadout : public IModInterface
 {
   public:
     void OnEngineInitialized() override;
-    void OnDrawMenu() override;
-    void OnDrawUI(const bool hasFocus) override;
+    void OnDrawMenu(IImGuiRenderer* p_Renderer) override;
+    void OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus) override;
 
   private:
     void RenderOutfitsTabItem();
@@ -20,7 +20,7 @@ class StartingLoadout : public IModInterface
     void LoadOutfits();
     void LoadFirearms();
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(StartingLoadout, void, ZHitman5_Activate, ZHitman5* p_Hitman5, const ZString& p_Subset);
+    DECLARE_THISCALL_MOD_DETOUR(StartingLoadout, void, ZHitman5_Activate, ZHitman5* p_Hitman5, const ZString& p_Subset);
 
     bool m_ShowWindow = false;
 
@@ -31,4 +31,4 @@ class StartingLoadout : public IModInterface
     STokenID m_SelectedFirearm;
 };
 
-DECLARE_MOD(StartingLoadout)
+DECLARE_HMASDK_MOD(StartingLoadout)

@@ -7,7 +7,7 @@
 
 #include <ResourcePatcher.h>
 #include <IO/BinaryReader.h>
-#include <SDK.h>
+#include <ModSDK.h>
 #include <Hooks.h>
 #include <Globals.h>
 
@@ -26,7 +26,7 @@ void ResourcePatcher::LoadPatchedResources()
         return;
     }
 
-    const std::string currentHeaderLibraryResourceID = SDK::GetInstance().GetResourceID(currentHeaderLibraryRuntimeResourceID);
+    const std::string currentHeaderLibraryResourceID = SDK().GetResourceID(currentHeaderLibraryRuntimeResourceID);
     const size_t index2 = currentHeaderLibraryResourceID.find_last_of("/");
     const std::string headerLibraryFileName =
         currentHeaderLibraryResourceID.substr(index2 + 1, currentHeaderLibraryResourceID.find(".", index2) - index2 - 1);
@@ -107,7 +107,7 @@ void ResourcePatcher::GetPatchedResource(const ZRuntimeResourceID& runtimeResour
     {
         if (patchedResources2[i].runtimeResourceID == runtimeResourceID.GetID())
         {
-            const std::string currentHeaderLibraryResourceID = SDK::GetInstance().GetResourceID(currentHeaderLibraryRuntimeResourceID);
+            const std::string currentHeaderLibraryResourceID = SDK().GetResourceID(currentHeaderLibraryRuntimeResourceID);
             const size_t index2 = currentHeaderLibraryResourceID.find_last_of("/");
             const std::string headerLibraryFileName =
                 currentHeaderLibraryResourceID.substr(index2 + 1, currentHeaderLibraryResourceID.find(".", index2) - index2 - 1);
@@ -153,7 +153,9 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
     ResourcePatcher, bool, ZHeaderLibraryInstaller_Install, ZHeaderLibraryInstaller* p_HeaderLibraryInstaller, ZResourcePending& p_ResourcePending
 )
 {
-    SDK::GetInstance().GetResourcePatcher()->SetCurrentHeaderLibraryRuntimeResourceID(p_ResourcePending.m_pResource.m_pResourceStub->m_ridResource);
+    ModSDK::GetInstance().GetResourcePatcher()->SetCurrentHeaderLibraryRuntimeResourceID(
+        p_ResourcePending.m_pResource.m_pResourceStub->m_ridResource
+    );
 
     return { HookAction::Continue() };
 }

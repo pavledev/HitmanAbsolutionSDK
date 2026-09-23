@@ -22,8 +22,8 @@ class FreeCamera : public IModInterface
 
     void Initialize() override;
     void OnEngineInitialized() override;
-    void OnDrawMenu() override;
-    void OnDrawUI(const bool hasFocus) override;
+    void OnDrawMenu(IImGuiRenderer* p_Renderer) override;
+    void OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus) override;
 
   private:
     void OnFrameUpdate(const SGameUpdateEvent& updateEvent);
@@ -44,15 +44,13 @@ class FreeCamera : public IModInterface
 
     void KillActor();
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
-        FreeCamera, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene
-    );
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(FreeCamera, void, ZEngineAppCommon_ResetSceneCallback, ZEngineAppCommon* p_EngineAppCommon);
+    DECLARE_THISCALL_MOD_DETOUR(FreeCamera, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene);
+    DECLARE_THISCALL_MOD_DETOUR(FreeCamera, void, ZEngineAppCommon_ResetSceneCallback, ZEngineAppCommon* p_EngineAppCommon);
 
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
+    DECLARE_THISCALL_MOD_DETOUR(
         FreeCamera, void, ZFreeCameraControlEntity_UpdateCamera, ZFreeCameraControlEntity* p_FreeCameraControlEntity, float p_Dt
     );
-    DECLARE_THISCALL_DETOUR_WITH_CONTEXT(
+    DECLARE_THISCALL_MOD_DETOUR(
         FreeCamera, void, ZFreeCameraControlEntity_UpdateMovementFromInput, ZFreeCameraControlEntity* p_FreeCameraControlEntity
     );
 
@@ -113,4 +111,4 @@ class FreeCamera : public IModInterface
     inline static ZInputAction m_ResetSpeedAction[2] = { "ResetSpeed0", "ResetSpeed1" };
 };
 
-DECLARE_MOD(FreeCamera)
+DECLARE_HMASDK_MOD(FreeCamera)

@@ -13,7 +13,7 @@ void StartingLoadout::OnEngineInitialized()
     Hooks::ZHitman5_Activate->AddDetour(this, &StartingLoadout::ZHitman5_Activate);
 }
 
-void StartingLoadout::OnDrawMenu()
+void StartingLoadout::OnDrawMenu(IImGuiRenderer* p_Renderer)
 {
     if (ImGui::Button(ICON_MD_TUNE " Starting loadout"))
     {
@@ -21,19 +21,19 @@ void StartingLoadout::OnDrawMenu()
     }
 }
 
-void StartingLoadout::OnDrawUI(const bool hasFocus)
+void StartingLoadout::OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    if (!hasFocus || !m_ShowWindow)
+    if (!p_HasFocus || !m_ShowWindow)
     {
         return;
     }
 
-    ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+    ImGui::PushFont(p_Renderer->GetBlackFont());
     ImGui::SetNextWindowSize(ImVec2(500, 300), ImGuiCond_FirstUseEver);
 
     const bool isWindowExpanded = ImGui::Begin(ICON_MD_TUNE " Starting loadout", &m_ShowWindow);
 
-    ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+    ImGui::PushFont(p_Renderer->GetRegularFont());
 
     if (isWindowExpanded)
     {
@@ -98,7 +98,7 @@ void StartingLoadout::LoadFirearms()
     }
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(StartingLoadout, void, ZHitman5_Activate, ZHitman5* p_Hitman5, const ZString& p_Subset)
+DEFINE_THISCALL_MOD_DETOUR(StartingLoadout, void, ZHitman5_Activate, ZHitman5* p_Hitman5, const ZString& p_Subset)
 {
     if (m_SelectedOutfit != STokenID::InvalidToken)
     {
@@ -113,4 +113,4 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(StartingLoadout, void, ZHitman5_Activate, ZH
     return { HookAction::Continue() };
 }
 
-DEFINE_MOD(StartingLoadout);
+DEFINE_HMASDK_MOD(StartingLoadout);

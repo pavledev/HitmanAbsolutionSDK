@@ -7,9 +7,9 @@
 // CREDITS
 //   Written by Michal Cichon
 //------------------------------------------------------------------------------
-#include <imgui_internal.h>
-
 #include "Builders.h"
+
+#include <imgui_internal.h>
 
 ax::NodeEditor::Utilities::BlueprintNodeBuilder::BlueprintNodeBuilder(ImTextureID texture, int textureWidth, int textureHeight)
     : HeaderTextureId(texture)

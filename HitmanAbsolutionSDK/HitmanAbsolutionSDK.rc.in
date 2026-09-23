@@ -1,0 +1,18 @@
+1 VERSIONINFO
+FILEVERSION @HitmanAbsolutionSDK_RCVERSION@
+PRODUCTVERSION @HitmanAbsolutionSDK_RCVERSION@
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "FileVersion", "@HitmanAbsolutionSDK_RCVERSION_STR@\0"
+            VALUE "ProductVersion", "@HitmanAbsolutionSDK_RCVERSION_STR@\0"
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END

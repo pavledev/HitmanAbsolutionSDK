@@ -193,3 +193,26 @@ class ZString
     uint32_t m_length;
     const char* m_chars;
 };
+
+template<> struct fmt::formatter<ZString>
+{
+    constexpr auto parse(format_parse_context& ctx) -> format_parse_context::iterator
+    {
+        return ctx.begin();
+    }
+
+    auto format(const ZString& r, format_context& ctx) const -> format_context::iterator
+    {
+        return fmt::format_to(ctx.out(), "{}", r.ToStringView());
+    }
+};
+
+inline std::ostream& operator<<(std::ostream& p_Stream, const ZString& p_String)
+{
+    return p_Stream.write(p_String.ToCString(), p_String.Length());
+}
+
+inline ZString operator""_zs(const char* p_String, size_t p_Size)
+{
+    return { std::string_view(p_String, p_Size) };
+}

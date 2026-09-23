@@ -11,7 +11,7 @@ void SkipIntro::Initialize()
     Hooks::ZLevelSelectManager_GetBootMovie->AddDetour(this, &SkipIntro::ZLevelSelectManager_GetBootMovie);
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(SkipIntro, void, ZMenuManager_SetStartupState, ZMenuManager* p_MenuManager, EMenuStartupState p_NewState)
+DEFINE_THISCALL_MOD_DETOUR(SkipIntro, void, ZMenuManager_SetStartupState, ZMenuManager* p_MenuManager, EMenuStartupState p_NewState)
 {
     if (p_NewState == EMenuStartupState::EMENUPHASE_INTRO_MOVIE)
     {
@@ -23,7 +23,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(SkipIntro, void, ZMenuManager_SetStartupStat
     return { HookAction::Continue() };
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+DEFINE_THISCALL_MOD_DETOUR(
     SkipIntro, ZRuntimeResourceID*, ZLevelSelectManager_GetBootMovie, ZLevelSelectManager* p_LevelSelectManager, ZRuntimeResourceID& p_Result
 )
 {
@@ -32,4 +32,4 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
     return { HookAction::Return(), &p_Result };
 }
 
-DEFINE_MOD(SkipIntro);
+DEFINE_HMASDK_MOD(SkipIntro);

@@ -12,7 +12,6 @@
 #include <Hooks.h>
 #include "Utility/Builders.h"
 #include "Utility/Widgets.h"
-#include <Renderer/DirectXRenderer.h>
 
 Editor::EntityTreeNode::EntityTreeNode()
 {
@@ -115,15 +114,15 @@ void Editor::Initialize()
 
 void Editor::OnEngineInitialized()
 {
-    std::shared_ptr<DirectXRenderer> directXRenderer = SDK::GetInstance().GetDirectXRenderer();
+    /*std::shared_ptr<DirectXRenderer> directXRenderer = SDK::GetInstance().GetDirectXRenderer();
 
     directXRenderer->LoadTextureFromFile(
         "assets/images/BlueprintBackground.png", &headerBackgroundTexture, &headerBackgroundTextureView, headerBackgroundTextureWidth,
         headerBackgroundTextureHeight
-    );
+    );*/
 }
 
-void Editor::OnDrawMenu()
+void Editor::OnDrawMenu(IImGuiRenderer* p_Renderer)
 {
     if (ImGui::Button(ICON_MD_VIEW_LIST " Editor"))
     {
@@ -131,32 +130,32 @@ void Editor::OnDrawMenu()
     }
 }
 
-void Editor::OnDrawUI(const bool hasFocus)
+void Editor::OnDrawUI(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    RenderEntityTree(hasFocus);
-    RenderEntityProperties(hasFocus);
-    RenderGizmo(hasFocus);
-    RenderBlueprintNodesAndPins(hasFocus);
+    RenderEntityTree(p_Renderer, p_HasFocus);
+    RenderEntityProperties(p_Renderer, p_HasFocus);
+    RenderGizmo(p_HasFocus);
+    RenderBlueprintNodesAndPins(p_Renderer, p_HasFocus);
 }
 
-void Editor::OnDraw3D()
+void Editor::OnDraw3D(IDirectXRenderer* p_Renderer)
 {
     if (selectedentityTreeNode && selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)
     {
-        RenderEntityAABB();
+        RenderEntityAABB(p_Renderer);
     }
 }
 
-void Editor::RenderEntityTree(const bool hasFocus)
+void Editor::RenderEntityTree(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    if (!hasFocus || !isOpen || !rootNode)
+    if (!p_HasFocus || !isOpen || !rootNode)
     {
         return;
     }
 
     ImGui::SetNextWindowPos({ 0, 110 }, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({ 700, ImGui::GetIO().DisplaySize.y - 110 }, ImGuiCond_FirstUseEver);
-    ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+    ImGui::PushFont(p_Renderer->GetBlackFont());
 
     const bool isWindowVisible = ImGui::Begin(ICON_MD_VIEW_LIST " Entity Tree", &isOpen, ImGuiWindowFlags_HorizontalScrollbar);
 
@@ -168,7 +167,7 @@ void Editor::RenderEntityTree(const bool hasFocus)
         return;
     }
 
-    ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+    ImGui::PushFont(p_Renderer->GetRegularFont());
 
     if (!rootNode->entityRef.m_pEntityTypePtrPtr)
     {
@@ -322,9 +321,9 @@ void Editor::RenderEntityTree(std::shared_ptr<EntityTreeNode> entityTreeNode, co
     ImGui::PopID();
 }
 
-void Editor::RenderEntityProperties(const bool hasFocus)
+void Editor::RenderEntityProperties(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    if (!hasFocus || !isOpen || !selectedentityTreeNode || !selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr
+    if (!p_HasFocus || !isOpen || !selectedentityTreeNode || !selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr
         || !(*selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)->m_pPropertyData)
     {
         return;
@@ -334,7 +333,7 @@ void Editor::RenderEntityProperties(const bool hasFocus)
 
     ImGui::SetNextWindowPos({ io.DisplaySize.x - 600, 110 }, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({ 600, io.DisplaySize.y - 110 }, ImGuiCond_FirstUseEver);
-    ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+    ImGui::PushFont(p_Renderer->GetBlackFont());
 
     const bool isWindowVisible = ImGui::Begin(ICON_MD_BUILD " Entity Properties", &isOpen, ImGuiWindowFlags_HorizontalScrollbar);
 
@@ -346,7 +345,7 @@ void Editor::RenderEntityProperties(const bool hasFocus)
         return;
     }
 
-    ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+    ImGui::PushFont(p_Renderer->GetRegularFont());
 
     static char propertyName[256]{ "" };
     static std::string hint = std::format("{} Property Name...", ICON_MD_SEARCH);
@@ -377,7 +376,7 @@ void Editor::RenderEntityProperties(const bool hasFocus)
             for (size_t i = 0; i < properties->Size(); ++i)
             {
                 SPropertyData* propertyData = &(*properties)[i];
-                const std::string& propertyName3 = SDK::GetInstance().GetPropertyName(propertyData->m_nPropertyID);
+                const std::string& propertyName3 = SDK().GetPropertyName(propertyData->m_nPropertyID);
                 std::string propertyName4 = propertyName3;
 
                 std::transform(propertyName4.begin(), propertyName4.end(), propertyName4.begin(), tolower);
@@ -483,7 +482,7 @@ void Editor::RenderEntityProperties(const bool hasFocus)
     for (size_t i = 0; i < properties->Size(); ++i)
     {
         SPropertyData* propertyData = &(*properties)[i];
-        const std::string& propertyName3 = SDK::GetInstance().GetPropertyName(propertyData->m_nPropertyID);
+        const std::string& propertyName3 = SDK().GetPropertyName(propertyData->m_nPropertyID);
 
         if (!filteredProperties.empty() && !filteredProperties.contains(i))
         {
@@ -669,7 +668,7 @@ void Editor::RenderGizmo(const bool hasFocus)
     }
 }
 
-void Editor::RenderEntityAABB()
+void Editor::RenderEntityAABB(IDirectXRenderer* p_Renderer)
 {
     ZSpatialEntity* spatialEntity = selectedentityTreeNode->entityRef.QueryInterfacePtr<ZSpatialEntity>();
 
@@ -683,14 +682,12 @@ void Editor::RenderEntityAABB()
 
     spatialEntity->CalculateBounds(min, max, 1, 0);
 
-    SDK::GetInstance().GetDirectXRenderer()->DrawOBB3D(
-        SVector3(min.x, min.y, min.z), SVector3(max.x, max.y, max.z), transform, SVector4(0.f, 0.f, 1.f, 1.f)
-    );
+    p_Renderer->DrawOBB3D(SVector3(min.x, min.y, min.z), SVector3(max.x, max.y, max.z), transform, SVector4(0.f, 0.f, 1.f, 1.f));
 }
 
-void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
+void Editor::RenderBlueprintNodesAndPins(IImGuiRenderer* p_Renderer, bool p_HasFocus)
 {
-    if (!hasFocus || !isOpen || !selectedentityTreeNode || !selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr
+    if (!p_HasFocus || !isOpen || !selectedentityTreeNode || !selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr
         || !(*selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)->m_pInputPins
         || !(*selectedentityTreeNode->entityRef.m_pEntityTypePtrPtr)->m_pOutputPins)
     {
@@ -705,7 +702,7 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
 
     ImGui::SetNextWindowPos({ bottomWindowPosX, 110 }, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({ bottomWindowWidth, bottomWindowHeight }, ImGuiCond_FirstUseEver);
-    ImGui::PushFont(SDK::GetInstance().GetBoldFont());
+    ImGui::PushFont(p_Renderer->GetBlackFont());
 
     const bool isWindowVisible = ImGui::Begin(ICON_MD_BUILD " Blueprints Graph View", &isOpen, ImGuiWindowFlags_HorizontalScrollbar);
 
@@ -738,7 +735,7 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
         BuildNodes();
     }
 
-    ImGui::PushFont(SDK::GetInstance().GetRegularFont());
+    ImGui::PushFont(p_Renderer->GetRegularFont());
 
     ax::NodeEditor::SetCurrentEditor(editor);
 
@@ -754,7 +751,8 @@ void Editor::RenderBlueprintNodesAndPins(const bool hasFocus)
         const ImVec2 cursorTopLeft = ImGui::GetCursorScreenPos();
 
         ax::NodeEditor::Utilities::BlueprintNodeBuilder builder(
-            headerBackgroundTextureView, headerBackgroundTextureWidth, headerBackgroundTextureHeight
+            static_cast<ImTextureID>(reinterpret_cast<uintptr_t>(headerBackgroundTextureView)), headerBackgroundTextureWidth,
+            headerBackgroundTextureHeight
         );
 
         for (auto& node : nodes)
@@ -1400,7 +1398,7 @@ void Editor::OnLeftMouseButtonDown(const SVector2& mousePosition, const bool isF
     SVector3 worldPosition;
     SVector3 direction;
 
-    SDK::GetInstance().GetDirectXRenderer()->ScreenToWorld(mousePosition, worldPosition, direction);
+    SDK().ScreenToWorld(mousePosition, worldPosition, direction);
 
     const float4 direction2 = float4(direction.x, direction.y, direction.z, 1.f);
     const float4 from = float4(worldPosition.x, worldPosition.y, worldPosition.z, 1.f);
@@ -1645,7 +1643,7 @@ void Editor::EnumProperty(const std::string& id, const ZEntityRef entityRef, con
     int value = *static_cast<int*>(data);
     STypeID* typeID = propertyData->m_pInfo->m_Type;
     const char* typeName = typeID->pTypeInfo->pszTypeName;
-    const std::map<int32_t, std::string>& enumItems = SDK::GetInstance().GetEnum(typeName);
+    const std::map<int32_t, std::string>& enumItems = SDK().GetEnum(typeName);
 
     std::string currentValue;
 
@@ -1782,7 +1780,7 @@ void Editor::ResourceProperty(const std::string& id, const ZEntityRef entityRef,
 
     if (resourcePtr->m_pResourceStub)
     {
-        const std::string resourceID = SDK::GetInstance().GetResourceID(resourcePtr->m_pResourceStub->m_ridResource);
+        const std::string resourceID = SDK().GetResourceID(resourcePtr->m_pResourceStub->m_ridResource);
 
         // memcpy(stringBuffer, resourceID.c_str(), resourceID.GetURI().Length() + 1);
     }
@@ -1793,7 +1791,7 @@ void Editor::ResourceProperty(const std::string& id, const ZEntityRef entityRef,
 
     if (ImGui::InputText(id.c_str(), stringBuffer, sizeof(stringBuffer)))
     {
-        const ZRuntimeResourceID runtimeResourceID = SDK::GetInstance().GetRuntimeResourceID(stringBuffer);
+        const ZRuntimeResourceID runtimeResourceID = SDK().GetRuntimeResourceID(stringBuffer);
         const ZResourcePtr resourcePtr2 = Globals::ResourceManager->GetResourcePtr(runtimeResourceID, 0);
         ZVariant variant;
 
@@ -2124,9 +2122,7 @@ void Editor::AddBlueprintNodesAndPins(const ZRuntimeResourceID& tbluRuntimeResou
     }
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
-    Editor, void, ZEntitySceneContext_CreateScene, ZEntitySceneContext* p_EntitySceneContext, const ZString& p_StreamingState
-)
+DEFINE_THISCALL_MOD_DETOUR(Editor, void, ZEntitySceneContext_CreateScene, ZEntitySceneContext* p_EntitySceneContext, const ZString& p_StreamingState)
 {
     rootNode = std::make_shared<EntityTreeNode>();
 
@@ -2135,7 +2131,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
     return { HookAction::Continue() };
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Editor, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene)
+DEFINE_THISCALL_MOD_DETOUR(Editor, void, ZEntitySceneContext_ClearScene, ZEntitySceneContext* p_EntitySceneContext, bool p_FullyUnloadScene)
 {
     rootNode.reset();
     selectedentityTreeNode.reset();
@@ -2162,7 +2158,7 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(Editor, void, ZEntitySceneContext_ClearScene
     return { HookAction::Continue() };
 }
 
-DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
+DEFINE_THISCALL_MOD_DETOUR(
     Editor, void, ZTemplateEntityBlueprintFactory_ZTemplateEntityBlueprintFactory, ZTemplateEntityBlueprintFactory* p_TemplateEntityBlueprintFactory,
     STemplateEntityBlueprint* p_TemplateEntityBlueprint, ZResourcePending& p_ResourcePending
 )
@@ -2257,4 +2253,4 @@ DEFINE_THISCALL_DETOUR_WITH_CONTEXT(
     return { HookAction::Continue() };
 }
 
-DEFINE_MOD(Editor);
+DEFINE_HMASDK_MOD(Editor);
