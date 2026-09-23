@@ -699,6 +699,34 @@ bool ModSDK::CreateAndInstallDynamicResourceLibrary(
     return util::CreateAndInstallDynamicResourceLibrary(p_ResourceID, p_DynamicResourceLibrary, p_TempRuntimeResourceID, p_EntityCount);
 }
 
+void ModSDK::AllocateZString(ZString* p_Target, const char* p_Str, uint32_t p_Size)
+{
+    if (Globals::Hitman5Module->IsEngineInitialized())
+    {
+        // If engine is initialized, allocate the normal way.
+        p_Target->m_length = p_Size;
+        p_Target->m_chars = Functions::ZString_ZImpl_Allocate->Call(p_Str, p_Size)->m_pDataStart;
+    }
+    else
+    {
+        // Otherwise, allocate ourselves and make the game think it's a static allocation.
+        // This will leak memory, but best we can do for now before the engine is initialized.
+        auto* string = new char[p_Size + 1]{};
+        memcpy(string, p_Str, p_Size);
+        string[p_Size] = '\0';
+
+        *p_Target = ZString(std::string_view(string, p_Size));
+    }
+}
+
+void ModSDK::FreeZString(ZString* p_Target)
+{
+    if (p_Target->IsAllocated())
+    {
+        Functions::ZString_ZImpl_Free->Call(p_Target->GetImpl());
+    }
+}
+
 bool ModSDK::PatchCodeInternal(
     const char* p_Pattern, const char* p_Mask, void* p_NewCode, size_t p_CodeSize, ptrdiff_t p_TargetOffset, void* p_OriginalCode
 )

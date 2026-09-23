@@ -105,6 +105,9 @@ class ModSDK : public IModSDK
         const uint32_t p_EntityCount = 1
     ) override;
 
+    void AllocateZString(ZString* p_Target, const char* p_Str, uint32_t p_Size) override;
+    void FreeZString(ZString* p_Target) override;
+
     std::shared_ptr<DirectXRenderer> GetDirectXRenderer() const
     {
         return m_DirectXRenderer;

@@ -258,7 +258,7 @@ class ZEntityRef
             return false;
         }
 
-        const STypeID* typeID = (*Globals::TypeRegistry)->GetType(p_TypeName.c_str());
+        const STypeID* typeID = (*Globals::TypeRegistry)->GetType(p_TypeName);
 
         if (typeID)
         {

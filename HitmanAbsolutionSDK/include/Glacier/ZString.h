@@ -9,60 +9,98 @@
 
 #include <Globals.h>
 #include <Hash.h>
+#include <IModSDK.h>
 
 class ZString
 {
   public:
+    struct ZImpl
+    {
+        uint32_t m_nAllocatedSize;
+        volatile long m_nRefcount;
+        ZImpl* m_pNext;
+        char m_pDataStart[0]; // String data starts at the end of this struct.
+    };
+
     ZString() : m_length(0x80000000), m_chars(const_cast<char*>("")) {}
 
     ZString(std::string_view str) : m_length(static_cast<uint32_t>(str.size()) | 0x80000000), m_chars(str.data()) {}
+
+    ZString(const char* str) : m_length(static_cast<uint32_t>(std::strlen(str)) | 0x80000000), m_chars(str) {}
 
     ZString(const std::string& str) : ZString()
     {
         Allocate(str.c_str(), str.size());
     }
 
-    ZString(const char* str) : m_length(static_cast<uint32_t>(std::strlen(str)) | 0x80000000), m_chars(str) {}
-
-    ZString(const char* str, size_t size) : m_length(static_cast<uint32_t>(size) | 0x80000000), m_chars(str) {}
-
-    ZString(const ZString& other)
+    template<size_t N> ZString(const char (&str)[N]) : ZString()
     {
-        if (other.IsAllocated())
+        Allocate(str, N - 1);
+    }
+
+    ZString(const ZString& p_Other) : m_length(p_Other.m_length), m_chars(p_Other.m_chars)
+    {
+        if (IsAllocated())
         {
-            Allocate(other.ToCString(), other.Length());
-        }
-        else
-        {
-            m_length = other.m_length;
-            m_chars = other.m_chars;
+            _InterlockedIncrement(&GetImpl()->m_nRefcount);
         }
     }
 
-    ZString& operator=(const ZString& other)
+    ZString(ZString&& p_Other) noexcept
     {
-        if (this != &other)
-        {
-            if (other.IsAllocated())
-            {
-                Allocate(other.ToCString(), other.Length());
-            }
-            else
-            {
-                m_length = other.m_length;
-                m_chars = other.m_chars;
-            }
-        }
+        m_length = p_Other.m_length;
+        m_chars = p_Other.m_chars;
 
-        return *this;
+        p_Other.m_length = 0x80000000;
+        p_Other.m_chars = const_cast<char*>("");
     }
 
     ~ZString()
     {
-        /*if (IsAllocated())
+        SDK().FreeZString(this);
+    }
+
+    ZString& operator=(const ZString& p_Other)
+    {
+        if (this == &p_Other)
         {
-            Free();
-        }*/
+            return *this;
+        }
+
+        if (p_Other.IsAllocated())
+        {
+            _InterlockedIncrement(&p_Other.GetImpl()->m_nRefcount);
+        }
+
+        SDK().FreeZString(this);
+
+        m_length = p_Other.m_length;
+        m_chars = p_Other.m_chars;
+
+        return *this;
+    }
+
+    ZString& operator=(ZString&& p_Other) noexcept
+    {
+        if (this == &p_Other)
+        {
+            return *this;
+        }
+
+        SDK().FreeZString(this);
+
+        m_length = p_Other.m_length;
+        m_chars = p_Other.m_chars;
+
+        p_Other.m_length = 0x80000000;
+        p_Other.m_chars = const_cast<char*>("");
+
+        return *this;
+    }
+
+    ZImpl* GetImpl() const
+    {
+        return reinterpret_cast<ZImpl*>(const_cast<char*>(m_chars)) - 1;
     }
 
     uint32_t Length() const
@@ -75,24 +113,24 @@ class ZString
         return m_chars;
     }
 
-    bool operator==(const ZString& other) const
+    bool operator==(const ZString& p_Other) const
     {
-        if (Length() != other.Length())
+        if (Length() != p_Other.Length())
         {
             return false;
         }
 
-        return strncmp(m_chars, other.m_chars, Length()) == 0;
+        return strncmp(m_chars, p_Other.m_chars, Length()) == 0;
     }
 
-    bool StartsWith(const ZString& other) const
+    bool StartsWith(const ZString& p_Other) const
     {
-        if (Length() != other.Length())
+        if (Length() != p_Other.Length())
         {
             return false;
         }
 
-        return strncmp(m_chars, other.m_chars, other.Length()) == 0;
+        return strncmp(m_chars, p_Other.m_chars, p_Other.Length()) == 0;
     }
 
     bool IsAllocated() const
@@ -110,33 +148,9 @@ class ZString
         return ToStringView();
     }
 
-    ZString CopyFrom(const ZString& other)
+    void Allocate(const char* p_Str, size_t p_Size)
     {
-        ZString string;
-
-        string.Allocate(other.m_chars, other.Length());
-
-        return string;
-    }
-
-    void Allocate(const char* str, size_t size)
-    {
-        IAllocator* normalAllocator = (*Globals::MemoryManager)->m_pNormalAllocator;
-        char* chars = reinterpret_cast<char*>(normalAllocator->Allocate(size + 1, 0));
-
-        strncpy_s(chars, size + 1, str, size + 1);
-
-        m_length = static_cast<uint32_t>(size);
-        m_chars = chars;
-    }
-
-    void Free()
-    {
-        IAllocator* normalAllocator = (*Globals::MemoryManager)->m_pNormalAllocator;
-
-        normalAllocator->Free(const_cast<char*>(m_chars));
-
-        m_chars = nullptr;
+        SDK().AllocateZString(this, p_Str, p_Size);
     }
 
     bool IsEmpty() const
@@ -144,9 +158,9 @@ class ZString
         return Length() == 0;
     }
 
-    int IndexOf(const char* rhs) const
+    int IndexOf(const char* p_Other) const
     {
-        const char* foundPtr = strstr(m_chars, rhs);
+        const char* foundPtr = strstr(m_chars, p_Other);
 
         if (foundPtr)
         {
@@ -189,7 +203,7 @@ class ZString
         binarySerializer.RecordOffsetForRebasing(charsOffset);
     }
 
-  private:
+  public:
     uint32_t m_length;
     const char* m_chars;
 };

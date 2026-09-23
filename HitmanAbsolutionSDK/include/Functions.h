@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Glacier/ZMath.h"
+#include "Glacier/ZString.h"
 
 #include "Common.h"
 #include "EngineFunction.h"
@@ -208,4 +209,8 @@ class HitmanAbsolutionSDK_API Functions
         LocalResourceIDsResolver_RecordMapping;
 
     static CdeclEngineFunction<ZConfigCommand*(const ZString& pszName)>* ZConfigCommand_GetConfigVariable;
+
+    static CdeclEngineFunction<ZString::ZImpl*(const char* pszString, uint32_t nStringLength)>* ZString_ZImpl_Allocate;
+
+    static ThiscallEngineFunction<void(ZString::ZImpl* th)>* ZString_ZImpl_Free;
 };

@@ -284,6 +284,9 @@ class IModSDK
         const std::string& p_ResourceID, ZDynamicResourceLibrary*& p_DynamicResourceLibrary, ZRuntimeResourceID& p_TempRuntimeResourceID,
         const uint32_t p_EntityCount = 1
     ) = 0;
+
+    virtual void AllocateZString(ZString* p_Target, const char* p_Str, uint32_t p_Size) = 0;
+    virtual void FreeZString(ZString* p_Target) = 0;
 };
 
 HitmanAbsolutionSDK_API IModSDK& SDK();
