@@ -210,7 +210,7 @@ class HitmanAbsolutionSDK_API Functions
 
     static CdeclEngineFunction<ZConfigCommand*(const ZString& pszName)>* ZConfigCommand_GetConfigVariable;
 
-    static CdeclEngineFunction<ZString::ZImpl*(const char* pszString, uint32_t nStringLength)>* ZString_ZImpl_Allocate;
+    static ThiscallEngineFunction<ZString::ZImpl*(ZStringCollection* th, const char* pszString, size_t nStringLength)>* ZStringCollection_Allocate;
 
     static ThiscallEngineFunction<void(ZString::ZImpl* th)>* ZString_ZImpl_Free;
 };

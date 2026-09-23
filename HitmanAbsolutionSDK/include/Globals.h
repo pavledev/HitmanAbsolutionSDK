@@ -35,6 +35,7 @@ class LocalResourceIDsResolver;
 struct SReasoningGrid;
 class ZPathfinder2;
 class ZHM5GridManager;
+class ZStringCollection;
 
 class HitmanAbsolutionSDK_API Globals
 {
@@ -74,4 +75,5 @@ class HitmanAbsolutionSDK_API Globals
     static SReasoningGrid** ActiveGrid;
     static ZPathfinder2* Pathfinder2;
     static ZHM5GridManager* HM5GridManager;
+    static ZStringCollection** StringCollection;
 };

@@ -338,8 +338,9 @@ PATTERN_CDECL_FUNCTION(
     ZConfigCommand*(const ZString& pszName)
 );
 
-PATTERN_CDECL_FUNCTION(
-    "\x55\x8B\xEC\x56\x8B\x75\x08\xB8", "xxxxxxxx", ZString_ZImpl_Allocate, ZString::ZImpl*(const char* pszString, uint32_t nStringLength)
+PATTERN_THISCALL_FUNCTION(
+    "\x55\x8B\xEC\x83\xEC\x00\x53\x56\x57\x8B\x7D\x0C\x8B\xF1\x33\xC9", "xxxxx?xxxxxxxxxx", ZStringCollection_Allocate,
+    ZString::ZImpl*(ZStringCollection* th, const char* pszString, size_t nStringLength)
 );
 
 PATTERN_THISCALL_FUNCTION(

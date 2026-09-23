@@ -716,7 +716,7 @@ void ModSDK::AllocateZString(ZString* p_Target, const char* p_Str, uint32_t p_Si
     {
         // If engine is initialized, allocate the normal way.
         p_Target->m_length = p_Size;
-        p_Target->m_chars = Functions::ZString_ZImpl_Allocate->Call(p_Str, p_Size)->m_pDataStart;
+        p_Target->m_chars = Functions::ZStringCollection_Allocate->Call(*Globals::StringCollection, p_Str, p_Size)->m_pDataStart;
     }
     else
     {
